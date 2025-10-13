@@ -7,9 +7,6 @@ use axum::{
     routing::{Route, Router},
 };
 
-#[cfg(feature = "shaku-di")]
-use shaku::Module;
-
 use tower::{Layer, Service};
 use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 
@@ -187,78 +184,6 @@ impl ApplicationBuilder {
             .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
 
         self
-    }
-
-    /// Registers a Shaku dependency injection module in the application.
-    ///
-    /// This method integrates Shaku modules for dependency injection, allowing you
-    /// to register services and dependencies that can be resolved later using
-    /// `Context::shaku_di::<ModuleType, InterfaceType>()`.
-    ///
-    /// Available only when the `shaku-di` feature is enabled.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `M` - The Shaku module type (must implement `Sync + Send + 'static`)
-    ///
-    /// ### Arguments
-    ///
-    /// * `module` - The Shaku module instance containing registered services
-    ///
-    /// ### Returns
-    ///
-    /// Returns `Ok(Self)` for method chaining, or `Err(StateError)` if the module
-    /// type is already registered.
-    ///
-    /// ### Example
-    ///
-    /// ```rust,ignore
-    /// use sword::prelude::*;
-    /// use shaku::{module, Component, Interface};
-    /// use std::sync::Arc;
-    ///
-    /// trait DatabaseService: Interface {
-    ///     fn get_connection(&self) -> String;
-    /// }
-    ///
-    /// #[derive(Component)]
-    /// #[shaku(interface = DatabaseService)]
-    /// struct PostgresService;
-    ///
-    /// impl DatabaseService for PostgresService {
-    ///     fn get_connection(&self) -> String {
-    ///         "postgresql://localhost:5432/mydb".to_string()
-    ///     }
-    /// }
-    ///
-    /// module! {
-    ///     AppModule {
-    ///         components = [PostgresService],
-    ///         providers = []
-    ///     }
-    /// }
-    ///
-    /// let module = AppModule::builder().build();
-    ///
-    /// let app = Application::builder()
-    ///     .with_shaku_di_module(module)
-    ///     .build();
-    /// ```
-    #[cfg(feature = "shaku-di")]
-    pub fn with_shaku_di_module<M: Sync + Send + 'static + Module>(
-        self,
-        module: M,
-    ) -> Self {
-        self.state.insert(module).expect("Failed to insert state");
-
-        let router = Router::new().with_state(self.state.clone());
-
-        Self {
-            router,
-            state: self.state,
-            config: self.config,
-            prefix: self.prefix,
-        }
     }
 
     /// Sets a URL prefix for all routes in the application.

@@ -4,11 +4,10 @@ version = "0.1.8"
 edition = "2024"
 authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
 description = "A structured rust web framework built on top of Axum, providing clean routing, configuration, and middleware support"
-repository = "https://github.com/sword-framework/sword"
-homepage = "https://github.com/sword-framework/sword"
+repository = "https://github.com/sword-web/sword"
+homepage = "https://github.com/sword-web/sword"
 documentation = "https://docs.rs/sword"
 keywords = ["sword", "web", "framework", "axum", "rest"]
-categories = ["web, http-framework", "web-framework", "api"]
 readme = "../README.md"
 license-file = "../LICENSE"
 
@@ -43,7 +42,6 @@ tower-http = { version = "0.6.6", features = ["limit", "timeout"] }
 tower-cookies = { version = "0.11.0", optional = true }
 thiserror = "2.0.12"
 
-shaku = { version = "0.6.2", optional = true }
 bytes = { version = "1.10.1", optional = true }
 colored = "3.0.0"
 inventory = "0.3.21"
@@ -59,6 +57,5 @@ default = []
 multipart = ["axum/multipart", "dep:bytes"]
 cookies = ["dep:tower-cookies", "tower-cookies/signed", "tower-cookies/private"]
 helmet = ["dep:axum-helmet"]
-shaku-di = ["dep:shaku"]
 validator = ["dep:validator"]
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]

@@ -15,7 +15,7 @@ pub enum MiddlewareArgs {
 
 impl Parse for MiddlewareArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        if let Some(result) = try_parse_sword_middleware(input)? {
+        if let Some(result) = parse_as_sword_middleware(input)? {
             return Ok(result);
         }
 
@@ -23,7 +23,7 @@ impl Parse for MiddlewareArgs {
     }
 }
 
-fn try_parse_sword_middleware(
+fn parse_as_sword_middleware(
     input: ParseStream,
 ) -> syn::Result<Option<MiddlewareArgs>> {
     let fork = input.fork();

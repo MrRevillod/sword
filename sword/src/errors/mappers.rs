@@ -58,14 +58,11 @@ impl From<DependencyInjectionError> for HttpResponse {
                     .message("Service configuration error")
             }
             DependencyInjectionError::StateError { type_name, source } => {
-                eprintln!(
-                    "State error while building '{type_name}': {}",
-                    source.to_string()
-                );
+                eprintln!("State error while building '{type_name}': {source}",);
                 HttpResponse::InternalServerError().message("Internal server error")
             }
             DependencyInjectionError::ConfigInjectionError { source } => {
-                eprintln!("Failed to inject config: {}", source.to_string());
+                eprintln!("Failed to inject config: {source}");
                 HttpResponse::InternalServerError().message("Configuration error")
             }
         }

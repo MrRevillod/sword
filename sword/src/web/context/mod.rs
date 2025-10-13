@@ -15,12 +15,6 @@ use axum::{
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
-#[cfg(feature = "shaku-di")]
-use std::sync::Arc;
-
-#[cfg(feature = "shaku-di")]
-use shaku::{HasComponent, Interface, Module};
-
 use crate::{
     core::{Config, ConfigItem, State},
     errors::{ConfigError, DependencyInjectionError},
@@ -83,50 +77,6 @@ impl Context {
         })?;
 
         Ok(value)
-    }
-
-    /// Retrieves a dependency from a Shaku dependency injection module.
-    ///
-    /// This method provides access to services registered in Shaku modules
-    /// that were added to the application using `ApplicationBuilder::with_shaku_di_module()`.
-    ///
-    /// Available only when the `shaku-di` feature is enabled.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `M` - The module type containing the dependency (must implement required Shaku traits)
-    /// * `I` - The interface type being resolved (must be a `dyn Interface`)
-    ///
-    /// ### Returns
-    ///
-    /// Returns `Ok(Arc<I>)` containing the resolved service, or `Err(StateError)`
-    /// if the module or service is not found.
-    ///
-    /// ### Errors
-    ///
-    /// This function will return a `StateError::TypeNotFound` if the requested
-    /// module type was not registered in the application.
-    ///
-    /// ### Example
-    /// To see usage, We recommend checking the full example in the sword framework repository.
-    /// [Shaku dependency injection example](https://github.com/sword-framework/sword/tree/main/examples/src/dependency_injection)
-    #[cfg(feature = "shaku-di")]
-    pub fn shaku_di<M, I>(&self) -> Result<Arc<I>, DependencyInjectionError>
-    where
-        M: Module + HasComponent<I> + Send + Sync + 'static,
-        I: Interface + ?Sized + 'static,
-    {
-        let type_name = std::any::type_name::<I>().to_string();
-
-        let module = self.state.borrow::<M>().map_err(|_| {
-            DependencyInjectionError::DependencyNotFound {
-                type_name: type_name.clone(),
-            }
-        })?;
-
-        let interface = module.resolve();
-
-        Ok(interface)
     }
 
     /// Retrieves a configuration item of type `T` from the application configuration.

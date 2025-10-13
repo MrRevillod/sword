@@ -9,7 +9,7 @@ use sword::prelude::*;
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 
-#[provider]
+#[injectable(kind = "provider")]
 pub struct Database {
     db: Store,
 }
@@ -103,8 +103,8 @@ async fn test_get_tasks_empty() {
 
     let container = DependencyContainer::builder()
         .register_provider(db)
-        .register::<TaskRepository>()
-        .register::<TasksService>()
+        .register_component::<TaskRepository>()
+        .register_component::<TasksService>()
         .build();
 
     let app = Application::builder()
@@ -120,7 +120,7 @@ async fn test_get_tasks_empty() {
 
     let body: ResponseBody = response.json();
 
-    assert_eq!(body.success, true);
+    assert!(body.success);
     assert_eq!(body.code, 200);
     assert_eq!(body.data, Some(json!([])));
 }
@@ -131,8 +131,8 @@ async fn test_create_task() {
 
     let container = DependencyContainer::builder()
         .register_provider(db)
-        .register::<TaskRepository>()
-        .register::<TasksService>()
+        .register_component::<TaskRepository>()
+        .register_component::<TasksService>()
         .build();
 
     let app = Application::builder()
@@ -148,7 +148,7 @@ async fn test_create_task() {
 
     let body: ResponseBody = response.json();
 
-    assert_eq!(body.success, true);
+    assert!(body.success);
     assert_eq!(body.code, 201);
     assert_eq!(body.message.as_ref(), "Task created");
 

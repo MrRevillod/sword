@@ -13,7 +13,7 @@ pub struct DatabaseConfig {
     collection_name: String,
 }
 
-#[provider]
+#[injectable(kind = "provider")]
 pub struct Database {
     db: Store,
 }

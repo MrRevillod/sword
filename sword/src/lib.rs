@@ -71,7 +71,7 @@
 pub mod prelude {
     pub use crate::core::{
         Application, ApplicationConfig, Config, ConfigItem, DependencyContainer,
-        config, injectable, provider,
+        config, injectable,
     };
 
     pub use crate::errors::{
@@ -134,7 +134,7 @@ pub mod core {
     mod utils;
 
     pub use di::*;
-    pub use sword_macros::{injectable, provider};
+    pub use sword_macros::injectable;
 
     pub use utils::deserialize_size;
 

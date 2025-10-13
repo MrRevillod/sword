@@ -53,8 +53,8 @@ async fn main() {
 
     let container = DependencyContainer::builder()
         .register_provider(db)
-        .register::<TaskRepository>()
-        .register::<TasksService>()
+        .register_component::<TaskRepository>()
+        .register_component::<TasksService>()
         .build();
 
     let app = app

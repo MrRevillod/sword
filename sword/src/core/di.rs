@@ -14,10 +14,12 @@ type Dependency = Arc<dyn Any + Send + Sync>;
 type DependencyBuilder =
     Box<dyn Fn(&State) -> Result<Dependency, DependencyInjectionError>>;
 
-/// Trait to represent Injectable elements.
+/// Trait to represent elements that can be injected and built automatically
+/// by the dependency container.
+///
 /// This trait gives two functions that helps to build a dependency and
 /// its own dependencies in recursive way.
-pub trait Injectable {
+pub trait Component {
     fn build(state: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized;
@@ -27,7 +29,7 @@ pub trait Injectable {
 
 /// Marker trait for types that are manually instantiated and registered as providers.
 ///
-/// Providers are dependencies that cannot be auto-constructed from the State
+/// Instances are dependencies that cannot be auto-constructed from the State
 /// (e.g., database connections, external API clients) but need to be available
 /// for injection into other services.
 pub trait Provider: Send + Sync + 'static {}
@@ -36,16 +38,16 @@ pub trait Provider: Send + Sync + 'static {}
 ///
 /// Basically it support two types of registrations:
 ///
-/// 1. Provider:
+/// 1. Providers:
 ///
 /// Providers are pre-created objects that you want to register directly into the container.
 /// For example, you might have a database connection or external service client that you
 /// need to build beforehand and inject into other Dependencies.
 ///
-/// 2. Non-instances (Injectables):
+/// 2. Components:
 ///
 /// Are types that has no need to be pre-created. Instead, you register the type itself,
-/// and the container will use the `Injectable` trait to build them when needed, resolving
+/// and the container will use the `Component` trait to build them when needed, resolving
 /// their dependencies automatically.
 pub struct DependencyContainer {
     pub(crate) instances: HashMap<TypeId, Dependency>,
@@ -62,11 +64,11 @@ impl DependencyContainer {
         }
     }
 
-    /// Register a injectable service into the dependency container.
-    /// The dependency must implement Injectable trait.
-    pub fn register<T>(mut self) -> Self
+    /// Register a injectable component.
+    /// The dependency must implement Component trait.
+    pub fn register_component<T>(mut self) -> Self
     where
-        T: Injectable + Send + Sync + 'static,
+        T: Component + Send + Sync + 'static,
     {
         let type_id = TypeId::of::<T>();
         let type_name = std::any::type_name::<T>();
