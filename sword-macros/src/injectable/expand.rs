@@ -9,11 +9,11 @@ pub fn expand_injectable(
     item: TokenStream,
 ) -> Result<TokenStream, syn::Error> {
     let input = syn::parse::<ItemStruct>(item.clone())?;
-    let parsed = parse_dependency_struct_input(attr, item)?;
+    let parsed = parse_injectable_input(attr, item)?;
 
     let injectable_impl = match parsed.kind {
-        InjectableKind::Component => generate_injectable_component_trait(&parsed),
-        InjectableKind::Provider => generate_injectable_provider_trait(&parsed),
+        InjectableKind::Provider => generate_provider_trait(&parsed),
+        InjectableKind::Component => generate_component_trait(&parsed),
     };
 
     let clone_impl = generate_clone_impl(&parsed);

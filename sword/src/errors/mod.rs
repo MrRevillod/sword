@@ -58,6 +58,9 @@ pub enum DependencyInjectionError {
         #[source]
         source: StateError,
     },
+
+    #[error("Circular dependency detected involving '{type_name}'")]
+    CircularDependency { type_name: String },
 }
 
 #[derive(Debug, Error)]

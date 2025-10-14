@@ -3,6 +3,8 @@ mod middleware;
 mod repository;
 mod service;
 
+use std::sync::Arc;
+
 pub use middleware::MyMiddleware;
 pub use repository::TaskRepository;
 
@@ -16,7 +18,7 @@ use crate::{
 
 #[controller("/tasks", version = "v1")]
 struct TasksController {
-    tasks: TasksService,
+    tasks: Arc<TasksService>,
 }
 
 #[routes]
@@ -47,8 +49,10 @@ impl TasksController {
 #[sword::main]
 async fn main() {
     let app = Application::builder();
-    let db_config = app.config.get::<DatabaseConfig>().unwrap();
 
+    // DatabaseConfig is automatically registered in state via #[config] macro + inventory
+    // Get config to create the database provider
+    let db_config = app.config.get::<DatabaseConfig>().unwrap();
     let db = Database::new(db_config).await;
 
     let container = DependencyContainer::builder()

@@ -4,7 +4,7 @@ use syn::{Ident, Type};
 
 use crate::controller::parsing::ControllerInput;
 use crate::middleware::expand_middleware_args;
-use crate::shared::generate_field_extraction_from_state;
+use crate::shared::generate_field_extractions;
 
 pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let base_path = &input.base_path;
@@ -12,7 +12,7 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let self_fields = &input.fields;
     let controller_middlewares = &input.middlewares;
 
-    let field_extractions = generate_field_extraction_from_state(self_fields);
+    let field_extractions = generate_field_extractions(self_fields);
     let field_assignments = generate_field_assignments(self_fields);
 
     let processed_middlewares: Vec<TokenStream> = controller_middlewares

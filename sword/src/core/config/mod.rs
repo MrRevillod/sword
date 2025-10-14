@@ -1,11 +1,14 @@
+mod registrar;
+
 use super::utils;
 use serde::de::{DeserializeOwned, IntoDeserializer};
 use std::{fs::read_to_string, path::Path, str::FromStr, sync::Arc};
 use toml::Table;
 
+pub use registrar::*;
 pub use sword_macros::config;
 
-use crate::errors::ConfigError;
+use crate::{core::State, errors::ConfigError};
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -17,7 +20,8 @@ pub struct Config {
 /// Types implementing this trait can be used with `Config::get()` to extract
 /// and deserialize specific sections from the configuration file.
 ///
-/// Use the `#[config(key = "section_name")]` macro to automatically implement this trait:
+/// Use the `#[config(key = "section_name")]` macro to automatically implement this trait.
+/// The macro will also auto-register the config type using the `inventory` crate.
 ///
 /// ```rust,ignore
 /// use sword::prelude::*;
@@ -27,9 +31,20 @@ pub struct Config {
 ///     value: String,
 /// }
 /// ```
-pub trait ConfigItem {
+pub trait ConfigItem: DeserializeOwned + Clone + Send + Sync + 'static {
     /// Returns the TOML section key for this configuration type.
     fn toml_key() -> &'static str;
+
+    /// Registers this config type in the application State.
+    /// This is called automatically during application bootstrap.
+    fn register_in_state(config: &Config, state: &State) -> Result<(), ConfigError> {
+        state.insert(config.get::<Self>()?).map_err(|_| {
+            ConfigError::ParseError(format!(
+                "Failed to register config '{}' in state",
+                Self::toml_key()
+            ))
+        })
+    }
 }
 
 impl Config {

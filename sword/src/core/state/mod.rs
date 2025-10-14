@@ -1,3 +1,5 @@
+mod traits;
+
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -5,6 +7,7 @@ use std::{
 };
 
 use crate::errors::StateError;
+pub use traits::*;
 
 /// Application state container for type-safe dependency injection and data sharing.
 ///

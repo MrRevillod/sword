@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sword::prelude::*;
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[config(key = "my-custom-section")]
 pub struct MyConfig {
     custom_key: String,

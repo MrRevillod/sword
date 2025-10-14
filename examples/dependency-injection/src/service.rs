@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use crate::TaskRepository;
 use serde_json::Value;
 use sword::core::injectable;
 
 #[injectable]
 pub struct TasksService {
-    repository: TaskRepository,
+    repository: Arc<TaskRepository>,
 }
 
 impl TasksService {

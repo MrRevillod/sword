@@ -1,11 +1,14 @@
-use crate::database::Database;
+use std::sync::Arc;
+
+use crate::database::{Database, DatabaseConfig};
 use serde_json::Value;
 
 use sword::core::injectable;
 
 #[injectable]
 pub struct TaskRepository {
-    db: Database,
+    db_conf: DatabaseConfig,
+    db: Arc<Database>,
 }
 
 impl TaskRepository {

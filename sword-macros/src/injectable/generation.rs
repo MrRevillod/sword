@@ -4,17 +4,21 @@ use syn::Ident;
 
 use crate::{injectable::*, shared::*};
 
-pub fn generate_injectable_component_trait(
-    input: &InjectableStructInput,
-) -> TokenStream {
-    let field_extractions = generate_field_extraction_from_state(&input.fields);
-    let field_assignments = generate_struct_field_assignments(&input.fields);
+pub fn generate_component_trait(input: &InjectableInput) -> TokenStream {
+    let field_extractions = generate_field_extractions(&input.fields);
+    let field_assignments = generate_field_assignments(&input.fields);
 
     let struct_name = &input.struct_name;
 
     let type_ids = input.fields.iter().map(|(_, ty)| {
-        quote! {
-            std::any::TypeId::of::<#ty>()
+        if let Some(inner_type) = extract_arc_inner_type(ty) {
+            quote! {
+                std::any::TypeId::of::<#inner_type>()
+            }
+        } else {
+            quote! {
+                std::any::TypeId::of::<#ty>()
+            }
         }
     });
 
@@ -45,9 +49,7 @@ pub fn generate_injectable_component_trait(
     }
 }
 
-pub fn generate_injectable_provider_trait(
-    parsed: &InjectableStructInput,
-) -> TokenStream {
+pub fn generate_provider_trait(parsed: &InjectableInput) -> TokenStream {
     let struct_name = &parsed.struct_name;
 
     quote! {
@@ -66,7 +68,7 @@ pub fn generate_injectable_provider_trait(
     }
 }
 
-pub fn generate_clone_impl(parsed: &InjectableStructInput) -> TokenStream {
+pub fn generate_clone_impl(parsed: &InjectableInput) -> TokenStream {
     let struct_name = &parsed.struct_name;
     let field_names: Vec<&Ident> =
         parsed.fields.iter().map(|(name, _)| name).collect();

@@ -79,6 +79,10 @@ impl ApplicationBuilder {
             .insert(config.clone())
             .expect("Failed to insert Config into State");
 
+        for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
+            register(&config, &state).expect("Failed to register config type");
+        }
+
         let router = Router::new().with_state(state.clone());
 
         Self {
@@ -173,7 +177,8 @@ impl ApplicationBuilder {
 
     /// Registers the provided dependency container in the application.
     ///
-    /// **IMPORTANT**: This method must be called before adding controllers or middleware.
+    /// Config types marked with `#[config]` are automatically registered in the state
+    /// during application initialization, so they can be injected into dependencies.
     ///
     /// This method adds a dependency container to the application, allowing you to
     /// register providers and services that can be resolved later.

@@ -65,6 +65,11 @@ impl From<DependencyInjectionError> for HttpResponse {
                 eprintln!("Failed to inject config: {source}");
                 HttpResponse::InternalServerError().message("Configuration error")
             }
+            DependencyInjectionError::CircularDependency { type_name } => {
+                eprintln!("Circular dependency detected involving '{type_name}'");
+                HttpResponse::InternalServerError()
+                    .message("Dependency injection error")
+            }
         }
     }
 }

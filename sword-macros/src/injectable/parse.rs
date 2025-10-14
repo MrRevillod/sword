@@ -8,7 +8,7 @@ pub enum InjectableKind {
     Component,
 }
 
-pub struct InjectableStructInput {
+pub struct InjectableInput {
     pub struct_name: Ident,
     pub fields: Vec<(Ident, Type)>,
     pub derive_clone: bool,
@@ -60,14 +60,14 @@ impl Parse for InjectableArgs {
     }
 }
 
-pub fn parse_dependency_struct_input(
+pub fn parse_injectable_input(
     attr: TokenStream,
     item: TokenStream,
-) -> Result<InjectableStructInput, syn::Error> {
+) -> Result<InjectableInput, syn::Error> {
     let input = syn::parse::<ItemStruct>(item)?;
     let args = syn::parse::<InjectableArgs>(attr)?;
 
-    Ok(InjectableStructInput {
+    Ok(InjectableInput {
         struct_name: input.clone().ident,
         fields: collect_struct_fields(&input),
         derive_clone: args.derive_clone,

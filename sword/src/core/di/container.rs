@@ -1,38 +1,16 @@
 use std::{
-    any::{Any, TypeId},
+    any::TypeId,
     collections::{HashMap, HashSet},
     sync::Arc,
 };
 
-use crate::{core::State, errors::DependencyInjectionError};
-
-/// Pointer to dyn Any element. It retrieves dynamic capabilites
-/// to the dependency container. Basically represents Any element.
-type Dependency = Arc<dyn Any + Send + Sync>;
-
-/// A function that builds a dependency from application State
-type DependencyBuilder =
-    Box<dyn Fn(&State) -> Result<Dependency, DependencyInjectionError>>;
-
-/// Trait to represent elements that can be injected and built automatically
-/// by the dependency container.
-///
-/// This trait gives two functions that helps to build a dependency and
-/// its own dependencies in recursive way.
-pub trait Component {
-    fn build(state: &State) -> Result<Self, DependencyInjectionError>
-    where
-        Self: Sized;
-
-    fn dependencies() -> Vec<TypeId>;
-}
-
-/// Marker trait for types that are manually instantiated and registered as providers.
-///
-/// Instances are dependencies that cannot be auto-constructed from the State
-/// (e.g., database connections, external API clients) but need to be available
-/// for injection into other services.
-pub trait Provider: Send + Sync + 'static {}
+use crate::{
+    core::{
+        Component, Provider, State,
+        di::{Dependency, DependencyBuilder},
+    },
+    errors::DependencyInjectionError,
+};
 
 /// A container for managing dependencies and their builders.
 ///
@@ -106,16 +84,18 @@ impl DependencyContainer {
         state: &State,
     ) -> Result<(), DependencyInjectionError> {
         let mut built = HashSet::new();
+        let mut visiting = HashSet::new();
 
         // First. register all the provided instances
 
         for (type_id, instance) in &self.instances {
             state
-                .insert_dependency(*type_id, instance.clone())
+                .insert_dependency(*type_id, Arc::clone(instance))
                 .map_err(|e| DependencyInjectionError::StateError {
                     type_name: format!("{:?}", type_id),
                     source: e,
                 })?;
+
             built.insert(*type_id);
         }
 
@@ -125,7 +105,7 @@ impl DependencyContainer {
         // If a type_id is already built, skip it (Dep already built).
 
         for type_id in self.dependency_graph.keys() {
-            self.build_recursive(type_id, state, &mut built)?;
+            self.build_recursive(type_id, state, &mut built, &mut visiting)?;
         }
 
         Ok(())
@@ -136,10 +116,19 @@ impl DependencyContainer {
         type_id: &TypeId,
         state: &State,
         built: &mut HashSet<TypeId>,
+        visiting: &mut HashSet<TypeId>,
     ) -> Result<(), DependencyInjectionError> {
         if built.contains(type_id) {
             return Ok(());
         }
+
+        if visiting.contains(type_id) {
+            return Err(DependencyInjectionError::CircularDependency {
+                type_name: std::any::type_name::<()>().to_string(),
+            });
+        }
+
+        visiting.insert(*type_id);
 
         // Explore to all the dependencies first
         // and for each dependency, invoke build_recursive
@@ -147,9 +136,11 @@ impl DependencyContainer {
 
         if let Some(deps) = self.dependency_graph.get(type_id) {
             for dep_id in deps {
-                self.build_recursive(dep_id, state, built)?;
+                self.build_recursive(dep_id, state, built, visiting)?;
             }
         }
+
+        visiting.remove(type_id);
 
         if let Some(builder) = self.dependency_builders.get(type_id) {
             state

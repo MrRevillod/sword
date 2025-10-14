@@ -56,6 +56,12 @@
 //! - `shaku-di` - Dependency injection
 //!
 
+/// Private re-exports for use by macros. Not part of the public API.
+#[doc(hidden)]
+pub mod __private {
+    pub use inventory;
+}
+
 /// The prelude module contains the most commonly used items from the Sword framework.
 ///
 /// This module is designed to be imported with a glob import to bring all essential
@@ -139,8 +145,8 @@ pub mod core {
     pub use utils::deserialize_size;
 
     pub use application::{Application, ApplicationConfig};
-    pub use config::{Config, ConfigItem, config};
-    pub use state::State;
+    pub use config::{Config, ConfigItem, ConfigRegistrar, config};
+    pub use state::{FromState, FromStateArc, State};
 }
 
 /// Web-related components for handling HTTP requests and responses.

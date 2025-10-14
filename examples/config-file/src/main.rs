@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sword::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 #[config(key = "my-custom-section")]
 struct MyConfig {
     custom_key: String,
