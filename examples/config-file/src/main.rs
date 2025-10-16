@@ -39,7 +39,12 @@ impl AppController {
 
 #[sword::main]
 async fn main() {
-    let app = Application::builder()
+    let app = Application::builder();
+    let my_app_conf = app.config::<ApplicationConfig>().expect("Failed to get app config");
+
+    dbg!(my_app_conf);
+
+    let app = app
         .with_controller::<AppController>()
         .build();
 

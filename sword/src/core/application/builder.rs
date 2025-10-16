@@ -14,8 +14,7 @@ use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 use tower_cookies::CookieManagerLayer;
 
 use crate::{
-    core::*,
-    web::{ContentTypeCheck, Controller, ResponsePrettifier},
+    core::*, errors::ConfigError, web::{ContentTypeCheck, Controller, ResponsePrettifier}
 };
 
 /// Builder for constructing a Sword application with various configuration options.
@@ -46,7 +45,7 @@ pub struct ApplicationBuilder {
     state: State,
 
     /// Application configuration loaded from TOML files.
-    pub config: Config,
+    config: Config,
 
     /// Optional URL prefix for all routes in the application.
     prefix: Option<String>,
@@ -202,6 +201,13 @@ impl ApplicationBuilder {
             config: self.config,
             prefix: Some(prefix.into()),
         }
+    }
+
+    pub fn config<T>(&self) -> Result<T, ConfigError>
+    where
+        T: ConfigItem,
+    {
+        self.config.get::<T>()
     }
 
     /// Builds the final application instance.

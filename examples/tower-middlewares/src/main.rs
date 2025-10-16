@@ -28,8 +28,7 @@ async fn main() {
     let mut app = Application::builder();
 
     let cors_config = app
-        .config
-        .get::<CorsConfig>()
+        .config::<CorsConfig>()
         .expect("Failed to load CORS config");
 
     let cors_middleware = CorsMiddleware::new(&cors_config);
