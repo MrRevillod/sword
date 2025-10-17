@@ -1,4 +1,4 @@
-use middleware::*;
+// use middleware::*;
 use serde::Deserialize;
 use sword::prelude::*;
 
@@ -33,7 +33,7 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[middleware(SetCookieMw)]
+    // #[middleware(SetCookieMw)]
     async fn with_middleware(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
         let cookies = ctx.cookies_mut()?;
 

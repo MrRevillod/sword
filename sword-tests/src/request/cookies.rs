@@ -1,23 +1,23 @@
 use axum_test::TestServer;
 use sword::prelude::*;
 
-struct SetCookieMw {}
+// struct SetCookieMw {}
 
-impl Middleware for SetCookieMw {
-    async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
-        let cookies = ctx.cookies_mut()?;
+// impl Middleware for SetCookieMw {
+//     async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
+//         let cookies = ctx.cookies_mut()?;
 
-        let cookie = CookieBuilder::new("session_id", "abc123")
-            .path("/")
-            .http_only(true)
-            .same_site(SameSite::Lax)
-            .build();
+//         let cookie = CookieBuilder::new("session_id", "abc123")
+//             .path("/")
+//             .http_only(true)
+//             .same_site(SameSite::Lax)
+//             .build();
 
-        cookies.add(cookie);
+//         cookies.add(cookie);
 
-        next!(ctx, next)
-    }
-}
+//         next!(ctx, next)
+//     }
+// }
 
 #[controller("/cookies")]
 struct CookieController {}
@@ -40,7 +40,7 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[middleware(SetCookieMw)]
+    // #[middleware(SetCookieMw)]
     async fn with_middleware(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
         let cookies = ctx.cookies_mut()?;
 

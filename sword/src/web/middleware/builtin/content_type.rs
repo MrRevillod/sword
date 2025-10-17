@@ -1,9 +1,4 @@
-use crate::web::{HttpResponse, Next};
-
-use crate::{
-    next,
-    web::{Context, MiddlewareResult},
-};
+use crate::web::*;
 
 const APPLICATION_JSON: &str = "application/json";
 const MULTIPART_FORM_DATA: &str = "multipart/form-data";
@@ -11,7 +6,10 @@ const MULTIPART_FORM_DATA: &str = "multipart/form-data";
 pub(crate) struct ContentTypeCheck;
 
 impl ContentTypeCheck {
-    pub async fn layer(ctx: Context, next: Next) -> MiddlewareResult {
+    pub async fn layer(
+        ctx: Context,
+        next: Next,
+    ) -> HttpResult<axum::response::Response> {
         let content_type = ctx.header("Content-Type").unwrap_or_default();
 
         if !ctx.has_body() {

@@ -5,7 +5,7 @@ mod service;
 
 use std::sync::Arc;
 
-pub use middleware::MyMiddleware;
+// pub use middleware::MyMiddleware;
 pub use repository::TaskRepository;
 
 use serde_json::json;
@@ -24,7 +24,7 @@ struct TasksController {
 #[routes]
 impl TasksController {
     #[get("/")]
-    #[middleware(MyMiddleware)]
+    // #[middleware(MyMiddleware)]
     async fn get_tasks(&self) -> HttpResponse {
         let data = self.tasks.find_all().await;
 

@@ -4,7 +4,7 @@ use syn::Type;
 
 use crate::{
     controller::routes::{HTTP_METHODS, parsing::RouteInfo},
-    middleware::expand_middleware_args,
+    middlewares::expand_middleware_args,
 };
 
 pub fn generate_controller_routes(

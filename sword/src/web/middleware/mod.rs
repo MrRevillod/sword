@@ -1,10 +1,5 @@
 mod builtin;
 
-use axum::response::Response as AxumResponse;
-use std::future::Future;
-
-use crate::web::{Context, HttpResult};
-
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
 
@@ -12,61 +7,41 @@ pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
 pub use axum::middleware::Next;
-pub use sword_macros::middleware;
+pub use sword_macros::{middleware, use_middleware};
 
-/// `MiddlewareResult` is the result type returned by middleware handlers.
-/// It is a `Result` that contains an axum native Response in both success and error cases.
-pub type MiddlewareResult = HttpResult<AxumResponse>;
+use crate::{core::State, errors::DependencyInjectionError};
 
-/// Trait for build middlewares that can be used in the application.
-///
-/// ### Usage
-/// Implement this trait for your middleware struct and define the `handle` method.
-///
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// struct MyMiddleware;
-///
-/// impl Middleware for MyMiddleware {
-///     async fn handle(ctx: Context, next: Next) -> MiddlewareResult {
-///         next!(ctx, next)
-///     }
-/// }
-/// ```
-pub trait Middleware: Send + Sync + 'static {
-    fn handle(
-        ctx: Context,
-        next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
+pub trait Middleware {
+    fn build(state: &State) -> Result<Self, DependencyInjectionError>
+    where
+        Self: Sized;
 }
 
-/// Trait for build middlewares that can be used in the application with a generic
-/// configuration parameters, like a secret key, vector of roles, Custom structs and more.
-///
-/// ```rust,ignore
-///
-/// use sword::prelude::*;
-///
-/// struct MyConfig {
-///     secret_key: String,
-/// }
-///
-/// struct MyMiddleware;
-///
-/// impl MiddlewareWithConfig<MyConfig> for MyMiddleware {
-///     async fn handle(config: MyConfig, req: Context, next: Next) -> MiddlewareResult {
-///         next!(req, next)
-///     }
-/// }
-/// ```
-pub trait MiddlewareWithConfig<C>: Send + Sync + 'static {
-    fn handle(
-        config: C,
-        next: Context,
-        next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
+pub struct MiddlewareRegistrar {
+    pub mw_type_id: std::any::TypeId,
+    pub builder: Box<
+        dyn Fn(&State) -> Result<Box<dyn Middleware>, DependencyInjectionError>
+            + Send
+            + Sync,
+    >,
 }
+
+impl MiddlewareRegistrar {
+    pub fn new<M>() -> Self
+    where
+        M: Middleware + 'static + Send + Sync,
+    {
+        Self {
+            mw_type_id: std::any::TypeId::of::<M>(),
+            builder: Box::new(|state: &State| {
+                let mw = M::build(state)?;
+                Ok(Box::new(mw) as Box<dyn Middleware>)
+            }),
+        }
+    }
+}
+
+inventory::collect!(MiddlewareRegistrar);
 
 /// A macro to simplify the next middleware call in the middleware chain.
 ///

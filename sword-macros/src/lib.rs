@@ -30,12 +30,7 @@ mod controller {
     pub use routes::expand_controller_routes;
 }
 
-mod middleware {
-    pub mod expand;
-    pub mod parse;
-
-    pub use expand::expand_middleware_args;
-}
+mod middlewares;
 
 mod injectable;
 
@@ -210,6 +205,26 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+///  Declares a middleware struct.
+#[proc_macro_attribute]
+pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
+    middlewares::expand_middleware(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+/// on_request middleware attribute macro
+#[proc_macro_attribute]
+pub fn on_request(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+#[proc_macro_attribute]
+pub fn on_response(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
 /// Declares a executable middleware to apply to a route controller.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
 ///
@@ -240,17 +255,18 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     #[middleware(RoleMiddleware, config = vec!["admin", "user"])]
+///     #[use_middleware(RoleMiddleware, config = vec!["admin", "user"])]
 ///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("List of items"))
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn use_middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }
+
 /// Defines a configuration struct for the application.
 /// This macro generates the necessary code to deserialize the struct from
 /// the configuration toml file.

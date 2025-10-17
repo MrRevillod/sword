@@ -1,39 +1,39 @@
-use sword::prelude::*;
+// use sword::prelude::*;
 
-pub struct ExtensionsTestMiddleware;
+// pub struct ExtensionsTestMiddleware;
 
-impl Middleware for ExtensionsTestMiddleware {
-    async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
-        ctx.extensions
-            .insert::<String>("test_extension".to_string());
+// impl Middleware for ExtensionsTestMiddleware {
+//     async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
+//         ctx.extensions
+//             .insert::<String>("test_extension".to_string());
 
-        next!(ctx, next)
-    }
-}
+//         next!(ctx, next)
+//     }
+// }
 
-pub struct RoleMiddleware;
+// pub struct RoleMiddleware;
 
-impl MiddlewareWithConfig<Vec<&str>> for RoleMiddleware {
-    async fn handle(roles: Vec<&str>, ctx: Context, next: Next) -> MiddlewareResult {
-        println!("Allowed roles: {roles:?}");
-        next!(ctx, next)
-    }
-}
+// impl MiddlewareWithConfig<Vec<&str>> for RoleMiddleware {
+//     async fn handle(roles: Vec<&str>, ctx: Context, next: Next) -> MiddlewareResult {
+//         println!("Allowed roles: {roles:?}");
+//         next!(ctx, next)
+//     }
+// }
 
-pub struct ErrorMiddleware;
+// pub struct ErrorMiddleware;
 
-impl Middleware for ErrorMiddleware {
-    async fn handle(_ctx: Context, _next: Next) -> MiddlewareResult {
-        Err(HttpResponse::InternalServerError())
-    }
-}
+// impl Middleware for ErrorMiddleware {
+//     async fn handle(_ctx: Context, _next: Next) -> MiddlewareResult {
+//         Err(HttpResponse::InternalServerError())
+//     }
+// }
 
-pub struct LoggerMiddleware;
+// pub struct LoggerMiddleware;
 
-impl Middleware for LoggerMiddleware {
-    async fn handle(ctx: Context, next: Next) -> MiddlewareResult {
-        println!("Request: {} {}", ctx.method(), ctx.uri());
+// impl Middleware for LoggerMiddleware {
+//     async fn handle(ctx: Context, next: Next) -> MiddlewareResult {
+//         println!("Request: {} {}", ctx.method(), ctx.uri());
 
-        next!(ctx, next)
-    }
-}
+//         next!(ctx, next)
+//     }
+// }

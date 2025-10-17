@@ -2,16 +2,16 @@ use serde_json::json;
 use sword::prelude::*;
 
 mod middlewares;
-use middlewares::*;
+// use middlewares::*;
 
 #[controller("/test")]
-#[middleware(LoggerMiddleware)]
+// #[middleware(LoggerMiddleware)]
 struct TestController {}
 
 #[routes]
 impl TestController {
     #[get("/extensions-test")]
-    #[middleware(ExtensionsTestMiddleware)]
+    // #[middleware(ExtensionsTestMiddleware)]
     async fn extensions_test(&self, ctx: Context) -> HttpResponse {
         let extension_value = ctx.extensions.get::<String>();
 
@@ -23,14 +23,14 @@ impl TestController {
     }
 
     #[get("/role-test")]
-    #[middleware(ExtensionsTestMiddleware)]
-    #[middleware(RoleMiddleware, config = vec!["admin", "user"])]
+    // #[middleware(ExtensionsTestMiddleware)]
+    // #[middleware(RoleMiddleware, config = vec!["admin", "user"])]
     async fn role_test(&self) -> HttpResponse {
         HttpResponse::Ok().message("Role middleware test passed")
     }
 
     #[get("/error-test")]
-    #[middleware(ErrorMiddleware)]
+    // #[middleware(ErrorMiddleware)]
     async fn error_test(&self) -> HttpResponse {
         HttpResponse::Ok()
     }

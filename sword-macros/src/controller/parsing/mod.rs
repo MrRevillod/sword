@@ -4,8 +4,8 @@ use proc_macro::TokenStream;
 use syn::{Ident, ItemStruct, Type};
 
 use crate::{
-    controller::parsing::attributes::ControllerArgs,
-    middleware::parse::MiddlewareArgs, shared::collect_struct_fields,
+    controller::parsing::attributes::ControllerArgs, middlewares::MiddlewareArgs,
+    shared::collect_struct_fields,
 };
 
 pub struct ControllerInput {

@@ -3,8 +3,8 @@ use quote::quote;
 use syn::{Ident, Type};
 
 use crate::controller::parsing::ControllerInput;
-use crate::middleware::expand_middleware_args;
-use crate::shared::generate_field_extractions;
+use crate::middlewares::expand_middleware_args;
+use crate::shared::{generate_field_assignments, generate_field_extractions};
 
 pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let base_path = &input.base_path;
@@ -57,15 +57,5 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
                 })
             }
         }
-    }
-}
-
-fn generate_field_assignments(fields: &[(Ident, Type)]) -> TokenStream {
-    let assignments = fields.iter().map(|(name, _)| {
-        quote! { #name }
-    });
-
-    quote! {
-        #(#assignments),*
     }
 }
