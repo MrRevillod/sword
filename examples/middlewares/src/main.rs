@@ -1,17 +1,33 @@
+use std::sync::Arc;
+
 use serde_json::json;
 use sword::prelude::*;
 
-mod middlewares;
-// use middlewares::*;
+#[middleware]
+pub struct ExtensionsTestMiddleware {
+    database: Arc<Database>,
+}
+
+impl ExtensionsTestMiddleware {
+    async fn on_request(
+        &self,
+        mut ctx: Context,
+        next: Next,
+    ) -> HttpResult<axum::response::Response> {
+        ctx.extensions
+            .insert::<String>("test_extension".to_string());
+
+        next!(ctx, next)
+    }
+}
 
 #[controller("/test")]
-// #[middleware(LoggerMiddleware)]
 struct TestController {}
 
 #[routes]
 impl TestController {
     #[get("/extensions-test")]
-    // #[middleware(ExtensionsTestMiddleware)]
+    #[uses(ExtensionsTestMiddleware)]
     async fn extensions_test(&self, ctx: Context) -> HttpResponse {
         let extension_value = ctx.extensions.get::<String>();
 
@@ -21,24 +37,30 @@ impl TestController {
                 "extension_value": extension_value.cloned().unwrap_or_default()
             }))
     }
+}
 
-    #[get("/role-test")]
-    // #[middleware(ExtensionsTestMiddleware)]
-    // #[middleware(RoleMiddleware, config = vec!["admin", "user"])]
-    async fn role_test(&self) -> HttpResponse {
-        HttpResponse::Ok().message("Role middleware test passed")
-    }
+#[injectable(kind = "provider")]
+pub struct Database {
+    pub connection_string: String,
+}
 
-    #[get("/error-test")]
-    // #[middleware(ErrorMiddleware)]
-    async fn error_test(&self) -> HttpResponse {
-        HttpResponse::Ok()
+impl Database {
+    pub fn new() -> Self {
+        Self {
+            connection_string: "sqlite://:memory:".to_string(),
+        }
     }
 }
 
 #[sword::main]
 async fn main() {
+    let db = Database::new();
+
+    let dependency_container =
+        DependencyContainer::builder().register_provider(db).build();
+
     let app = Application::builder()
+        .with_dependency_container(dependency_container)
         .with_controller::<TestController>()
         .build();
 

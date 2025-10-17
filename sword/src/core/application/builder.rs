@@ -14,7 +14,9 @@ use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 use tower_cookies::CookieManagerLayer;
 
 use crate::{
-    core::*, errors::ConfigError, web::{ContentTypeCheck, Controller, ResponsePrettifier}
+    core::*,
+    errors::ConfigError,
+    web::{ContentTypeCheck, Controller, MiddlewareRegistrar, ResponsePrettifier},
 };
 
 /// Builder for constructing a Sword application with various configuration options.
@@ -80,6 +82,13 @@ impl ApplicationBuilder {
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&config, &state).expect("Failed to register config type");
+        }
+
+        // Register middlewares in state
+        println!("🔧 Registering middlewares...");
+        for mw in inventory::iter::<MiddlewareRegistrar> {
+            (mw.register)(&state).expect("Failed to register middleware");
+            println!("  ✓ Middleware registered");
         }
 
         let router = Router::new().with_state(state.clone());

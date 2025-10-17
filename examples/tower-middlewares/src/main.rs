@@ -11,7 +11,7 @@ struct AppController {}
 #[routes]
 impl AppController {
     #[get("/")]
-    #[use_middleware(TimeoutLayer::new(Duration::from_secs(2)))]
+    #[uses(TimeoutLayer::new(Duration::from_secs(2)))]
     async fn get_data(&self) -> HttpResponse {
         sleep(Duration::from_secs(3)).await;
         HttpResponse::Ok()

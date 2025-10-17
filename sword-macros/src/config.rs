@@ -61,7 +61,7 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
         // This allows automatic registration of all configs during app initialization
         // We use the full path to inventory through sword's re-export
         const _: () = {
-            ::sword::__private::inventory::submit! {
+            ::sword::__internal::inventory::submit! {
                 ::sword::core::ConfigRegistrar::new(|config, state| {
                     <#struct_name as ::sword::core::ConfigItem>::register_in_state(config, state)
                 })

@@ -255,14 +255,14 @@ pub fn on_response(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     #[use_middleware(RoleMiddleware, config = vec!["admin", "user"])]
+///     #[uses(RoleMiddleware)]
 ///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("List of items"))
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn use_middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }

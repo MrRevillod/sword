@@ -56,12 +56,6 @@
 //! - `shaku-di` - Dependency injection
 //!
 
-/// Private re-exports for use by macros. Not part of the public API.
-#[doc(hidden)]
-pub mod __private {
-    pub use inventory;
-}
-
 /// The prelude module contains the most commonly used items from the Sword framework.
 ///
 /// This module is designed to be imported with a glob import to bring all essential
@@ -234,6 +228,8 @@ pub mod __internal {
         delete as axum_delete_fn, get as axum_get_fn, patch as axum_patch_fn,
         post as axum_post_fn, put as axum_put_fn,
     };
+
+    pub use inventory;
 
     pub use tokio::runtime as tokio_runtime;
 

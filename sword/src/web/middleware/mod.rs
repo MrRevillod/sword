@@ -1,5 +1,7 @@
 mod builtin;
 
+use std::any::Any;
+
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
 
@@ -7,36 +9,41 @@ pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
 pub use axum::middleware::Next;
-pub use sword_macros::{middleware, use_middleware};
+pub use sword_macros::{middleware, uses};
 
 use crate::{core::State, errors::DependencyInjectionError};
 
-pub trait Middleware {
+pub trait Middleware: Any + Send + Sync + 'static {
     fn build(state: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized;
 }
 
 pub struct MiddlewareRegistrar {
-    pub mw_type_id: std::any::TypeId,
-    pub builder: Box<
-        dyn Fn(&State) -> Result<Box<dyn Middleware>, DependencyInjectionError>
-            + Send
-            + Sync,
-    >,
+    pub register: fn(&State) -> Result<(), DependencyInjectionError>,
 }
 
 impl MiddlewareRegistrar {
-    pub fn new<M>() -> Self
+    pub const fn new<M>() -> Self
     where
-        M: Middleware + 'static + Send + Sync,
+        M: Middleware + Clone + 'static + Send + Sync,
     {
+        fn register_middleware<M: Middleware + Clone + 'static + Send + Sync>(
+            state: &State,
+        ) -> Result<(), DependencyInjectionError> {
+            let mw = M::build(state)?;
+            state.insert(mw).map_err(|source| {
+                DependencyInjectionError::StateError {
+                    type_name: std::any::type_name::<M>().to_string(),
+                    source,
+                }
+            })?;
+
+            Ok(())
+        }
+
         Self {
-            mw_type_id: std::any::TypeId::of::<M>(),
-            builder: Box::new(|state: &State| {
-                let mw = M::build(state)?;
-                Ok(Box::new(mw) as Box<dyn Middleware>)
-            }),
+            register: register_middleware::<M>,
         }
     }
 }

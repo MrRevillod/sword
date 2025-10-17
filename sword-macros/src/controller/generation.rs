@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, Type};
 
 use crate::controller::parsing::ControllerInput;
 use crate::middlewares::expand_middleware_args;

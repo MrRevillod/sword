@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::Ident;
 
 use crate::{
     middlewares::MiddlewareInput,
@@ -12,6 +13,9 @@ pub fn generate_middleware_builder(input: &MiddlewareInput) -> TokenStream {
 
     let field_extractions = generate_field_extractions(self_fields);
     let field_assignments = generate_field_assignments(self_fields);
+
+    let field_names: Vec<&Ident> =
+        input.fields.iter().map(|(name, _)| name).collect();
 
     quote! {
 
@@ -33,11 +37,17 @@ pub fn generate_middleware_builder(input: &MiddlewareInput) -> TokenStream {
             }
         }
 
-        const _: () = {
-            ::sword::__private::inventory::submit! {
-                ::sword::web::middleware::MiddlewareRegistrar::new::<#self_name>()
-            }
-        };
+        ::sword::__internal::inventory::submit! {
+            ::sword::web::MiddlewareRegistrar::new::<#self_name>()
+        }
 
+
+        impl ::std::clone::Clone for #self_name {
+            fn clone(&self) -> Self {
+                Self {
+                    #(#field_names: self.#field_names.clone()),*
+                }
+            }
+        }
     }
 }

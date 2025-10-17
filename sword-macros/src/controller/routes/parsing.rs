@@ -9,8 +9,15 @@ use syn::{
 
 use crate::middlewares::MiddlewareArgs;
 
-const VALID_ROUTE_MACROS: &[&str; 6] =
-    &["get", "post", "put", "patch", "delete", "middleware"];
+const VALID_ROUTE_MACROS: &[&str; 7] = &[
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "middleware",
+    "uses",
+];
 
 pub const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "delete", "patch"];
 
