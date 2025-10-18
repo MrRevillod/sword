@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemStruct;
 
-use crate::injectable::*;
+use crate::{injectable::*, shared::generate_clone_impl};
 
 pub fn expand_injectable(
     attr: TokenStream,
@@ -16,7 +16,7 @@ pub fn expand_injectable(
         InjectableKind::Component => generate_component_trait(&parsed),
     };
 
-    let clone_impl = generate_clone_impl(&parsed);
+    let clone_impl = generate_clone_impl(&parsed.struct_name, &parsed.fields);
 
     let mut expanded = quote! {
         #input

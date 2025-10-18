@@ -1,8 +1,8 @@
-use crate::{core::State as SwordState, errors::DependencyInjectionError};
+use crate::{core::State, errors::DependencyInjectionError};
 use axum::Router as AxumRouter;
 
 pub trait Controller: ControllerBuilder {
-    fn router(state: SwordState) -> AxumRouter;
+    fn router(state: State) -> AxumRouter;
 }
 
 pub trait ControllerBuilder {
@@ -10,10 +10,10 @@ pub trait ControllerBuilder {
 
     fn apply_controller_middlewares(
         router: AxumRouter,
-        app_state: SwordState,
+        app_state: State,
     ) -> AxumRouter;
 
-    fn build(state: SwordState) -> Result<Self, DependencyInjectionError>
+    fn build(state: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized;
 }

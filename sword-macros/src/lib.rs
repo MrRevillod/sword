@@ -3,13 +3,7 @@ use quote::quote;
 use syn::parse_macro_input;
 
 mod config;
-mod shared {
-    mod generation;
-    mod parsing;
-
-    pub use generation::*;
-    pub use parsing::*;
-}
+mod shared;
 
 mod controller {
     pub mod expand;

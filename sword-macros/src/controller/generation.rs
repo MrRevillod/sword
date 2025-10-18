@@ -3,7 +3,7 @@ use quote::quote;
 
 use crate::controller::parsing::ControllerInput;
 use crate::middlewares::expand_middleware_args;
-use crate::shared::{generate_field_assignments, generate_field_extractions};
+use crate::shared::{generate_build_method, generate_try_from_state};
 
 pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let base_path = &input.base_path;
@@ -11,18 +11,16 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let self_fields = &input.fields;
     let controller_middlewares = &input.middlewares;
 
-    let field_extractions = generate_field_extractions(self_fields);
-    let field_assignments = generate_field_assignments(self_fields);
-
     let processed_middlewares: Vec<TokenStream> = controller_middlewares
         .iter()
         .map(expand_middleware_args)
         .collect();
 
+    let try_from_impl = generate_try_from_state(self_name, self_fields);
+    let build_method = generate_build_method();
+
     quote! {
-
         impl ::sword::web::ControllerBuilder for #self_name {
-
             fn base_path() -> &'static str {
                 #base_path
             }
@@ -32,29 +30,15 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
                 state: ::sword::core::State,
             ) -> ::sword::__internal::AxumRouter {
                 let mut result = router;
-
                 #(
                     result = result.layer(#processed_middlewares);
                 )*
-
                 result
             }
 
-            fn build(state: ::sword::core::State) -> Result<Self, ::sword::errors::DependencyInjectionError> {
-                Self::try_from(&state)
-            }
+            #build_method
         }
 
-        impl TryFrom<&::sword::core::State> for #self_name {
-            type Error = ::sword::errors::DependencyInjectionError;
-
-            fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
-                #field_extractions
-
-                Ok(Self {
-                    #field_assignments
-                })
-            }
-        }
+        #try_from_impl
     }
 }
