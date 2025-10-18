@@ -215,8 +215,8 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// on_request middleware attribute macro
 #[proc_macro_attribute]
 pub fn on_request(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
+    middlewares::expand_on_request(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
 #[proc_macro_attribute]

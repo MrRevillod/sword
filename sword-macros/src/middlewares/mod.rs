@@ -8,6 +8,14 @@ mod middleware {
     pub use parse::*;
 }
 
+mod on {
+    mod expand;
+    mod parse;
+
+    pub use expand::*;
+    pub use parse::*;
+}
+
 mod uses {
     mod expand;
     mod parse;
@@ -17,4 +25,5 @@ mod uses {
 }
 
 pub use middleware::*;
+pub use on::*;
 pub use uses::*;

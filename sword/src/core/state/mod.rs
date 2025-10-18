@@ -15,7 +15,6 @@ pub use traits::*;
 /// the entire application. It uses `TypeId` as keys to ensure type safety and
 /// prevents type confusion. State is automatically managed by the framework
 /// and can be accessed through the `Context` in route handlers and middleware.
-/// ```
 #[derive(Clone, Debug)]
 pub struct State {
     inner: Arc<RwLock<HashMap<TypeId, Arc<dyn Any + Send + Sync>>>>,
@@ -28,6 +27,7 @@ impl State {
         }
     }
 
+    /// Extract a clone of the stored value of type `T` from the state.
     pub fn get<T>(&self) -> Result<T, StateError>
     where
         T: Clone + Send + Sync + 'static,
@@ -47,6 +47,8 @@ impl State {
             .ok_or(StateError::TypeNotFound { type_name })
     }
 
+    /// Borrow an `Arc` to the stored value of type `T` from the state.
+    /// This returns an `Arc<T>` without cloning the underlying value.
     pub fn borrow<T>(&self) -> Result<Arc<T>, StateError>
     where
         T: Send + Sync + 'static,

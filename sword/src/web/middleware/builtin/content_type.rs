@@ -6,10 +6,7 @@ const MULTIPART_FORM_DATA: &str = "multipart/form-data";
 pub(crate) struct ContentTypeCheck;
 
 impl ContentTypeCheck {
-    pub async fn layer(
-        ctx: Context,
-        next: Next,
-    ) -> HttpResult<axum::response::Response> {
+    pub async fn layer(ctx: Context, next: Next) -> MiddlewareResult {
         let content_type = ctx.header("Content-Type").unwrap_or_default();
 
         if !ctx.has_body() {

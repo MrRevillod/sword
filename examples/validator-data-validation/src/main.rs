@@ -9,7 +9,7 @@ struct AppController {}
 #[routes]
 impl AppController {
     #[get("/hello")]
-    async fn hello(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn hello(&self, ctx: Context) -> HttpResult {
         match ctx.query_validator::<MyQuery>()? {
             Some(query) => Ok(HttpResponse::Ok()
                 .data(query)
@@ -20,7 +20,7 @@ impl AppController {
     }
 
     #[post("/submit")]
-    async fn submit_data(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn submit_data(&self, ctx: Context) -> HttpResult {
         let body = ctx.body_validator::<MyBody>()?;
 
         Ok(HttpResponse::Ok()

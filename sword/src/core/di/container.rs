@@ -1,5 +1,5 @@
 use std::{
-    any::TypeId,
+    any::{TypeId, type_name},
     collections::{HashMap, HashSet},
     sync::Arc,
 };
@@ -44,12 +44,9 @@ impl DependencyContainer {
 
     /// Register a injectable component.
     /// The dependency must implement Component trait.
-    pub fn register_component<T>(mut self) -> Self
-    where
-        T: Component + Send + Sync + 'static,
-    {
+    pub fn register_component<T: Component>(mut self) -> Self {
         let type_id = TypeId::of::<T>();
-        let type_name = std::any::type_name::<T>();
+        let type_name = type_name::<T>();
 
         let dependency_builder = Box::new(move |state: &State| {
             T::build(state)

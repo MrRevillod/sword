@@ -1,7 +1,7 @@
 use crate::{
     core::{ApplicationConfig, Config, State},
     errors::RequestError,
-    web::{Context, HttpResponse, HttpResult},
+    web::{Context, HttpResponse},
 };
 
 use axum::{
@@ -23,7 +23,10 @@ where
 {
     type Rejection = HttpResponse;
 
-    async fn from_request(req: AxumRequest, state: &S) -> HttpResult<Self> {
+    async fn from_request(
+        req: AxumRequest,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
         let mut params = HashMap::new();

@@ -8,7 +8,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
         MiddlewareArgs::SwordSimple(path) => {
             quote! {
                 {
-                    let middleware = state.get::<#path>()
+                    let middleware = state.borrow::<#path>()
                         .expect("Failed to retrieve middleware from State");
 
                     ::sword::__internal::mw_with_state(
@@ -16,7 +16,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
                         move |ctx: ::sword::web::Context, next: ::sword::web::Next| {
                             let mw = middleware.clone();
                             async move {
-                                mw.on_request(ctx, next).await
+                                mw.__on__request__function__(ctx, next).await
                             }
                         }
                     )

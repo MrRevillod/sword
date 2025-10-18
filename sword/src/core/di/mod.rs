@@ -21,7 +21,7 @@ type DependencyBuilder =
 ///
 /// This trait gives two functions that helps to build a dependency and
 /// its own dependencies in recursive way.
-pub trait Component {
+pub trait Component: Send + Sync + 'static {
     fn build(state: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized;

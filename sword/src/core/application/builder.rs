@@ -84,13 +84,6 @@ impl ApplicationBuilder {
             register(&config, &state).expect("Failed to register config type");
         }
 
-        // Register middlewares in state
-        println!("🔧 Registering middlewares...");
-        for mw in inventory::iter::<MiddlewareRegistrar> {
-            (mw.register)(&state).expect("Failed to register middleware");
-            println!("  ✓ Middleware registered");
-        }
-
         let router = Router::new().with_state(state.clone());
 
         Self {
@@ -247,6 +240,12 @@ impl ApplicationBuilder {
         #[cfg(feature = "cookies")]
         {
             router = router.layer(CookieManagerLayer::new());
+        }
+
+        for mw in inventory::iter::<MiddlewareRegistrar> {
+            self.state
+                .insert((mw.build)(&self.state))
+                .expect("Failed to register middleware");
         }
 
         router = router

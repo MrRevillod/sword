@@ -1,6 +1,9 @@
 mod builtin;
 
-use std::any::Any;
+use std::{any::Any, sync::Arc};
+
+use axum::response::Response as AxumResponse;
+use axum_responses::http::HttpResponse;
 
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
@@ -9,9 +12,11 @@ pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
 pub use axum::middleware::Next;
-pub use sword_macros::{middleware, uses};
+pub use sword_macros::{middleware, on_request, uses};
 
 use crate::{core::State, errors::DependencyInjectionError};
+
+pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 
 pub trait Middleware: Any + Send + Sync + 'static {
     fn build(state: &State) -> Result<Self, DependencyInjectionError>
@@ -20,30 +25,18 @@ pub trait Middleware: Any + Send + Sync + 'static {
 }
 
 pub struct MiddlewareRegistrar {
-    pub register: fn(&State) -> Result<(), DependencyInjectionError>,
+    pub build: fn(&State) -> Result<Arc<dyn Middleware>, DependencyInjectionError>,
 }
 
 impl MiddlewareRegistrar {
     pub const fn new<M>() -> Self
     where
-        M: Middleware + Clone + 'static + Send + Sync,
+        M: Middleware + Clone,
     {
-        fn register_middleware<M: Middleware + Clone + 'static + Send + Sync>(
-            state: &State,
-        ) -> Result<(), DependencyInjectionError> {
-            let mw = M::build(state)?;
-            state.insert(mw).map_err(|source| {
-                DependencyInjectionError::StateError {
-                    type_name: std::any::type_name::<M>().to_string(),
-                    source,
-                }
-            })?;
-
-            Ok(())
-        }
-
         Self {
-            register: register_middleware::<M>,
+            build: |state: &State| {
+                Ok(Arc::new(M::build(state)?) as Arc<dyn Middleware>)
+            },
         }
     }
 }

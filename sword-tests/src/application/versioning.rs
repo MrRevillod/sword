@@ -34,7 +34,7 @@ impl V1UsersController {
     }
 
     #[get("/{id}")]
-    async fn get_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn get_user(&self, ctx: Context) -> HttpResult {
         let id = ctx.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
@@ -49,7 +49,7 @@ impl V1UsersController {
     }
 
     #[post("/")]
-    async fn create_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn create_user(&self, ctx: Context) -> HttpResult {
         let body = ctx.body::<Value>()?;
 
         Ok(HttpResponse::Created()
@@ -80,7 +80,7 @@ impl V1ProductsController {
     }
 
     #[get("/{id}")]
-    async fn get_product(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn get_product(&self, ctx: Context) -> HttpResult {
         let id = ctx.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
@@ -121,7 +121,7 @@ impl V2UsersController {
     }
 
     #[get("/{id}")]
-    async fn get_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn get_user(&self, ctx: Context) -> HttpResult {
         let id = ctx.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
@@ -139,7 +139,7 @@ impl V2UsersController {
     }
 
     #[post("/")]
-    async fn create_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn create_user(&self, ctx: Context) -> HttpResult {
         let body = ctx.body::<Value>()?;
 
         Ok(HttpResponse::Created()
@@ -191,7 +191,7 @@ impl V2ProductsController {
     }
 
     #[get("/{id}")]
-    async fn get_product(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn get_product(&self, ctx: Context) -> HttpResult {
         let id = ctx.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()

@@ -9,11 +9,8 @@ pub struct ExtensionsTestMiddleware {
 }
 
 impl ExtensionsTestMiddleware {
-    async fn on_request(
-        &self,
-        mut ctx: Context,
-        next: Next,
-    ) -> HttpResult<axum::response::Response> {
+    #[on_request]
+    async fn add_extension(&self, mut ctx: Context, next: Next) -> MiddlewareResult {
         ctx.extensions
             .insert::<String>("test_extension".to_string());
 

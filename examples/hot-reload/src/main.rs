@@ -30,7 +30,7 @@ impl AppController {
     }
 
     #[post("/submit")]
-    async fn submit_data(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    async fn submit_data(&self, ctx: Context) -> HttpResult {
         let body = ctx.body::<Value>()?;
         let custom_config = ctx.config::<MyConfig>()?;
 

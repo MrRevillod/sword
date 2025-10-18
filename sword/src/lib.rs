@@ -193,9 +193,11 @@ pub mod web {
     mod middleware;
 
     pub use axum::http::{Method, StatusCode, header};
-    pub use axum_responses::Result as HttpResult;
+    pub use axum_responses::Result as AxumResponsesResult;
     pub use axum_responses::http::*;
     pub use sword_macros::{controller, delete, get, patch, post, put, routes};
+
+    pub type HttpResult = AxumResponsesResult<HttpResponse>;
 
     pub use crate::next;
 
