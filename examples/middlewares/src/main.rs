@@ -102,3 +102,9 @@ async fn main() {
 
     app.run().await;
 }
+
+impl Default for Database {
+    fn default() -> Self {
+        Self::new()
+    }
+}
