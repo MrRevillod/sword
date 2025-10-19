@@ -14,8 +14,7 @@ pub use traits::*;
 ///
 /// `State` provides a thread-safe way to store and retrieve shared data across
 /// the entire application. It uses `TypeId` as keys to ensure type safety and
-/// prevents type confusion. State is automatically managed by the framework
-/// and can be accessed through the `Context` in route handlers and middleware.
+/// prevents type confusion. State is automatically managed by the framework.
 #[derive(Clone, Debug)]
 pub struct State {
     inner: Arc<RwLock<HashMap<TypeId, Arc<dyn Any + Send + Sync>>>>,

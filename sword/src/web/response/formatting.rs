@@ -1,5 +1,5 @@
+#[cfg(feature = "validator")]
 use serde_json::{Map, Value, json};
-
 #[cfg(feature = "validator")]
 use validator::ValidationErrors;
 

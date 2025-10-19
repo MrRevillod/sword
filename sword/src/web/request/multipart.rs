@@ -12,8 +12,13 @@ impl Request {
     ///
     /// ### Example
     /// ```rust,ignore
-    /// async fn upload(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let mut multipart = ctx.multipart().await?;
+    /// use sword::prelude::*;
+    ///
+    /// ... asuming you have a controller struct ...
+    ///
+    /// #[post("/upload")]
+    /// async fn upload(&self, req: Request) -> HttpResult {
+    ///     let mut multipart = req.multipart().await?;
     ///     let mut field_names = Vec::new();
     ///
     ///     // Process each field in the multipart form data

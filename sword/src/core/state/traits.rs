@@ -9,7 +9,7 @@ pub trait FromState: Sized {
     fn from_state(state: &State) -> Result<Self, StateError>;
 }
 
-/// Trait for extracting Arc-wrapped types from State efficiently.
+/// Trait for extracting Arc-wrapped types from State.
 ///
 /// This trait provides zero-cost extraction of Arc<T> from state by
 /// borrowing the existing Arc instead of cloning the underlying value.
@@ -27,7 +27,7 @@ where
     }
 }
 
-// Implement FromStateArc for Arc<T> (uses .borrow() which returns Arc - efficient!)
+// Implement FromStateArc for Arc<T> (uses .borrow() which returns Arc)
 impl<T> FromStateArc for Arc<T>
 where
     T: Send + Sync + 'static,

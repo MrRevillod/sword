@@ -3,20 +3,63 @@ use quote::quote;
 
 use super::parse::MiddlewareArgs;
 
+/// Expands middleware arguments into the appropriate runtime code.
+///
+/// 1. **Simple middleware** (`#[uses(MyMiddleware)]`):
+///    - Requires `MyMiddleware` to implement `OnRequest`
+///
+/// 2. **Middleware with config** (`#[uses(MyMiddleware(config))]`):
+///    - Requires `MyMiddleware` to implement `OnRequestWithConfig<ConfigType>`
 pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
     match args {
         MiddlewareArgs::SwordSimple(path) => {
             quote! {
                 {
+                    fn __check_on_request<M: ::sword::web::OnRequest>(mw: &M) -> &M { mw }
+
                     let middleware = state.borrow::<::std::sync::Arc<#path>>()
                         .expect("Failed to retrieve middleware from State");
 
+                    let _ = __check_on_request(&**middleware);
+
                     ::sword::__internal::mw_with_state(
                         state.clone(),
-                        move |ctx: ::sword::web::Request, next: ::sword::web::Next| {
+                        move |req: ::sword::web::Request, next: ::sword::web::Next| {
                             let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
-                                mw.__on__request__function__(ctx, next).await
+                                <#path as ::sword::web::OnRequest>::on_request(&*mw, req, next).await
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        MiddlewareArgs::SwordWithConfig { middleware, config } => {
+            quote! {
+                {
+                    fn __check_on_request_with_config<M, C>(mw: &M) -> &M
+                    where
+                        M: ::sword::web::OnRequestWithConfig<C>
+                    {
+                        mw
+                    }
+
+                    let middleware = state.borrow::<::std::sync::Arc<#middleware>>()
+                        .expect("Failed to retrieve middleware from State");
+
+                    let _ = __check_on_request_with_config::<#middleware, _>(&**middleware);
+
+                    ::sword::__internal::mw_with_state(
+                        state.clone(),
+                        move |req: ::sword::web::Request, next: ::sword::web::Next| {
+                            let mw = ::std::sync::Arc::clone(&middleware);
+                            async move {
+                                <#middleware as ::sword::web::OnRequestWithConfig<_>>::on_request_with_config(
+                                    &*mw,
+                                    #config,
+                                    req,
+                                    next
+                                ).await
                             }
                         }
                     )

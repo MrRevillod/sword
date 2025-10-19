@@ -1,3 +1,25 @@
+/// Core framework components for application setup and configuration.
+///
+/// This module contains the fundamental building blocks of a Sword application:
+///
+/// - [`Application`](core::Application) - The main application struct that manages routing and configuration
+/// - [`ApplicationConfig`](core::ApplicationConfig) - Configuration structure for application settings
+/// - [`Config`](core::Config) - Configuration management with file and environment variable support
+/// - [`State`](core::State) - Thread-safe state container for sharing data across requests
+///
+/// ## Example
+///
+/// ```rust,ignore
+/// use sword::prelude::*;
+///
+/// // Create and configure an application
+/// let app = Application::builder()
+///     .with_controller::<MyController>()
+///     .build();
+///
+/// // Access configuration
+/// let config = app.config::<ApplicationConfig>().unwrap();
+/// ```
 pub mod core;
 pub mod prelude;
 

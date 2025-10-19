@@ -39,8 +39,14 @@ impl DependencyContainer {
         }
     }
 
-    /// Register a injectable component.
-    /// The dependency must implement Component trait.
+    /// Registers an injectable component.
+    ///
+    /// The component must implement the `Component` trait. The container will store
+    /// a builder function and the component's dependency list for later construction
+    /// during the `build_all` phase.
+    ///
+    /// Dependencies are resolved automatically using topological sorting based on
+    /// the dependency graph.
     pub fn register_component<T: Component>(mut self) -> Self {
         let type_id = TypeId::of::<T>();
         let type_name = type_name::<T>();
@@ -54,13 +60,18 @@ impl DependencyContainer {
                 })
         });
 
-        self.dependency_graph.insert(type_id, T::dependencies());
+        self.dependency_graph.insert(type_id, T::deps());
         self.dependency_builders.insert(type_id, dependency_builder);
 
         self
     }
 
-    /// Register pre-built dependency. a.k.a Provider.
+    /// Registers a pre-built dependency provider.
+    ///
+    /// Providers are instances that have already been constructed and are ready
+    /// to be injected into other components. Typical use cases include database
+    /// connections, HTTP clients, or external service configurations that cannot
+    /// be auto-constructed from the State.
     pub fn register_provider<T>(mut self, provider: T) -> Self
     where
         T: Provider,
@@ -73,6 +84,15 @@ impl DependencyContainer {
         self
     }
 
+    /// Builds all registered components in dependency order.
+    ///
+    /// This internal method performs the following steps:
+    /// 1. Registers all provider instances in the State
+    /// 2. Performs topological sorting on the dependency graph
+    /// 3. Constructs components recursively in the correct order
+    /// 4. Detects circular dependencies and returns an error if found
+    ///
+    /// This method is called internally during application initialization.
     pub(crate) fn build_all(
         &self,
         state: &State,
@@ -105,6 +125,13 @@ impl DependencyContainer {
         Ok(())
     }
 
+    /// Recursively builds a component and its dependencies.
+    ///
+    /// This method implements depth-first traversal of the dependency graph:
+    /// - Skips already built components
+    /// - Detects circular dependencies using a visiting set
+    /// - Recursively builds all dependencies before the component itself
+    /// - Invokes the builder function and stores the result in State
     fn build_recursive(
         &self,
         type_id: &TypeId,

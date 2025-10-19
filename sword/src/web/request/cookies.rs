@@ -9,7 +9,7 @@ pub use tower_cookies::{
 };
 
 impl Request {
-    /// Access the cookies from the request context.
+    /// Access the cookies from the request.
     /// This method returns a reference to the `Cookies` instance, a struct that provides
     /// methods to get, set, and remove cookies.
     ///
@@ -26,7 +26,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/show-cookies")]
-    /// async fn show_cookies(&self, ctx: Context) -> HttpResult<HttpResponse> {
+    /// async fn show_cookies(&self, req: Request) -> HttpResult {
     ///     let cookies = ctx.cookies()?;
     ///     let session_cookie = cookies.get("session_id");
     ///
@@ -44,7 +44,7 @@ impl Request {
         })
     }
 
-    /// Access the cookies from the request context as a mutable reference.
+    /// Access the cookies from the request as a mutable reference.
     /// This method returns a mutable reference to the `Cookies` instance, allowing
     /// modification of cookies (setting or removing).
     ///
@@ -61,7 +61,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/set-cookie")]
-    /// async fn set_cookie(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
+    /// async fn set_cookie(&self, mut req: Request) -> HttpResult {
     ///     let cookie = Cookie::new("session_id", "abc123")
     ///         .path("/")
     ///         .http_only(true)

@@ -36,7 +36,7 @@ pub struct RouteInfo {
 pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
     let mut routes: Vec<RouteInfo> = vec![];
 
-    for item in input.items.iter() {
+    for item in &input.items {
         if !matches!(item, ImplItem::Fn(_)) {
             continue;
         }

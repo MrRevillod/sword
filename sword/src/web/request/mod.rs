@@ -19,12 +19,10 @@ pub use error::RequestError;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
 
-/// Context represents the incoming request context in the Sword framework.
+/// Represents the incoming request in the Sword framework.
 ///
-/// `Context` is the primary interface for accessing request data in Sword applications.
+/// `Request` is the primary extractor for accessing request data in Sword applications.
 /// It provides access to request parameters, body data, HTTP method, headers, URI,
-/// and the application's shared state. This struct is automatically extracted from
-/// incoming HTTP requests and passed to route handlers and middleware.
 #[derive(Debug, Clone)]
 pub struct Request {
     params: HashMap<String, String>,
@@ -125,11 +123,12 @@ impl Request {
     /// ```rust,ignore
     /// use sword::prelude::*;
     ///
-    /// // Route: GET /users/{id}/posts/{post_id}
+    /// ... asuming you have a controller struct ...
+    ///
     /// #[get("/users/{id}/posts/{post_id}")]
-    /// async fn get_user_post(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let user_id: u32 = ctx.param("id")?;
-    ///     let post_id: u64 = ctx.param("post_id")?;
+    /// async fn get_user_post(&self, req: Request) -> HttpResult {
+    ///     let user_id: u32 = req.param("id")?;
+    ///     let post_id: u64 = req.param("post_id")?;
     ///
     ///     let message = format!("User ID: {}, Post ID: {}", user_id, post_id);
     ///     
@@ -193,9 +192,11 @@ impl Request {
     ///     age: u32,
     /// }
     ///
+    /// ... asuming you have a controller struct ...
+    ///
     /// #[post("/users")]
-    /// async fn create_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let user_data: CreateUserRequest = ctx.body()?;
+    /// async fn create_user(&self, req: Request) -> HttpResult {
+    ///     let user_data: CreateUserRequest = req.body()?;
     ///     
     ///     // Process user creation...
     ///     
@@ -251,18 +252,18 @@ impl Request {
     ///     limit: Option<u32>,
     /// }
     ///
-    /// // Route: GET /search?q=rust&page=1&limit=10
+    /// ... asuming you have a controller struct ...
+    ///
     /// #[get("/search")]
-    /// async fn search(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let query: SearchQuery = ctx.query()?.unwrap_or_default();
+    /// async fn search(&self, req: Request) -> HttpResult<HttpResponse> {
+    ///     let query: SearchQuery = req.query()?.unwrap_or_default();
     ///     
     ///     let search_term = query.q.unwrap_or("".into());
     ///     let page = query.page.unwrap_or(1);
     ///     let limit = query.limit.unwrap_or(20);
     ///     
     ///     Ok(HttpResponse::Ok().data(format!(
-    ///         "Search results for '{}', page {}, limit {}",
-    ///         search_term, page, limit
+    ///         "Search results for '{search_term}', page {page}, limit {limit}"
     ///     )))
     /// }
     /// ```

@@ -7,6 +7,9 @@ fmt-check:
 lint:
     cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+nursery:
+    cargo clippy --workspace --all-targets --all-features -- -D warnings -D clippy::pedantic -D clippy::nursery
+
 test entity="":
     cargo test {{entity}} --workspace --all-features --quiet
 

@@ -97,9 +97,9 @@ impl Config {
     ///
     /// ```rust,ignore
     /// use sword::prelude::*;
-    /// use serde::Deserialize;
+    /// use serde::{Serialize, Deserialize};
     ///
-    /// #[derive(Deserialize)]
+    /// #[derive(Serialize, Deserialize)]
     /// #[config(key = "application")]
     /// struct DatabaseConfig {
     ///     url: String,
@@ -107,12 +107,18 @@ impl Config {
     ///
     /// // Then in a route handler:
     ///
-    /// #[get("/db-info")]
-    /// async fn db_info(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let db_config = ctx.config::<DatabaseConfig>()?;
-    ///     Ok(HttpResponse::Ok().data(db_config))
+    /// #[controller("/")]
+    /// struct MyController {
+    ///     db_config: DatabaseConfig,
     /// }
     ///
+    /// #[routes]
+    /// impl MyController {
+    ///     #[get("/db-info")]
+    ///     async fn db_info(&self) -> HttpResponse {
+    ///         HttpResponse::Ok().data(&self.db_config)
+    ///     }
+    /// }
     /// ```
     pub fn get<T: DeserializeOwned + ConfigItem>(&self) -> Result<T, ConfigError> {
         let Some(config_item) = self.inner.get(T::toml_key()) else {

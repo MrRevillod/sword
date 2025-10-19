@@ -13,7 +13,7 @@ pub fn generate_controller_routes(
 ) -> Result<TokenStream, syn::Error> {
     let mut handlers = vec![];
 
-    for route in routes.iter() {
+    for route in routes {
         let routing_function = match route.method.as_str() {
             "get" => quote! { axum_get_fn },
             "post" => quote! { axum_post_fn },

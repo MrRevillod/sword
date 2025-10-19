@@ -8,9 +8,8 @@ pub struct MyMiddleware {
     tasks_repository: Arc<TaskRepository>,
 }
 
-impl MyMiddleware {
-    #[on_request]
-    async fn handle(&self, req: Request, next: Next) -> MiddlewareResult {
+impl OnRequest for MyMiddleware {
+    async fn on_request(&self, req: Request, next: Next) -> MiddlewareResult {
         let tasks = self.tasks_repository.find_all().await;
 
         println!("Current tasks:");

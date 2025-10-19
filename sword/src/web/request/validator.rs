@@ -60,9 +60,11 @@ impl ValidatorRequestValidation for Request {
     ///     age: u32,
     /// }
     ///
+    /// ... asuming you have a controller struct ...
+    ///
     /// #[post("/users")]
-    /// async fn create_user(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let user_data: CreateUserRequest = ctx.validated_body()?;
+    /// async fn create_user(&self, req: Request) -> HttpResult {
+    ///     let user_data: CreateUserRequest = req.body_validator()?;
     ///     
     ///     // now data is guaranteed to be valid
     ///
@@ -127,10 +129,11 @@ impl ValidatorRequestValidation for Request {
     ///     limit: Option<u32>,
     /// }
     ///
-    /// // Route: GET /search?q=rust&page=1&limit=10
+    /// ... asuming you have a controller struct ...
+    ///
     /// #[get("/search")]
-    /// async fn search(&self, ctx: Context) -> HttpResult<HttpResponse> {
-    ///     let query: SearchQuery = ctx.validated_query()?.unwrap_or_default();
+    /// async fn search(&self, req: Request) -> HttpResult {
+    ///     let query: SearchQuery = req.query_validator()?.unwrap_or_default();
     ///     
     ///     Ok(HttpResponse::Ok().data(query))
     /// }

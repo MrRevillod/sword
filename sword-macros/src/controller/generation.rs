@@ -3,7 +3,7 @@ use quote::quote;
 
 use crate::controller::parsing::ControllerInput;
 use crate::middlewares::expand_middleware_args;
-use crate::shared::{generate_build_method, generate_try_from_state};
+use crate::shared::{gen_build, gen_deps};
 
 pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
     let base_path = &input.base_path;
@@ -16,10 +16,15 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
         .map(expand_middleware_args)
         .collect();
 
-    let try_from_impl = generate_try_from_state(self_name, self_fields);
-    let build_method = generate_build_method();
+    let error_type = quote! { ::sword::core::DependencyInjectionError };
+
+    let build_impl = gen_build(self_name, self_fields, &error_type);
+    let deps_impl = gen_deps(self_name, self_fields);
 
     quote! {
+        #build_impl
+        #deps_impl
+
         impl ::sword::web::ControllerBuilder for #self_name {
             fn base_path() -> &'static str {
                 #base_path
@@ -35,10 +40,6 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
                 )*
                 result
             }
-
-            #build_method
         }
-
-        #try_from_impl
     }
 }

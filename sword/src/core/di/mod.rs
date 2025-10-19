@@ -1,12 +1,9 @@
 mod container;
 mod error;
 
-use std::{
-    any::{Any, TypeId},
-    sync::Arc,
-};
+use std::{any::Any, sync::Arc};
 
-use crate::core::State;
+use crate::core::{Build, HasDeps, State};
 
 pub use container::DependencyContainer;
 pub use error::DependencyInjectionError;
@@ -20,22 +17,38 @@ type Dependency = Arc<dyn Any + Send + Sync>;
 type DependencyBuilder =
     Box<dyn Fn(&State) -> Result<Dependency, DependencyInjectionError>>;
 
-/// Trait to represent elements that can be injected and built automatically
-/// by the dependency container.
+/// Trait for injectable components that can be automatically constructed
+/// by the dependency container with automatic dependency resolution.
 ///
-/// This trait gives two functions that helps to build a dependency and
-/// its own dependencies in recursive way.
-pub trait Component: Send + Sync + 'static {
-    fn build(state: &State) -> Result<Self, DependencyInjectionError>
-    where
-        Self: Sized;
-
-    fn dependencies() -> Vec<TypeId>;
-}
-
-/// Marker trait for types that are manually instantiated and registered as providers.
+/// Components are services or dependencies that need to be built from other
+/// components in the State. The framework automatically resolves the dependency
+/// graph using topological sorting to ensure all dependencies are available
+/// before constructing a component.
 ///
-/// Instances are dependencies that cannot be auto-constructed from the State
+/// Use the `#[injectable]` macro to automatically implement this trait.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use sword::prelude::*;
+///
+/// #[injectable]
+/// struct UserService {
+///     db: Arc<Database>,
+///     cache: Arc<CacheService>,
+/// }
+///
+/// impl UserService {
+///     fn get_user(&self, id: u64) -> User {
+///         // Service logic
+///     }
+/// }
+/// ```
+pub trait Component: HasDeps<Error = DependencyInjectionError> {}
+
+/// Marker trait for pre-instantiated dependencies (providers).
+///
+/// Providers are dependencies that cannot be auto-constructed from the State
 /// (e.g., database connections, external API clients) but need to be available
-/// for injection into other services.
-pub trait Provider: Send + Sync + 'static {}
+/// for injection into other components.
+pub trait Provider: Build<Error = DependencyInjectionError> {}

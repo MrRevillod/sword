@@ -12,9 +12,9 @@ use axum::{
 use http_body_util::LengthLimitError;
 use std::collections::HashMap;
 
-/// Implementation of `FromRequest` for `Context`.
+/// Implementation of `FromRequest` for `Request`.
 ///
-/// Allows `Context` to be automatically extracted from HTTP requests
+/// Allows `Request` to be automatically extracted from HTTP requests
 /// in Axum handlers, providing easy access to parameters, headers, body, and state.
 impl<S> FromRequest<S> for Request
 where
@@ -85,9 +85,9 @@ where
     }
 }
 
-/// Implementation of conversion from `Context` to `AxumRequest`.
+/// Implementation of conversion from `Request` to `axum::extract::Request`.
 ///
-/// Allows converting a `Context` back to an Axum request,
+/// Allows converting a `sword::web::Request` back to an Axum request,
 /// preserving headers, method, URI, body, and extensions.
 impl TryFrom<Request> for AxumReq {
     type Error = RequestError;

@@ -42,8 +42,8 @@ mod injectable;
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("List of items"))
+///     async fn get_items(&self) -> HttpResponse {
+///         HttpResponse::Ok().message("List of items")
 ///     }
 /// }
 /// ```
@@ -67,7 +67,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[post("/items")]
-///     async fn create_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn create_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item created"))
 ///     }
 /// }
@@ -92,7 +92,7 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[put("/item/{id}")]
-///     async fn update_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn update_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item updated"))
 ///     }
 /// }
@@ -117,7 +117,7 @@ pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[delete("/item/{id}")]
-///     async fn delete_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn delete_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item deleted"))
 ///     }
 /// }
@@ -142,7 +142,7 @@ pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[patch("/item/{id}")]
-///     async fn patch_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn patch_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item patched"))
 ///     }
 /// }
@@ -157,7 +157,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// This macro should be used in combination with the `#[routes]` macro.
 ///
 /// ### Parameters
-/// - `base_path`: The base path for the controller, e.g., `"/api
+/// - `base_path`: The base path for the controller, e.g., "/api
 ///
 /// ### Usage
 /// ```rust,ignore
@@ -167,7 +167,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn my_handler(&self) -> HttpResponse {
 ///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
 ///     }
 /// }
@@ -188,8 +188,8 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(ctx: Context) -> HttpResult<HttpResponse> {
-///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
+///     async fn my_handler(&self) -> HttpResponse {
+///        HttpResponse::Ok().message("Hello from MyController")
 ///     }
 /// }
 /// ```
@@ -206,26 +206,13 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// on_request middleware attribute macro
-#[proc_macro_attribute]
-pub fn on_request(attr: TokenStream, item: TokenStream) -> TokenStream {
-    middlewares::expand_on_request(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-#[proc_macro_attribute]
-pub fn on_response(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
 /// Declares a executable middleware to apply to a route controller.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
 ///
 /// ### Parameters
 /// - `MiddlewareName`: The name of the middleware struct that implements the `Middleware` or `MiddlewareWithConfig` trait.
 ///   Also can receive an instance of a `tower-http` service layer like `CorsLayer`, `CompressionLayer`, `TraceLayer`, etc.
-///   If the layer can be added without errors on Application::with_layer() there will not be any problem using it.  
+///   If the layer can be added without errors on `Application::with_layer` there will not be any problem using it.  
 ///
 /// - `config`: (Optional) Configuration parameters for the middleware,
 ///
@@ -238,7 +225,7 @@ pub fn on_response(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// pub struct RoleMiddleware;
 ///
 /// impl MiddlewareWithConfig<Vec<&str>> for RoleMiddleware {
-///     async fn handle(roles: Vec<&str>, ctx: Context, next: Next) -> MiddlewareResult {
+///     async fn handle(roles: Vec<&str>, req: Request, next: Next) -> MiddlewareResult {
 ///         next!(ctx, next)
 ///     }
 /// }
@@ -250,8 +237,8 @@ pub fn on_response(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// impl MyController {
 ///     #[get("/items")]
 ///     #[uses(RoleMiddleware)]
-///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("List of items"))
+///     async fn get_items(&self) -> HttpResponse {
+///         HttpResponse::Ok().message("List of items")
 ///     }
 /// }
 /// ```
@@ -283,16 +270,17 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// #[controller("/some_path")]
-/// struct SomeController {}
+/// struct SomeController {
+///     my_config: MyConfig,
+/// }
 ///
 /// #[routes]
 /// impl SomeController {
 ///     #[get("/config")]
-///     async fn get_config(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         let config = ctx.config::<MyConfig>()?;
-///         let message = format!("Config key: {}", config.my_key);
+///     async fn get_config(&self) -> HttpResponse {
+///         let message = format!("Config key: {}", &self.config.my_key);
 ///
-///         Ok(HttpResponse::Ok().message(message))
+///         HttpResponse::Ok().message(message)
 ///     }
 /// }
 #[proc_macro_attribute]
@@ -619,7 +607,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     let fn_body = input.block.clone();
     let fn_attrs = input.attrs.clone();
     let fn_vis = input.vis.clone();
-    let _fn_sig = input.sig.clone();
+    let _fn_sig = input.sig;
 
     #[allow(unused)]
     let mut output = quote! {};

@@ -35,7 +35,7 @@
 //! - ** JSON-first design** - Built-in JSON serialization/deserialization support
 //! - ** Request validation** - Automatic validation using `serde` and `validator` crates
 //! - ** RFC-compliant HTTP responses** - Standards-compliant HTTP handling
-//! - ** Express-like Request** - Rich request context with utility methods
+//! - ** Express-like Request** - Rich request struct with utility methods
 //! - ** Dependency Injection** - Built-in DI system for managing application state
 //! - ** Middleware system** - Flexible middleware at route and controller levels
 //! - ** Async by default** - Built on `tokio` and `axum` for high performance
@@ -46,7 +46,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! sword = { version = "0.1.8", features = ["cookies", "multipart", "helmet"] }
+//! sword = { version = "0.1.9", features = ["cookies", "multipart", "helmet"] }
 //! ```
 //!
 //! Available features:
@@ -63,8 +63,6 @@
 ///
 /// ```rust,ignore
 /// use sword::prelude::*;
-///
-/// // Now you have access to Application, Context, HttpResult, and more
 /// ```
 pub use crate::core::*;
 pub use crate::web::*;

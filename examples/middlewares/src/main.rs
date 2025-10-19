@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use serde_json::json;
+use std::sync::Arc;
 use sword::prelude::*;
 
 #[middleware]
@@ -8,12 +7,26 @@ pub struct ExtensionsTestMiddleware {
     database: Arc<Database>,
 }
 
-impl ExtensionsTestMiddleware {
-    #[on_request]
-    async fn add_extension(&self, mut req: Request, next: Next) -> MiddlewareResult {
+impl OnRequest for ExtensionsTestMiddleware {
+    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
+        next!(req, next)
+    }
+}
+
+#[middleware]
+pub struct MwWithConfig {}
+
+impl OnRequestWithConfig<u8> for MwWithConfig {
+    async fn on_request_with_config(
+        &self,
+        config: u8,
+        mut req: Request,
+        next: Next,
+    ) -> MiddlewareResult {
+        req.extensions.insert::<u8>(config);
         next!(req, next)
     }
 }
@@ -32,6 +45,32 @@ impl TestController {
             .message("Test controller response with extensions")
             .data(json!({
                 "extension_value": extension_value.cloned().unwrap_or_default()
+            }))
+    }
+
+    #[get("/middleware-config")]
+    #[uses(MwWithConfig, config = 1)]
+    async fn middleware_config(&self, req: Request) -> HttpResponse {
+        let config_value = req.extensions.get::<String>();
+        HttpResponse::Ok()
+            .message("Test controller response with middleware config")
+            .data(json!({
+                "config_value": config_value.cloned().unwrap_or_default()
+            }))
+    }
+
+    #[get("/both")]
+    #[uses(ExtensionsTestMiddleware)]
+    #[uses(MwWithConfig, config = 1)]
+    async fn both_middlewares(&self, req: Request) -> HttpResponse {
+        let extension_value = req.extensions.get::<String>();
+        let config_value = req.extensions.get::<u8>();
+
+        HttpResponse::Ok()
+            .message("Test controller response with both middlewares")
+            .data(json!({
+                "extension_value": extension_value.cloned().unwrap_or_default(),
+                "config_value": config_value.cloned().unwrap_or_default()
             }))
     }
 }

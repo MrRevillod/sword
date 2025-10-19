@@ -5,47 +5,38 @@ use crate::{injectable::*, shared::*};
 
 pub fn generate_component_trait(input: &InjectableInput) -> TokenStream {
     let struct_name = &input.struct_name;
+    let error_type = quote! { ::sword::core::DependencyInjectionError };
 
-    let try_from_impl = generate_try_from_state(struct_name, &input.fields);
-
-    let type_ids = input.fields.iter().map(|(_, ty)| {
-        if let Some(inner_type) = extract_arc_inner_type(ty) {
-            quote! { std::any::TypeId::of::<#inner_type>() }
-        } else {
-            quote! { std::any::TypeId::of::<#ty>() }
-        }
-    });
+    let build_impl = gen_build(struct_name, &input.fields, &error_type);
+    let deps_impl = gen_deps(struct_name, &input.fields);
 
     quote! {
-        impl ::sword::core::Component for #struct_name {
-            fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError> {
-                Self::try_from(state)
-            }
-
-            fn dependencies() -> Vec<std::any::TypeId> {
-                vec![#(#type_ids),*]
-            }
-        }
-
-        #try_from_impl
+        #build_impl
+        #deps_impl
+        impl ::sword::core::Component for #struct_name {}
     }
 }
 
 pub fn generate_provider_trait(parsed: &InjectableInput) -> TokenStream {
     let struct_name = &parsed.struct_name;
+    let error_type = quote! { ::sword::core::DependencyInjectionError };
 
-    quote! {
-        impl ::sword::core::Provider for #struct_name {}
+    let build_impl = quote! {
+        impl ::sword::core::Build for #struct_name {
+            type Error = #error_type;
 
-        impl TryFrom<&::sword::core::State> for #struct_name {
-            type Error = ::sword::core::DependencyInjectionError;
-
-            fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
+            fn build(state: &::sword::core::State) -> Result<Self, Self::Error> {
                 state.get::<Self>()
                     .map_err(|_| ::sword::core::DependencyInjectionError::DependencyNotFound {
                         type_name: stringify!(#struct_name).to_string(),
                     })
             }
         }
+    };
+
+    quote! {
+        #build_impl
+
+        impl ::sword::core::Provider for #struct_name {}
     }
 }
