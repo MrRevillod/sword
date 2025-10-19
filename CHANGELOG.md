@@ -42,6 +42,8 @@
 
 - Change the purpose of `#[middleware]`. Now, it's used to declare a middleware struct instead of applying middlewares to controllers. To apply middlewares to controllers, use the new `#[uses]` attribute.
 
+- Change `HttpResult` from `Result<T, HttpResponse>` to `Result<HttpResponse, HttpResponse>`. This change was made because the main usage of `HttpResult` is to return HTTP responses, not arbitrary types.
+
 ## [0.1.8]
 
 ### Added

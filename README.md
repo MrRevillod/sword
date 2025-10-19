@@ -12,10 +12,9 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 
 - **Macro-based routing** - Clean and intuitive route definitions
 - **JSON-first design** - Built with JSON formats as priority
-- **Built-in validation** - Support `validator` and `garde` crates
-- **RFC-compliant HTTP responses** - Using `axum_responses` crate
+- **Built-in validation** - Support `validator` crate and extensible validation system
+- **HTTP responses standarization** - Using `axum_responses` crate
 - **Dependency Injection** - Built-in DI support
-- **Middleware support** - Easily add middleware to routes or controllers
 - **Asynchronous by default** - Built on top of `axum` and `tokio`
 - **Interactive CLI** - Built to improve the developer experience
 
@@ -25,17 +24,7 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 
 ```toml
 [dependencies]
-sword = "0.1.8"
-```
-
-### Other useful dependencies
-
-```toml
-# Data serialization and deserialization
-serde = { version = "*", features = ["derive"] }
-
-# JSON data handling
-serde_json = "*"
+sword = "0.2.0"
 ```
 
 ### Basic web server
@@ -45,18 +34,18 @@ use sword::prelude::*;
 use serde_json::Value;
 
 #[controller("/")]
-struct AppController {}
+struct AppController;
 
 #[routes]
 impl AppController {
     #[get("/hello")]
-    async fn hello() -> HttpResponse {
+    async fn hello(&self) -> HttpResponse {
         HttpResponse::Ok().message("Hello, World!")
     }
 
     #[post("/submit")]
-    async fn submit_data(ctx: Context) -> HttpResult<HttpResponse> {
-        let body = ctx.body::<Value>()?;
+    async fn submit_data(&self, req: Request) -> HttpResult {
+        let body = req.body::<Value>()?;
 
         Ok(HttpResponse::Ok()
             .data(body)
@@ -66,11 +55,11 @@ impl AppController {
 
 #[sword::main]
 async fn main() {
-    let app = Application::builder()?
+    let app = Application::builder()
         .with_controller::<AppController>()
         .build();
 
-    app.run().await?;
+    app.run().await;
 }
 ```
 
