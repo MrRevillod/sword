@@ -1,6 +1,6 @@
 [package]
 name = "sword-macros"
-version = "0.1.9"
+version = "0.2.0"
 edition = "2024"
 authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
 description = "Macros for the Sword web framework"
