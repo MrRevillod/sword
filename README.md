@@ -14,7 +14,7 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` and `garde` crates
 - **RFC-compliant HTTP responses** - Using `axum_responses` crate
-- **Dependency Injection** - Built-in DI support using `shaku` crate
+- **Dependency Injection** - Built-in DI support
 - **Middleware support** - Easily add middleware to routes or controllers
 - **Asynchronous by default** - Built on top of `axum` and `tokio`
 - **Interactive CLI** - Built to improve the developer experience

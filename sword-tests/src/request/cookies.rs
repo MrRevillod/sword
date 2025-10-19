@@ -1,11 +1,12 @@
 use axum_test::TestServer;
 use sword::prelude::*;
 
+#[middleware]
 struct SetCookieMw {}
 
-impl Middleware for SetCookieMw {
-    async fn handle(mut ctx: Context, next: Next) -> MiddlewareResult {
-        let cookies = ctx.cookies_mut()?;
+impl OnRequest for SetCookieMw {
+    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+        let cookies = req.cookies_mut()?;
 
         let cookie = CookieBuilder::new("session_id", "abc123")
             .path("/")
@@ -15,7 +16,7 @@ impl Middleware for SetCookieMw {
 
         cookies.add(cookie);
 
-        next!(ctx, next)
+        next!(req, next)
     }
 }
 
@@ -25,8 +26,8 @@ struct CookieController {}
 #[routes]
 impl CookieController {
     #[get("/set")]
-    async fn set_cookie(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
-        let cookies = ctx.cookies_mut()?;
+    async fn set_cookie(&self, mut req: Request) -> HttpResult {
+        let cookies = req.cookies_mut()?;
 
         let cookie = CookieBuilder::new("username", "sword_user")
             .path("/")
@@ -40,9 +41,9 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[middleware(SetCookieMw)]
-    async fn with_middleware(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
-        let cookies = ctx.cookies_mut()?;
+    #[uses(SetCookieMw)]
+    async fn with_middleware(&self, mut req: Request) -> HttpResult {
+        let cookies = req.cookies_mut()?;
 
         let session_cookie = cookies.get("session_id").ok_or(
             HttpResponse::Unauthorized().message("Session cookie not found"),

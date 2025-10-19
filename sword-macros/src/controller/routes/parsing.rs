@@ -7,10 +7,17 @@ use syn::{
     spanned::Spanned,
 };
 
-use crate::middleware::parse::MiddlewareArgs;
+use crate::middlewares::MiddlewareArgs;
 
-const VALID_ROUTE_MACROS: &[&str; 6] =
-    &["get", "post", "put", "patch", "delete", "middleware"];
+const VALID_ROUTE_MACROS: &[&str; 7] = &[
+    "get",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "middleware",
+    "uses",
+];
 
 pub const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "delete", "patch"];
 
@@ -29,7 +36,7 @@ pub struct RouteInfo {
 pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
     let mut routes: Vec<RouteInfo> = vec![];
 
-    for item in input.items.iter() {
+    for item in &input.items {
         if !matches!(item, ImplItem::Fn(_)) {
             continue;
         }
@@ -52,7 +59,7 @@ pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
                 continue;
             }
 
-            if ident == "middleware" {
+            if ident == "uses" {
                 let args = attr.parse_args::<MiddlewareArgs>()?;
                 middlewares.push(args);
             } else if HTTP_METHODS.contains(&ident.to_string().as_str()) {

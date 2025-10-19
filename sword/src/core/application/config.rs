@@ -4,7 +4,7 @@ use byte_unit::Byte;
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use crate::core::ConfigItem;
+use crate::core::{Config, ConfigError, ConfigItem, State};
 
 /// Configuration structure for the Sword application.
 ///
@@ -192,6 +192,15 @@ impl ConfigItem for ApplicationConfig {
     /// configuration should be under the `[application]` section in the TOML file.
     fn toml_key() -> &'static str {
         "application"
+    }
+
+    fn register_in_state(config: &Config, state: &State) -> Result<(), ConfigError> {
+        state.insert(config.get::<Self>()?).map_err(|_| {
+            ConfigError::ParseError(format!(
+                "Failed to register config '{}' in state",
+                Self::toml_key()
+            ))
+        })
     }
 }
 

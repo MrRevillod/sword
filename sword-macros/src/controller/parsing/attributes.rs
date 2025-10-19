@@ -38,6 +38,6 @@ impl Parse for ControllerArgs {
             }
         }
 
-        Ok(ControllerArgs { base_path, version })
+        Ok(Self { base_path, version })
     }
 }

@@ -11,7 +11,7 @@ struct AppController {}
 #[routes]
 impl AppController {
     #[get("/")]
-    #[middleware(TimeoutLayer::new(Duration::from_secs(2)))]
+    #[uses(TimeoutLayer::new(Duration::from_secs(2)))]
     async fn get_data(&self) -> HttpResponse {
         sleep(Duration::from_secs(3)).await;
         HttpResponse::Ok()
@@ -25,18 +25,18 @@ impl AppController {
 
 #[sword::main]
 async fn main() {
-    let mut app = Application::builder();
+    let app = Application::builder();
 
     let cors_config = app
-        .config
-        .get::<CorsConfig>()
+        .config::<CorsConfig>()
         .expect("Failed to load CORS config");
 
     let cors_middleware = CorsMiddleware::new(&cors_config);
 
-    app = app
+    let app = app
         .with_controller::<AppController>()
-        .with_layer(cors_middleware.layer);
+        .with_layer(cors_middleware.layer)
+        .build();
 
-    app.build().run().await;
+    app.run().await;
 }

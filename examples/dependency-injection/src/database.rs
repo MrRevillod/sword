@@ -7,13 +7,13 @@ use tokio::sync::RwLock;
 
 pub type Store = Arc<RwLock<HashMap<String, Vec<Value>>>>;
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[config(key = "db-config")]
 pub struct DatabaseConfig {
     collection_name: String,
 }
 
-#[provider]
+#[injectable(kind = "provider")]
 pub struct Database {
     db: Store,
 }

@@ -4,7 +4,7 @@ use axum_test::TestServer;
 use serde::{Deserialize, Serialize};
 use sword::prelude::*;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[config(key = "my-custom-section")]
 struct MyConfig {
     custom_key: String,

@@ -1,7 +1,7 @@
 use garde::{Report, Validate};
 use serde::de::DeserializeOwned;
 use serde_json::{json, Map, Value};
-use sword::web::{Context, HttpResponse};
+use sword::prelude::*;
 
 pub trait GardeRequestValidation {
     fn body_garde<T: DeserializeOwned + Validate>(&self) -> Result<T, HttpResponse>
@@ -9,7 +9,7 @@ pub trait GardeRequestValidation {
         <T as Validate>::Context: Default;
 }
 
-impl GardeRequestValidation for Context {
+impl GardeRequestValidation for Request {
     fn body_garde<T: DeserializeOwned + Validate>(&self) -> Result<T, HttpResponse>
     where
         <T as Validate>::Context: Default,

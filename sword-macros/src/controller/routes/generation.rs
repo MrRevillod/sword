@@ -4,7 +4,7 @@ use syn::Type;
 
 use crate::{
     controller::routes::{HTTP_METHODS, parsing::RouteInfo},
-    middleware::expand_middleware_args,
+    middlewares::expand_middleware_args,
 };
 
 pub fn generate_controller_routes(
@@ -13,7 +13,7 @@ pub fn generate_controller_routes(
 ) -> Result<TokenStream, syn::Error> {
     let mut handlers = vec![];
 
-    for route in routes.iter() {
+    for route in routes {
         let routing_function = match route.method.as_str() {
             "get" => quote! { axum_get_fn },
             "post" => quote! { axum_post_fn },
@@ -39,10 +39,10 @@ pub fn generate_controller_routes(
                 ::sword::__internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
-                    move |ctx: ::sword::web::Context| {
+                    move |req: ::sword::web::Request| {
                         async move {
                             use ::sword::__internal::IntoResponse;
-                            ctrl.#handler_name(ctx).await.into_response()
+                            ctrl.#handler_name(req).await.into_response()
                         }
                     }
                 })
@@ -52,7 +52,7 @@ pub fn generate_controller_routes(
                 ::sword::__internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
-                    move |_: ::sword::web::Context| {
+                    move |_: ::sword::web::Request| {
                         async move {
                             use ::sword::__internal::IntoResponse;
                             ctrl.#handler_name().await.into_response()
@@ -82,7 +82,7 @@ pub fn generate_controller_routes(
         {
             fn router(state: ::sword::core::State) -> ::sword::__internal::AxumRouter {
                 let controller = std::sync::Arc::new(
-                    Self::build(state.clone()).unwrap_or_else(|err| {
+                    Self::build(&state).unwrap_or_else(|err| {
                         panic!("\n❌ Failed to build controller\n\n{}\n", err)
                     })
                 );
@@ -93,7 +93,7 @@ pub fn generate_controller_routes(
 
 
                 let base_path = #struct_self::base_path();
-                let router = #struct_self::apply_controller_middlewares(base_router, state);
+                let router = #struct_self::apply_middlewares(base_router, state);
 
                 match base_path {
                     "/" => router,

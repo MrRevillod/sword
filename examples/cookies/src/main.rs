@@ -1,8 +1,8 @@
-use middleware::*;
+mod middleware;
+
+use middleware::SetCookieMw;
 use serde::Deserialize;
 use sword::prelude::*;
-
-mod middleware;
 
 #[derive(Clone, Deserialize)]
 #[config(key = "cookies")]
@@ -18,8 +18,8 @@ struct CookieController {
 #[routes]
 impl CookieController {
     #[get("/set")]
-    async fn set_cookie(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
-        let cookies = ctx.cookies_mut()?;
+    async fn set_cookie(&self, mut req: Request) -> HttpResult {
+        let cookies = req.cookies_mut()?;
 
         let cookie = CookieBuilder::new("username", "sword_user")
             .path("/")
@@ -33,9 +33,9 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[middleware(SetCookieMw)]
-    async fn with_middleware(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
-        let cookies = ctx.cookies_mut()?;
+    #[uses(SetCookieMw)]
+    async fn with_middleware(&self, mut req: Request) -> HttpResult {
+        let cookies = req.cookies_mut()?;
 
         let session_cookie = cookies.get("session_id").ok_or_else(|| {
             HttpResponse::Unauthorized().message("Session cookie not found")
@@ -46,9 +46,9 @@ impl CookieController {
     }
 
     #[get("/private-counter")]
-    async fn private_counter(&self, mut ctx: Context) -> HttpResult<HttpResponse> {
+    async fn private_counter(&self, mut req: Request) -> HttpResult {
         let key = Key::from(self.cookies_config.key.as_bytes());
-        let private = ctx.cookies_mut()?.private(&key);
+        let private = req.cookies_mut()?.private(&key);
 
         let count = private
             .get("visited_private")

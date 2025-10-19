@@ -38,21 +38,35 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
             }
         }
 
+        // Implement TryFrom for use with #[injectable] macro
+        // Config structs are extracted from the Config object in State,
+        // not directly from State, so they use TryFrom instead of FromState.
         impl TryFrom<&::sword::core::State> for #struct_name {
-            type Error = ::sword::errors::DependencyInjectionError;
+            type Error = ::sword::core::DependencyInjectionError;
 
             fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
                 let config = state.get::<::sword::core::Config>()
-                    .map_err(|_| ::sword::errors::DependencyInjectionError::DependencyNotFound {
+                    .map_err(|_| ::sword::core::DependencyInjectionError::DependencyNotFound {
                         type_name: "Config".to_string(),
                     })?;
 
                 config.get::<Self>()
-                    .map_err(|e| ::sword::errors::DependencyInjectionError::ConfigInjectionError {
+                    .map_err(|e| ::sword::core::DependencyInjectionError::ConfigInjectionError {
                         source: e,
                     })
             }
         }
+
+        // Auto-register this config type using inventory
+        // This allows automatic registration of all configs during app initialization
+        // We use the full path to inventory through sword's re-export
+        const _: () = {
+            ::sword::__internal::inventory::submit! {
+                ::sword::__internal::ConfigRegistrar::new(|config, state| {
+                    <#struct_name as ::sword::core::ConfigItem>::register_in_state(config, state)
+                })
+            }
+        };
     };
 
     TokenStream::from(expanded)

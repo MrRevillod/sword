@@ -1,9 +1,4 @@
-use crate::web::{HttpResponse, Next};
-
-use crate::{
-    next,
-    web::{Context, MiddlewareResult},
-};
+use crate::web::*;
 
 const APPLICATION_JSON: &str = "application/json";
 const MULTIPART_FORM_DATA: &str = "multipart/form-data";
@@ -11,11 +6,11 @@ const MULTIPART_FORM_DATA: &str = "multipart/form-data";
 pub(crate) struct ContentTypeCheck;
 
 impl ContentTypeCheck {
-    pub async fn layer(ctx: Context, next: Next) -> MiddlewareResult {
-        let content_type = ctx.header("Content-Type").unwrap_or_default();
+    pub async fn layer(req: Request, next: Next) -> MiddlewareResult {
+        let content_type = req.header("Content-Type").unwrap_or_default();
 
-        if !ctx.has_body() {
-            return next!(ctx, next);
+        if !req.has_body() {
+            return next!(req, next);
         }
 
         if content_type != APPLICATION_JSON
@@ -26,6 +21,6 @@ impl ContentTypeCheck {
             ));
         }
 
-        next!(ctx, next)
+        next!(req, next)
     }
 }

@@ -3,13 +3,7 @@ use quote::quote;
 use syn::parse_macro_input;
 
 mod config;
-mod shared {
-    mod generation;
-    mod parsing;
-
-    pub use generation::*;
-    pub use parsing::*;
-}
+mod shared;
 
 mod controller {
     pub mod expand;
@@ -30,14 +24,9 @@ mod controller {
     pub use routes::expand_controller_routes;
 }
 
-mod middleware {
-    pub mod expand;
-    pub mod parse;
+mod middlewares;
 
-    pub use expand::expand_middleware_args;
-}
-
-mod di;
+mod injectable;
 
 /// Defines a handler for HTTP GET requests.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
@@ -53,8 +42,8 @@ mod di;
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("List of items"))
+///     async fn get_items(&self) -> HttpResponse {
+///         HttpResponse::Ok().message("List of items")
 ///     }
 /// }
 /// ```
@@ -78,7 +67,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[post("/items")]
-///     async fn create_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn create_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item created"))
 ///     }
 /// }
@@ -103,7 +92,7 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[put("/item/{id}")]
-///     async fn update_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn update_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item updated"))
 ///     }
 /// }
@@ -128,7 +117,7 @@ pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[delete("/item/{id}")]
-///     async fn delete_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn delete_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item deleted"))
 ///     }
 /// }
@@ -153,7 +142,7 @@ pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[patch("/item/{id}")]
-///     async fn patch_item(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn patch_item(&self, req: Request) -> HttpResult<HttpResponse> {
 ///         Ok(HttpResponse::Ok().message("Item patched"))
 ///     }
 /// }
@@ -168,7 +157,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// This macro should be used in combination with the `#[routes]` macro.
 ///
 /// ### Parameters
-/// - `base_path`: The base path for the controller, e.g., `"/api
+/// - `base_path`: The base path for the controller, e.g., "/api
 ///
 /// ### Usage
 /// ```rust,ignore
@@ -178,7 +167,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self, ctx: Context) -> HttpResult<HttpResponse> {
+///     async fn my_handler(&self) -> HttpResponse {
 ///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
 ///     }
 /// }
@@ -199,8 +188,8 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(ctx: Context) -> HttpResult<HttpResponse> {
-///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
+///     async fn my_handler(&self) -> HttpResponse {
+///        HttpResponse::Ok().message("Hello from MyController")
 ///     }
 /// }
 /// ```
@@ -210,13 +199,20 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+///  Declares a middleware struct.
+#[proc_macro_attribute]
+pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
+    middlewares::expand_middleware(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
 /// Declares a executable middleware to apply to a route controller.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
 ///
 /// ### Parameters
 /// - `MiddlewareName`: The name of the middleware struct that implements the `Middleware` or `MiddlewareWithConfig` trait.
 ///   Also can receive an instance of a `tower-http` service layer like `CorsLayer`, `CompressionLayer`, `TraceLayer`, etc.
-///   If the layer can be added without errors on Application::with_layer() there will not be any problem using it.  
+///   If the layer can be added without errors on `Application::with_layer` there will not be any problem using it.  
 ///
 /// - `config`: (Optional) Configuration parameters for the middleware,
 ///
@@ -229,7 +225,7 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// pub struct RoleMiddleware;
 ///
 /// impl MiddlewareWithConfig<Vec<&str>> for RoleMiddleware {
-///     async fn handle(roles: Vec<&str>, ctx: Context, next: Next) -> MiddlewareResult {
+///     async fn handle(roles: Vec<&str>, req: Request, next: Next) -> MiddlewareResult {
 ///         next!(ctx, next)
 ///     }
 /// }
@@ -240,17 +236,18 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     #[middleware(RoleMiddleware, config = vec!["admin", "user"])]
-///     async fn get_items(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("List of items"))
+///     #[uses(RoleMiddleware)]
+///     async fn get_items(&self) -> HttpResponse {
+///         HttpResponse::Ok().message("List of items")
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }
+
 /// Defines a configuration struct for the application.
 /// This macro generates the necessary code to deserialize the struct from
 /// the configuration toml file.
@@ -273,16 +270,17 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// #[controller("/some_path")]
-/// struct SomeController {}
+/// struct SomeController {
+///     my_config: MyConfig,
+/// }
 ///
 /// #[routes]
 /// impl SomeController {
 ///     #[get("/config")]
-///     async fn get_config(&self, ctx: Context) -> HttpResult<HttpResponse> {
-///         let config = ctx.config::<MyConfig>()?;
-///         let message = format!("Config key: {}", config.my_key);
+///     async fn get_config(&self) -> HttpResponse {
+///         let message = format!("Config key: {}", &self.config.my_key);
 ///
-///         Ok(HttpResponse::Ok().message(message))
+///         HttpResponse::Ok().message(message)
 ///     }
 /// }
 #[proc_macro_attribute]
@@ -290,70 +288,82 @@ pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
     config::expand_config_struct(attr, item)
 }
 
-#[proc_macro_attribute]
-pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
-    di::injectable::expand_injectable(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-/// Marks a type as a provider for dependency injection.
+/// Marks a struct as injectable.
 ///
-/// This macro implements the `Provider` marker trait for types that are manually constructed
-/// (e.g., database connections, external API clients) and need to be registered in the
-/// DI container to be injected into other services.
+/// This macro generates the necessary code to register the struct
+/// in the dependency injection container. It can be used with or without
+/// parameters.
 ///
-/// Unlike `#[injectable]`, which auto-constructs dependencies from the State,
-/// `#[provider]` marks a type that must be instantiated manually and then registered
-/// using `DependencyContainer::register_provider()`.
+/// ### Parameters
 ///
-/// By default, this macro also derives a `Clone` implementation. If you want to prevent
-/// this, you can pass `no_derive_clone` as an attribute parameter.
+/// - `kind`: (Optional) Specifies the kind of injectable.
+///   It can be either `provider` or `component`.
 ///
-/// ### Example
+///  `provider`: The struct that has to be instantiated manually and
+///   registered in the container. The struct will be treated as a singleton by default.
+///
+///  `component`: The struct will be instantiated automatically by the container
+///   based on its dependencies. It's also treated as a singleton by default.
+///
+///   By default, if no kind is provided, it will be treated as `component`.
+///
+/// - `no_derive_clone`: (Optional) If provided, the struct will not derive the `Clone` automatically.
+///   By default, the struct will derive `Clone` if all its fields implement `Clone`.
+///
+/// ### Usage of `#[injectable]` without parameters
 ///
 /// ```rust,ignore
-/// use sword::prelude::*;
+/// #[injectable]
+/// pub struct TaskRepository {
+///     db: Database,
+/// }
 ///
-/// #[provider]
+/// impl TaskRepository {
+///     pub async fn create(&self, task: Value) {
+///         self.db.insert("tasks", task).await;
+///     }
+///
+///     pub async fn find_all(&self) -> Option<Vec<Value>> {
+///         self.db.get_all("tasks").await
+///     }
+/// }
+/// ```
+///
+/// ### Usage of `#[injectable(instance)]` with parameters
+///
+/// ```rust,ignore
+/// #[injectable(kind = "provider")]
 /// pub struct Database {
-///     connection_pool: Pool,
+///     db: Store,
 /// }
 ///
 /// impl Database {
-///     pub async fn new(url: &str) -> Self {
-///         let pool = Pool::connect(url).await.unwrap();
-///         Self { connection_pool: pool }
+///     pub async fn new(db_conf: DatabaseConfig) -> Self {
+///         let db = Arc::new(RwLock::new(HashMap::new()));
+///
+///         db.write().await.insert(db_conf.collection_name, Vec::new());
+///
+///         Self { db }
 ///     }
-/// }
 ///
-/// // Injectable service that uses the provider
-/// #[injectable]
-/// pub struct TaskRepository {
-///     db: Database,  // Database is injected from the container
-/// }
+///     pub async fn insert(&self, table: &'static str, record: Value) {
+///         let mut db = self.db.write().await;
 ///
-/// #[sword::main]
-/// async fn main() {
-///     let db = Database::new("postgres://localhost").await;
-///     
-///     let container = DependencyContainer::builder()
-///         .register_provider(db)        // Register the manually created provider
-///         .register::<TaskRepository>() // TaskRepository can now inject Database
-///         .build();
-/// }
-/// ```
+///         if let Some(table_data) = db.get_mut(table) {
+///             table_data.push(record);
+///         }
+///     }
 ///
-/// ### Disabling Clone derivation
+///     pub async fn get_all(&self, table: &'static str) -> Option<Vec<Value>> {
+///         let db = self.db.read().await;
 ///
-/// ```rust,ignore
-/// #[provider(no_derive_clone)]
-/// pub struct MyProvider {
-///     // ...
+///         db.get(table).cloned()
+///     }
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn provider(attr: TokenStream, item: TokenStream) -> TokenStream {
-    di::provider::expand_provider(attr, item)
+pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
+    injectable::expand_injectable(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -597,7 +607,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     let fn_body = input.block.clone();
     let fn_attrs = input.attrs.clone();
     let fn_vis = input.vis.clone();
-    let _fn_sig = input.sig.clone();
+    let _fn_sig = input.sig;
 
     #[allow(unused)]
     let mut output = quote! {};

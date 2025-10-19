@@ -88,12 +88,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
-name = "anymap2"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,17 +101,6 @@ checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
 dependencies = [
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "async-trait"
-version = "0.1.89"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.106",
 ]
 
 [[package]]
@@ -1369,6 +1352,7 @@ dependencies = [
 name = "middlewares"
 version = "0.1.0"
 dependencies = [
+ "axum",
  "serde",
  "serde_json",
  "sword",
@@ -2002,41 +1986,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shaku"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d599314a26c92706bde1c984391b1eeb77ebf46e23142216a58eacb6e12f858b"
-dependencies = [
- "anymap2",
- "once_cell",
- "shaku_derive",
-]
-
-[[package]]
-name = "shaku-di"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "serde",
- "serde_json",
- "shaku",
- "sword",
- "tokio",
- "validator",
-]
-
-[[package]]
-name = "shaku_derive"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "524f791f1f958b9c1825c1e48657d3bc485ee9ac4a1c7c226ab7fc7010afa7dc"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2166,7 +2115,6 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "serde_urlencoded",
- "shaku",
  "subsecond",
  "sword-macros",
  "thiserror",
@@ -2201,7 +2149,6 @@ dependencies = [
  "garde",
  "serde",
  "serde_json",
- "shaku",
  "sword",
  "tokio",
  "tower",

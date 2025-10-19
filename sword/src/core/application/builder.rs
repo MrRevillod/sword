@@ -7,9 +7,6 @@ use axum::{
     routing::{Route, Router},
 };
 
-#[cfg(feature = "shaku-di")]
-use shaku::Module;
-
 use tower::{Layer, Service};
 use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 
@@ -18,7 +15,7 @@ use tower_cookies::CookieManagerLayer;
 
 use crate::{
     core::*,
-    web::{ContentTypeCheck, Controller, ResponsePrettifier},
+    web::{ContentTypeCheck, Controller, MiddlewareRegistrar, ResponsePrettifier},
 };
 
 /// Builder for constructing a Sword application with various configuration options.
@@ -49,10 +46,13 @@ pub struct ApplicationBuilder {
     state: State,
 
     /// Application configuration loaded from TOML files.
-    pub config: Config,
+    config: Config,
 
     /// Optional URL prefix for all routes in the application.
     prefix: Option<String>,
+
+    /// Flag to track if middlewares have been registered
+    middlewares_registered: bool,
 }
 
 impl ApplicationBuilder {
@@ -82,6 +82,10 @@ impl ApplicationBuilder {
             .insert(config.clone())
             .expect("Failed to insert Config into State");
 
+        for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
+            register(&config, &state).expect("Failed to register config type");
+        }
+
         let router = Router::new().with_state(state.clone());
 
         Self {
@@ -89,6 +93,7 @@ impl ApplicationBuilder {
             state,
             config,
             prefix: None,
+            middlewares_registered: false,
         }
     }
 
@@ -122,7 +127,17 @@ impl ApplicationBuilder {
     ///     .with_controller::<HomeController>()
     ///     .build();
     /// ```
-    pub fn with_controller<C: Controller>(self) -> Self {
+    pub fn with_controller<C: Controller>(mut self) -> Self {
+        if !self.middlewares_registered {
+            for MiddlewareRegistrar { register_fn } in
+                inventory::iter::<MiddlewareRegistrar>
+            {
+                (register_fn)(&self.state).expect("Failed to register middleware");
+            }
+
+            self.middlewares_registered = true;
+        }
+
         let controller_router = C::router(self.state.clone());
         let router = self.router.clone().merge(controller_router);
 
@@ -131,6 +146,7 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
@@ -171,12 +187,14 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
     /// Registers the provided dependency container in the application.
     ///
-    /// **IMPORTANT**: This method must be called before adding controllers or middleware.
+    /// Config types marked with `#[config]` are automatically registered in the state
+    /// during application initialization, so they can be injected into dependencies.
     ///
     /// This method adds a dependency container to the application, allowing you to
     /// register providers and services that can be resolved later.
@@ -186,78 +204,12 @@ impl ApplicationBuilder {
             .build_all(&self.state)
             .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
 
-        self
-    }
-
-    /// Registers a Shaku dependency injection module in the application.
-    ///
-    /// This method integrates Shaku modules for dependency injection, allowing you
-    /// to register services and dependencies that can be resolved later using
-    /// `Context::shaku_di::<ModuleType, InterfaceType>()`.
-    ///
-    /// Available only when the `shaku-di` feature is enabled.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `M` - The Shaku module type (must implement `Sync + Send + 'static`)
-    ///
-    /// ### Arguments
-    ///
-    /// * `module` - The Shaku module instance containing registered services
-    ///
-    /// ### Returns
-    ///
-    /// Returns `Ok(Self)` for method chaining, or `Err(StateError)` if the module
-    /// type is already registered.
-    ///
-    /// ### Example
-    ///
-    /// ```rust,ignore
-    /// use sword::prelude::*;
-    /// use shaku::{module, Component, Interface};
-    /// use std::sync::Arc;
-    ///
-    /// trait DatabaseService: Interface {
-    ///     fn get_connection(&self) -> String;
-    /// }
-    ///
-    /// #[derive(Component)]
-    /// #[shaku(interface = DatabaseService)]
-    /// struct PostgresService;
-    ///
-    /// impl DatabaseService for PostgresService {
-    ///     fn get_connection(&self) -> String {
-    ///         "postgresql://localhost:5432/mydb".to_string()
-    ///     }
-    /// }
-    ///
-    /// module! {
-    ///     AppModule {
-    ///         components = [PostgresService],
-    ///         providers = []
-    ///     }
-    /// }
-    ///
-    /// let module = AppModule::builder().build();
-    ///
-    /// let app = Application::builder()
-    ///     .with_shaku_di_module(module)
-    ///     .build();
-    /// ```
-    #[cfg(feature = "shaku-di")]
-    pub fn with_shaku_di_module<M: Sync + Send + 'static + Module>(
-        self,
-        module: M,
-    ) -> Self {
-        self.state.insert(module).expect("Failed to insert state");
-
-        let router = Router::new().with_state(self.state.clone());
-
         Self {
-            router,
+            router: self.router,
             state: self.state,
             config: self.config,
             prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
@@ -271,7 +223,15 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: Some(prefix.into()),
+            middlewares_registered: self.middlewares_registered,
         }
+    }
+
+    pub fn config<T>(&self) -> Result<T, ConfigError>
+    where
+        T: ConfigItem,
+    {
+        self.config.get::<T>()
     }
 
     /// Builds the final application instance.
@@ -311,10 +271,7 @@ impl ApplicationBuilder {
             router = Router::new().nest(prefix, router);
         }
 
-        Application {
-            router,
-            config: self.config,
-        }
+        Application::new(router, self.config)
     }
 }
 
