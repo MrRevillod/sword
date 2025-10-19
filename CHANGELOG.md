@@ -16,6 +16,16 @@
 
 - Non static middlewares support. Now, middlewares can also have `&self` as the first parameter in their methods. This allows to use struct fields that are extracted from the dependency injection system.
 
+- `OnRequest` and `OnRequestWithConfig` traits for creating custom middlewares.
+
+- `#[uses]` macro attribute to apply middlewares to controllers.
+
+- Added injection support for middlewares. Now, middlewares can have dependencies injected from the DI system.
+
+- Added injection support for custom configuration types marked with `#[config]` macro.
+
+- Added `DependencyContainer` struct that allows to register components and providers. This struct is used internally by the DI system to manage dependencies.
+
 ### Fixed
 
 - Fixed an issue where the middleware macro was not working correctly with some configuration types.
@@ -29,6 +39,8 @@
 - Changed global state scope. Now its necessary to use DI pattern.
 
 - Changed `Context` by `Request`. This change was made because at the first time `Context` was used to handle request, state, and config together. But now, with the new features added, it was more appropriate to use `Request`.
+
+- Change the purpose of `#[middleware]`. Now, it's used to declare a middleware struct instead of applying middlewares to controllers. To apply middlewares to controllers, use the new `#[uses]` attribute.
 
 ## [0.1.8]
 
