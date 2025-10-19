@@ -59,7 +59,7 @@ pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
                 continue;
             }
 
-            if ident == "use_middleware" {
+            if ident == "uses" {
                 let args = attr.parse_args::<MiddlewareArgs>()?;
                 middlewares.push(args);
             } else if HTTP_METHODS.contains(&ident.to_string().as_str()) {

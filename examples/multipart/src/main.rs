@@ -7,9 +7,9 @@ struct TestController {}
 #[routes]
 impl TestController {
     #[post("/multipart")]
-    async fn hello(&self, ctx: Context) -> HttpResult {
+    async fn hello(&self, req: Request) -> HttpResult {
         let mut fields = vec![];
-        let mut multipart = ctx.multipart().await?;
+        let mut multipart = req.multipart().await?;
 
         while let Some(field) = multipart.next_field().await.map_err(|e| {
             eprintln!("Error reading multipart field: {e}");

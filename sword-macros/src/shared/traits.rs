@@ -13,7 +13,7 @@ pub fn generate_try_from_state(
 
     quote! {
         impl TryFrom<&::sword::core::State> for #struct_name {
-            type Error = ::sword::errors::DependencyInjectionError;
+            type Error = ::sword::core::DependencyInjectionError;
 
             fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
                 #field_extractions
@@ -45,7 +45,7 @@ pub fn generate_clone_impl(
 
 pub fn generate_build_method() -> TokenStream {
     quote! {
-        fn build(state: &::sword::core::State) -> Result<Self, ::sword::errors::DependencyInjectionError> {
+        fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError> {
             Self::try_from(state)
         }
     }

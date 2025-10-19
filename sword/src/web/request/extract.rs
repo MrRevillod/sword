@@ -1,12 +1,12 @@
 use crate::{
     core::{ApplicationConfig, Config, State},
-    errors::RequestError,
-    web::{Context, HttpResponse},
+    web::{HttpResponse, Request, RequestError},
 };
 
 use axum::{
     body::{Body, to_bytes},
-    extract::{FromRef, FromRequest, Path, Request as AxumRequest},
+    extract::{FromRef, FromRequest, Path, Request as AxumReq},
+    http::{HeaderName, HeaderValue},
 };
 
 use http_body_util::LengthLimitError;
@@ -16,17 +16,14 @@ use std::collections::HashMap;
 ///
 /// Allows `Context` to be automatically extracted from HTTP requests
 /// in Axum handlers, providing easy access to parameters, headers, body, and state.
-impl<S> FromRequest<S> for Context
+impl<S> FromRequest<S> for Request
 where
     S: Send + Sync + 'static,
     State: FromRef<S>,
 {
     type Rejection = HttpResponse;
 
-    async fn from_request(
-        req: AxumRequest,
-        state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
         let mut params = HashMap::new();
@@ -84,7 +81,6 @@ where
             headers,
             uri: parts.uri,
             extensions: parts.extensions,
-            state,
         })
     }
 }
@@ -93,13 +89,11 @@ where
 ///
 /// Allows converting a `Context` back to an Axum request,
 /// preserving headers, method, URI, body, and extensions.
-impl TryFrom<Context> for AxumRequest {
+impl TryFrom<Request> for AxumReq {
     type Error = RequestError;
 
-    fn try_from(req: Context) -> Result<Self, Self::Error> {
-        use axum::http::{HeaderName, HeaderValue};
-
-        let mut builder = AxumRequest::builder().method(req.method).uri(req.uri);
+    fn try_from(req: Request) -> Result<Self, Self::Error> {
+        let mut builder = AxumReq::builder().method(req.method).uri(req.uri);
 
         for (key, value) in req.headers {
             if let (Ok(header_name), Ok(header_value)) =

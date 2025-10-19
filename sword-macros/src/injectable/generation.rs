@@ -18,7 +18,7 @@ pub fn generate_component_trait(input: &InjectableInput) -> TokenStream {
 
     quote! {
         impl ::sword::core::Component for #struct_name {
-            fn build(state: &::sword::core::State) -> Result<Self, ::sword::errors::DependencyInjectionError> {
+            fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError> {
                 Self::try_from(state)
             }
 
@@ -38,11 +38,11 @@ pub fn generate_provider_trait(parsed: &InjectableInput) -> TokenStream {
         impl ::sword::core::Provider for #struct_name {}
 
         impl TryFrom<&::sword::core::State> for #struct_name {
-            type Error = ::sword::errors::DependencyInjectionError;
+            type Error = ::sword::core::DependencyInjectionError;
 
             fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
                 state.get::<Self>()
-                    .map_err(|_| ::sword::errors::DependencyInjectionError::DependencyNotFound {
+                    .map_err(|_| ::sword::core::DependencyInjectionError::DependencyNotFound {
                         type_name: stringify!(#struct_name).to_string(),
                     })
             }

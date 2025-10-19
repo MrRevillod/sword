@@ -25,7 +25,7 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
                 #base_path
             }
 
-            fn apply_controller_middlewares(
+            fn apply_middlewares(
                 router: ::sword::__internal::AxumRouter,
                 state: ::sword::core::State,
             ) -> ::sword::__internal::AxumRouter {

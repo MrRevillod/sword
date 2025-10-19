@@ -1,3 +1,4 @@
+mod error;
 mod traits;
 
 use std::{
@@ -6,7 +7,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::errors::StateError;
+pub use error::StateError;
 pub use traits::*;
 
 /// Application state container for type-safe dependency injection and data sharing.
@@ -68,7 +69,7 @@ impl State {
             .map_err(|_| StateError::TypeNotFound { type_name })
     }
 
-    pub(crate) fn insert<T: Send + Sync + 'static>(
+    pub fn insert<T: Send + Sync + 'static>(
         &self,
         state: T,
     ) -> Result<(), StateError> {

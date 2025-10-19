@@ -4,12 +4,9 @@ use std::{
     sync::Arc,
 };
 
-use crate::{
-    core::{
-        Component, Provider, State,
-        di::{Dependency, DependencyBuilder},
-    },
-    errors::DependencyInjectionError,
+use crate::core::{
+    Component, Provider, State,
+    di::{Dependency, DependencyBuilder, DependencyInjectionError},
 };
 
 /// A container for managing dependencies and their builders.

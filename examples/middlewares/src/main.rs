@@ -10,11 +10,11 @@ pub struct ExtensionsTestMiddleware {
 
 impl ExtensionsTestMiddleware {
     #[on_request]
-    async fn add_extension(&self, mut ctx: Context, next: Next) -> MiddlewareResult {
-        ctx.extensions
+    async fn add_extension(&self, mut req: Request, next: Next) -> MiddlewareResult {
+        req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(ctx, next)
+        next!(req, next)
     }
 }
 
@@ -25,8 +25,8 @@ struct TestController {}
 impl TestController {
     #[get("/extensions-test")]
     #[uses(ExtensionsTestMiddleware)]
-    async fn extensions_test(&self, ctx: Context) -> HttpResponse {
-        let extension_value = ctx.extensions.get::<String>();
+    async fn extensions_test(&self, req: Request) -> HttpResponse {
+        let extension_value = req.extensions.get::<String>();
 
         HttpResponse::Ok()
             .message("Test controller response with extensions")

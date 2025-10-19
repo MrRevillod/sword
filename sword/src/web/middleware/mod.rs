@@ -1,9 +1,7 @@
 mod builtin;
-
-use std::{any::Any, sync::Arc};
+mod registrar;
 
 use axum::response::Response as AxumResponse;
-use axum_responses::http::HttpResponse;
 
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
@@ -11,37 +9,23 @@ pub use builtin::helmet;
 pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
+pub use crate::next;
 pub use axum::middleware::Next;
+
+#[doc(hidden)]
+pub use registrar::MiddlewareRegistrar;
 pub use sword_macros::{middleware, on_request, uses};
 
-use crate::{core::State, errors::DependencyInjectionError};
+use crate::core::{DependencyInjectionError, State};
+use crate::web::HttpResponse;
 
 pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 
-pub trait Middleware: Any + Send + Sync + 'static {
+pub trait Middleware: Send + Sync + 'static + Clone {
     fn build(state: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized;
 }
-
-pub struct MiddlewareRegistrar {
-    pub build: fn(&State) -> Result<Arc<dyn Middleware>, DependencyInjectionError>,
-}
-
-impl MiddlewareRegistrar {
-    pub const fn new<M>() -> Self
-    where
-        M: Middleware + Clone,
-    {
-        Self {
-            build: |state: &State| {
-                Ok(Arc::new(M::build(state)?) as Arc<dyn Middleware>)
-            },
-        }
-    }
-}
-
-inventory::collect!(MiddlewareRegistrar);
 
 /// A macro to simplify the next middleware call in the middleware chain.
 ///

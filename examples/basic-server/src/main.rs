@@ -9,7 +9,9 @@ pub struct MyConfig {
 }
 
 #[controller("/", version = "v1")]
-struct AppController {}
+struct AppController {
+    custom_config: MyConfig,
+}
 
 #[routes]
 impl AppController {
@@ -30,14 +32,13 @@ impl AppController {
     }
 
     #[post("/submit")]
-    async fn submit_data(&self, ctx: Context) -> HttpResult {
-        let body = ctx.body::<Value>()?;
-        let custom_config = ctx.config::<MyConfig>()?;
+    async fn submit_data(&self, req: Request) -> HttpResult {
+        let body = req.body::<Value>()?;
 
         Ok(HttpResponse::Ok()
             .data(json!({
                 "received_data": body,
-                "custom_config": custom_config
+                "custom_config": &self.custom_config
             }))
             .message("Data submitted successfully"))
     }

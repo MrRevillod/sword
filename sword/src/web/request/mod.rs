@@ -1,17 +1,42 @@
-use std::{collections::HashMap, str::FromStr};
+mod error;
+pub mod extract;
 
-use axum::http::Method;
-use serde::de::DeserializeOwned;
+#[cfg(feature = "multipart")]
+pub mod multipart;
+
+#[cfg(feature = "cookies")]
+pub mod cookies;
 
 #[cfg(feature = "validator")]
 pub mod validator;
 
-#[cfg(feature = "validator")]
-pub use validator::ValidatorRequestValidation;
+use axum::{
+    body::Bytes,
+    http::{Extensions, Method, Uri},
+};
 
-use crate::{errors::RequestError, web::Context};
+pub use error::RequestError;
+use serde::de::DeserializeOwned;
+use std::{collections::HashMap, str::FromStr};
 
-impl Context {
+/// Context represents the incoming request context in the Sword framework.
+///
+/// `Context` is the primary interface for accessing request data in Sword applications.
+/// It provides access to request parameters, body data, HTTP method, headers, URI,
+/// and the application's shared state. This struct is automatically extracted from
+/// incoming HTTP requests and passed to route handlers and middleware.
+#[derive(Debug, Clone)]
+pub struct Request {
+    params: HashMap<String, String>,
+    body_bytes: Bytes,
+    method: Method,
+    headers: HashMap<String, String>,
+    uri: Uri,
+    /// Axum extensions for additional request metadata.
+    pub extensions: Extensions,
+}
+
+impl Request {
     /// Gets the complete URI of the request as a string.
     ///
     /// ### Returns

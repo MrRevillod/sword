@@ -1,4 +1,4 @@
-use crate::{core::State, errors::StateError};
+use crate::core::{State, StateError};
 use std::sync::Arc;
 
 /// Trait for types that can be extracted from the application State.

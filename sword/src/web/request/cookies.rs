@@ -1,4 +1,4 @@
-use crate::web::{Context, HttpResponse};
+use crate::web::{HttpResponse, Request};
 
 pub use tower_cookies::{
     Cookies, Key, PrivateCookies, SignedCookies,
@@ -8,7 +8,7 @@ pub use tower_cookies::{
     },
 };
 
-impl Context {
+impl Request {
     /// Access the cookies from the request context.
     /// This method returns a reference to the `Cookies` instance, a struct that provides
     /// methods to get, set, and remove cookies.

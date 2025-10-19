@@ -77,8 +77,8 @@ pub struct UserController {}
 #[routes]
 impl UserController {
     #[get("/simple-query")]
-    async fn get_users(&self, ctx: Context) -> HttpResult {
-        let query: Option<QueryData> = ctx.query()?;
+    async fn get_users(&self, req: Request) -> HttpResult {
+        let query: Option<QueryData> = req.query()?;
 
         Ok(HttpResponse::Ok()
             .data(query)
@@ -86,8 +86,8 @@ impl UserController {
     }
 
     #[get("/validate-query")]
-    async fn get_users_with_validation(&self, ctx: Context) -> HttpResult {
-        let query: Option<ValidableQueryData> = ctx.query_validator()?;
+    async fn get_users_with_validation(&self, req: Request) -> HttpResult {
+        let query: Option<ValidableQueryData> = req.query_validator()?;
 
         Ok(HttpResponse::Ok()
             .data(query)
@@ -95,8 +95,8 @@ impl UserController {
     }
 
     #[get("/ergonomic-optional-query")]
-    async fn get_users_with_ergonomic_query(&self, ctx: Context) -> HttpResult {
-        let query: OptionalQueryData = ctx.query()?.unwrap_or_default();
+    async fn get_users_with_ergonomic_query(&self, req: Request) -> HttpResult {
+        let query: OptionalQueryData = req.query()?.unwrap_or_default();
 
         Ok(HttpResponse::Ok()
             .data(query)
@@ -106,10 +106,10 @@ impl UserController {
     #[get("/ergonomic-validated-optional-query")]
     async fn get_users_with_ergonomic_validated_optional_query(
         &self,
-        ctx: Context,
+        req: Request,
     ) -> HttpResult {
         let query: DefaultValidableQueryData =
-            ctx.query_validator()?.unwrap_or_default();
+            req.query_validator()?.unwrap_or_default();
 
         Ok(HttpResponse::Ok()
             .data(query)
@@ -117,8 +117,8 @@ impl UserController {
     }
 
     #[get("/complex-query")]
-    async fn get_users_with_complex_query(&self, ctx: Context) -> HttpResult {
-        let query: Option<ComplexQueryData> = ctx.query()?;
+    async fn get_users_with_complex_query(&self, req: Request) -> HttpResult {
+        let query: Option<ComplexQueryData> = req.query()?;
 
         Ok(HttpResponse::Ok()
             .data(query)
@@ -126,8 +126,8 @@ impl UserController {
     }
 
     #[get("/pattern-match-query")]
-    async fn get_users_with_pattern_match(&self, ctx: Context) -> HttpResult {
-        match ctx.query::<OptionalQueryData>()? {
+    async fn get_users_with_pattern_match(&self, req: Request) -> HttpResult {
+        match req.query::<OptionalQueryData>()? {
             Some(query) => Ok(HttpResponse::Ok()
                 .data(query)
                 .message("Users retrieved with query parameters")),

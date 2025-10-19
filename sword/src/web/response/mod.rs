@@ -1,7 +1,15 @@
-use crate::{errors::*, web::HttpResponse};
+mod formatting;
+
+pub use axum_responses::http::{HttpResponse, ResponseBody};
+pub type HttpResult = axum_responses::Result<HttpResponse>;
 
 #[cfg(feature = "validator")]
-use crate::errors::formatting::format_validator_errors;
+use formatting::format_validator_errors;
+
+use crate::{
+    core::{ConfigError, DependencyInjectionError, StateError},
+    web::RequestError,
+};
 
 impl From<RequestError> for HttpResponse {
     fn from(error: RequestError) -> HttpResponse {

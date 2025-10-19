@@ -54,7 +54,7 @@ pub fn generate_field_extractions(fields: &[(Ident, Type)]) -> TokenStream {
             quote! {
                 let #field_name = <#field_type as ::sword::core::FromStateArc>::from_state_arc(state)
                     .map_err(|_| {
-                        ::sword::errors::DependencyInjectionError::DependencyNotFound {
+                        ::sword::core::DependencyInjectionError::DependencyNotFound {
                             type_name: #type_str.to_string(),
                         }
                     })?;
@@ -65,7 +65,7 @@ pub fn generate_field_extractions(fields: &[(Ident, Type)]) -> TokenStream {
             quote! {
                 let #field_name = <#field_type as ::sword::core::FromState>::from_state(state)
                     .map_err(|_| {
-                        ::sword::errors::DependencyInjectionError::DependencyNotFound {
+                        ::sword::core::DependencyInjectionError::DependencyNotFound {
                             type_name: #type_str.to_string(),
                         }
                     })?;

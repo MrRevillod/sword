@@ -1,16 +1,17 @@
+mod error;
 mod registrar;
 
-use super::utils;
 use serde::de::{DeserializeOwned, IntoDeserializer};
-use std::{fs::read_to_string, path::Path, str::FromStr, sync::Arc};
+use std::{fs, path::Path, str::FromStr, sync::Arc};
 use toml::Table;
 
+pub use error::ConfigError;
 pub use registrar::*;
 pub use sword_macros::config;
 
-use crate::{core::State, errors::ConfigError};
+use crate::core::State;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Config {
     inner: Arc<Table>,
 }
@@ -52,7 +53,7 @@ impl Config {
         let path = Path::new("config/config.toml");
 
         let content = if path.exists() {
-            read_to_string(path).map_err(ConfigError::ReadError)?
+            fs::read_to_string(path).map_err(ConfigError::ReadError)?
         } else {
             let exe_path = std::env::current_exe()
                 .map_err(|_| ConfigError::FileNotFound("config/config.toml"))?;
@@ -63,14 +64,14 @@ impl Config {
 
             let fallback_path = exe_dir.join("config/config.toml");
 
-            if fallback_path.exists() {
-                read_to_string(fallback_path).map_err(ConfigError::ReadError)?
-            } else {
+            if !fallback_path.exists() {
                 return Err(ConfigError::FileNotFound("config/config.toml"));
             }
+
+            fs::read_to_string(fallback_path).map_err(ConfigError::ReadError)?
         };
 
-        let expanded = utils::expand_env_vars(&content)
+        let expanded = crate::core::utils::expand_env_vars(&content)
             .map_err(ConfigError::InterpolationError)?;
 
         let table = Table::from_str(&expanded)
@@ -122,13 +123,5 @@ impl Config {
 
         T::deserialize(value)
             .map_err(|e| ConfigError::DeserializeError(e.to_string()))
-    }
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            inner: Arc::new(Table::new()),
-        }
     }
 }

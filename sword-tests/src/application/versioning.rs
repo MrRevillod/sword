@@ -34,8 +34,8 @@ impl V1UsersController {
     }
 
     #[get("/{id}")]
-    async fn get_user(&self, ctx: Context) -> HttpResult {
-        let id = ctx.param::<u32>("id")?;
+    async fn get_user(&self, req: Request) -> HttpResult {
+        let id = req.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
             .data(json!({
@@ -49,8 +49,8 @@ impl V1UsersController {
     }
 
     #[post("/")]
-    async fn create_user(&self, ctx: Context) -> HttpResult {
-        let body = ctx.body::<Value>()?;
+    async fn create_user(&self, req: Request) -> HttpResult {
+        let body = req.body::<Value>()?;
 
         Ok(HttpResponse::Created()
             .data(json!({
@@ -80,8 +80,8 @@ impl V1ProductsController {
     }
 
     #[get("/{id}")]
-    async fn get_product(&self, ctx: Context) -> HttpResult {
-        let id = ctx.param::<u32>("id")?;
+    async fn get_product(&self, req: Request) -> HttpResult {
+        let id = req.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
             .data(json!({
@@ -121,8 +121,8 @@ impl V2UsersController {
     }
 
     #[get("/{id}")]
-    async fn get_user(&self, ctx: Context) -> HttpResult {
-        let id = ctx.param::<u32>("id")?;
+    async fn get_user(&self, req: Request) -> HttpResult {
+        let id = req.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
             .data(json!({
@@ -139,8 +139,8 @@ impl V2UsersController {
     }
 
     #[post("/")]
-    async fn create_user(&self, ctx: Context) -> HttpResult {
-        let body = ctx.body::<Value>()?;
+    async fn create_user(&self, req: Request) -> HttpResult {
+        let body = req.body::<Value>()?;
 
         Ok(HttpResponse::Created()
             .data(json!({
@@ -191,8 +191,8 @@ impl V2ProductsController {
     }
 
     #[get("/{id}")]
-    async fn get_product(&self, ctx: Context) -> HttpResult {
-        let id = ctx.param::<u32>("id")?;
+    async fn get_product(&self, req: Request) -> HttpResult {
+        let id = req.param::<u32>("id")?;
 
         Ok(HttpResponse::Ok()
             .data(json!({

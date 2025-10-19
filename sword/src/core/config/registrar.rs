@@ -1,7 +1,4 @@
-use crate::{
-    core::{Config, State},
-    errors::ConfigError,
-};
+use crate::core::{Config, ConfigError, State};
 
 type RegisterConfigFn = fn(&Config, &State) -> Result<(), ConfigError>;
 
@@ -17,17 +14,4 @@ impl ConfigRegistrar {
     }
 }
 
-// /// Registers all config types that were marked with `#[config]` into the application state.
-// /// This is called automatically during application initialization.
-// pub(crate) fn register_all_configs(
-//     config: &Config,
-//     state: &super::State,
-// ) -> Result<(), ConfigError> {
-//     for registrar in inventory::iter::<ConfigRegistrar> {
-//         (registrar.register)(config, state)?;
-//     }
-//     Ok(())
-// }
-
-// Collect all ConfigRegistrar instances submitted via inventory::submit!
 inventory::collect!(ConfigRegistrar);

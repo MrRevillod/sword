@@ -15,7 +15,6 @@ use tower_cookies::CookieManagerLayer;
 
 use crate::{
     core::*,
-    errors::ConfigError,
     web::{ContentTypeCheck, Controller, MiddlewareRegistrar, ResponsePrettifier},
 };
 
@@ -51,6 +50,9 @@ pub struct ApplicationBuilder {
 
     /// Optional URL prefix for all routes in the application.
     prefix: Option<String>,
+
+    /// Flag to track if middlewares have been registered
+    middlewares_registered: bool,
 }
 
 impl ApplicationBuilder {
@@ -91,6 +93,7 @@ impl ApplicationBuilder {
             state,
             config,
             prefix: None,
+            middlewares_registered: false,
         }
     }
 
@@ -124,7 +127,17 @@ impl ApplicationBuilder {
     ///     .with_controller::<HomeController>()
     ///     .build();
     /// ```
-    pub fn with_controller<C: Controller>(self) -> Self {
+    pub fn with_controller<C: Controller>(mut self) -> Self {
+        if !self.middlewares_registered {
+            for MiddlewareRegistrar { register_fn } in
+                inventory::iter::<MiddlewareRegistrar>
+            {
+                (register_fn)(&self.state).expect("Failed to register middleware");
+            }
+
+            self.middlewares_registered = true;
+        }
+
         let controller_router = C::router(self.state.clone());
         let router = self.router.clone().merge(controller_router);
 
@@ -133,6 +146,7 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
@@ -173,6 +187,7 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
@@ -189,7 +204,13 @@ impl ApplicationBuilder {
             .build_all(&self.state)
             .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
 
-        self
+        Self {
+            router: self.router,
+            state: self.state,
+            config: self.config,
+            prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
+        }
     }
 
     /// Sets a URL prefix for all routes in the application.
@@ -202,6 +223,7 @@ impl ApplicationBuilder {
             state: self.state,
             config: self.config,
             prefix: Some(prefix.into()),
+            middlewares_registered: self.middlewares_registered,
         }
     }
 
@@ -242,12 +264,6 @@ impl ApplicationBuilder {
             router = router.layer(CookieManagerLayer::new());
         }
 
-        for mw in inventory::iter::<MiddlewareRegistrar> {
-            self.state
-                .insert((mw.build)(&self.state))
-                .expect("Failed to register middleware");
-        }
-
         router = router
             .layer(mw_with_state(self.state.clone(), ResponsePrettifier::layer));
 
@@ -255,10 +271,7 @@ impl ApplicationBuilder {
             router = Router::new().nest(prefix, router);
         }
 
-        Application {
-            router,
-            config: self.config,
-        }
+        Application::new(router, self.config)
     }
 }
 

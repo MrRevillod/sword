@@ -8,13 +8,13 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
         MiddlewareArgs::SwordSimple(path) => {
             quote! {
                 {
-                    let middleware = state.borrow::<#path>()
+                    let middleware = state.borrow::<::std::sync::Arc<#path>>()
                         .expect("Failed to retrieve middleware from State");
 
                     ::sword::__internal::mw_with_state(
                         state.clone(),
-                        move |ctx: ::sword::web::Context, next: ::sword::web::Next| {
-                            let mw = middleware.clone();
+                        move |ctx: ::sword::web::Request, next: ::sword::web::Next| {
+                            let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
                                 mw.__on__request__function__(ctx, next).await
                             }

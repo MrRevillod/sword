@@ -25,7 +25,7 @@ impl AppController {
 
 #[sword::main]
 async fn main() {
-    let mut app = Application::builder();
+    let app = Application::builder();
 
     let cors_config = app
         .config::<CorsConfig>()
@@ -33,9 +33,10 @@ async fn main() {
 
     let cors_middleware = CorsMiddleware::new(&cors_config);
 
-    app = app
+    let app = app
         .with_controller::<AppController>()
-        .with_layer(cors_middleware.layer);
+        .with_layer(cors_middleware.layer)
+        .build();
 
-    app.build().run().await;
+    app.run().await;
 }

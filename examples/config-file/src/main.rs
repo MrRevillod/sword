@@ -9,7 +9,10 @@ struct MyConfig {
 }
 
 #[controller("/")]
-struct AppController {}
+struct AppController {
+    app_config: ApplicationConfig,
+    my_config: MyConfig,
+}
 
 #[routes]
 impl AppController {
@@ -19,20 +22,16 @@ impl AppController {
     }
 
     #[get("/config")]
-    async fn show_config(&self, ctx: Context) -> HttpResult {
-        let config = ctx.config::<ApplicationConfig>()?;
-
+    async fn show_config(&self) -> HttpResult {
         Ok(HttpResponse::Ok()
-            .data(config)
+            .data(&self.app_config)
             .message("This example demonstrates TOML config loading"))
     }
 
     #[get("/custom-conf")]
-    async fn custom_config(&self, ctx: Context) -> HttpResult {
-        let custom_config = ctx.config::<MyConfig>()?;
-
+    async fn custom_config(&self) -> HttpResult {
         Ok(HttpResponse::Ok()
-            .data(custom_config)
+            .data(&self.my_config)
             .message("This example demonstrates custom config loading"))
     }
 }

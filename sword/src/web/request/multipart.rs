@@ -2,9 +2,9 @@ use axum::extract::FromRequest;
 pub use axum::extract::multipart::*;
 pub use bytes;
 
-use crate::{errors::RequestError, web::Context};
+use crate::web::{Request, RequestError};
 
-impl Context {
+impl Request {
     /// Extracts multipart form data from the request.
     ///
     /// ### Errors

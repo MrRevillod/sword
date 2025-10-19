@@ -17,7 +17,7 @@ pub fn expand_on_request(
 
     let generated = quote! {
         #[allow(non_snake_case)]
-        async fn __on__request__function__(#(#args),*) #output {
+        pub async fn __on__request__function__(#(#args),*) #output {
             #body
         }
     };

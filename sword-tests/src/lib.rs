@@ -5,13 +5,13 @@ mod request {
     mod query;
 }
 
-// #[cfg(test)]
-// mod middlewares {
-//     mod built_in;
-//     mod controller_level;
-//     mod handler_level;
-//     mod helmet;
-// }
+#[cfg(test)]
+mod middlewares {
+    mod built_in;
+    mod controller_level;
+    mod handler_level;
+    mod helmet;
+}
 
 #[cfg(test)]
 mod application {

@@ -1,8 +1,7 @@
 use serde::de::DeserializeOwned;
 use validator::Validate;
 
-use crate::errors::RequestError;
-use crate::web::Context;
+use crate::web::{Request, RequestError};
 
 pub trait ValidatorRequestValidation {
     fn body_validator<T: DeserializeOwned + Validate>(
@@ -19,7 +18,7 @@ pub trait ValidatorRequestValidation {
 }
 
 #[cfg(feature = "validator")]
-impl ValidatorRequestValidation for Context {
+impl ValidatorRequestValidation for Request {
     /// Deserializes and validates the request body using validation rules.
     ///
     /// This method combines JSON deserialization with validation using the

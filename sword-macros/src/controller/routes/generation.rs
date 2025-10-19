@@ -39,10 +39,10 @@ pub fn generate_controller_routes(
                 ::sword::__internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
-                    move |ctx: ::sword::web::Context| {
+                    move |req: ::sword::web::Request| {
                         async move {
                             use ::sword::__internal::IntoResponse;
-                            ctrl.#handler_name(ctx).await.into_response()
+                            ctrl.#handler_name(req).await.into_response()
                         }
                     }
                 })
@@ -52,7 +52,7 @@ pub fn generate_controller_routes(
                 ::sword::__internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
-                    move |_: ::sword::web::Context| {
+                    move |_: ::sword::web::Request| {
                         async move {
                             use ::sword::__internal::IntoResponse;
                             ctrl.#handler_name().await.into_response()
@@ -93,7 +93,7 @@ pub fn generate_controller_routes(
 
 
                 let base_path = #struct_self::base_path();
-                let router = #struct_self::apply_controller_middlewares(base_router, state);
+                let router = #struct_self::apply_middlewares(base_router, state);
 
                 match base_path {
                     "/" => router,

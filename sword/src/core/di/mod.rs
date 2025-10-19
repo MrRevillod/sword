@@ -1,12 +1,16 @@
 mod container;
+mod error;
 
 use std::{
     any::{Any, TypeId},
     sync::Arc,
 };
 
-use crate::{core::State, errors::DependencyInjectionError};
+use crate::core::State;
+
 pub use container::DependencyContainer;
+pub use error::DependencyInjectionError;
+pub use sword_macros::injectable;
 
 /// Pointer to dyn Any element. It retrieves dynamic capabilites
 /// to the dependency container. Basically represents Any element.

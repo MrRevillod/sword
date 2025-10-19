@@ -26,7 +26,7 @@ pub fn parse_controller_input(
     let fields = collect_struct_fields(&input);
 
     for attr in &input.attrs {
-        if attr.path().is_ident("middleware") {
+        if attr.path().is_ident("uses") {
             let args = attr.parse_args::<MiddlewareArgs>()?;
             middlewares.push(args);
         }
