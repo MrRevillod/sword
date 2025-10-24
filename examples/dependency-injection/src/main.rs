@@ -1,24 +1,23 @@
 mod database;
 mod middleware;
 mod repository;
-mod service;
 
 use std::sync::Arc;
 
+use dotenv::dotenv;
 pub use middleware::MyMiddleware;
 pub use repository::TaskRepository;
 
-use serde_json::json;
 use sword::{core::DependencyContainer, prelude::*};
 
 use crate::{
     database::{Database, DatabaseConfig},
-    service::TasksService,
+    repository::Task,
 };
 
-#[controller("/tasks", version = "v1")]
+#[controller("/tasks")]
 struct TasksController {
-    tasks: Arc<TasksService>,
+    tasks: Arc<TaskRepository>,
 }
 
 #[routes]
@@ -33,12 +32,13 @@ impl TasksController {
 
     #[post("/")]
     async fn create_task(&self) -> HttpResponse {
-        let total_task = self.tasks.find_all().await.len();
+        let tasks = self.tasks.find_all().await;
+        let total_count = tasks.len() as i32 + 1;
 
-        let task = json!({
-            "id": total_task + 1,
-            "title": format!("Task {}", total_task + 1),
-        });
+        let task = Task {
+            id: total_count,
+            title: format!("Task {total_count}"),
+        };
 
         self.tasks.create(task.clone()).await;
 
@@ -48,6 +48,8 @@ impl TasksController {
 
 #[sword::main]
 async fn main() {
+    dotenv().ok();
+
     let app = Application::builder();
     let db_config = app.config::<DatabaseConfig>().unwrap();
 
@@ -56,7 +58,6 @@ async fn main() {
     let container = DependencyContainer::builder()
         .register_provider(db)
         .register_component::<TaskRepository>()
-        .register_component::<TasksService>()
         .build();
 
     let app = app

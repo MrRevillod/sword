@@ -1,43 +1,42 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use serde::Deserialize;
-use serde_json::Value;
+use sqlx::{migrate::Migrator, PgPool};
 use sword::prelude::*;
-use tokio::sync::RwLock;
-
-pub type Store = Arc<RwLock<HashMap<String, Vec<Value>>>>;
 
 #[derive(Clone, Deserialize)]
 #[config(key = "db-config")]
 pub struct DatabaseConfig {
-    collection_name: String,
+    uri: String,
+    migrations_path: String,
 }
 
-#[injectable(kind = "provider")]
+#[injectable(provider)]
 pub struct Database {
-    db: Store,
+    pool: Arc<PgPool>,
 }
 
 impl Database {
     pub async fn new(db_conf: DatabaseConfig) -> Self {
-        let db = Arc::new(RwLock::new(HashMap::new()));
+        let pool = PgPool::connect(&db_conf.uri)
+            .await
+            .expect("Failed to create Postgres connection pool");
 
-        db.write().await.insert(db_conf.collection_name, Vec::new());
+        let migrator = Migrator::new(Path::new(&db_conf.migrations_path))
+            .await
+            .unwrap();
 
-        Self { db }
-    }
+        migrator
+            .run(&pool)
+            .await
+            .expect("Failed to run database migrations");
 
-    pub async fn insert(&self, table: &'static str, record: Value) {
-        let mut db = self.db.write().await;
-
-        if let Some(table_data) = db.get_mut(table) {
-            table_data.push(record);
+        Self {
+            pool: Arc::new(pool),
         }
     }
 
-    pub async fn get_all(&self, table: &'static str) -> Option<Vec<Value>> {
-        let db = self.db.read().await;
-
-        db.get(table).cloned()
+    pub fn get_pool(&self) -> &PgPool {
+        &self.pool
     }
 }

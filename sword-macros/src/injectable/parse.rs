@@ -1,7 +1,7 @@
 use crate::shared::collect_struct_fields;
 use proc_macro::TokenStream;
 use syn::parse::{ParseStream, Result as ParseResult};
-use syn::{Ident, ItemStruct, LitStr, Token, Type, parse::Parse};
+use syn::{Ident, ItemStruct, Token, Type, parse::Parse};
 
 pub enum InjectableKind {
     Provider,
@@ -33,22 +33,15 @@ impl Parse for InjectableArgs {
             let arg: Ident = input.parse()?;
 
             match arg.to_string().as_str() {
-                "kind" => {
-                    input.parse::<Token![=]>()?;
-                    let val: LitStr = input.parse()?;
-                    kind = match val.value().as_str() {
-                        "provider" => InjectableKind::Provider,
-                        "component" => InjectableKind::Component,
-                        _ => {
-                            return Err(syn::Error::new_spanned(
-                                val,
-                                "Expected 'provider' or 'component'",
-                            ));
-                        }
-                    };
-                }
+                "provider" => kind = InjectableKind::Provider,
+                "component" => kind = InjectableKind::Component,
                 "no_derive_clone" => derive_clone = false,
-                _ => return Err(syn::Error::new_spanned(arg, "Unknown attribute")),
+                _ => {
+                    return Err(syn::Error::new_spanned(
+                        arg,
+                        "Unknown attribute. Use 'provider', 'component', or 'no_derive_clone'",
+                    ));
+                }
             }
 
             if !input.is_empty() {

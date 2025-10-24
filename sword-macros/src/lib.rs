@@ -310,7 +310,7 @@ pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - `no_derive_clone`: (Optional) If provided, the struct will not derive the `Clone` automatically.
 ///   By default, the struct will derive `Clone` if all its fields implement `Clone`.
 ///
-/// ### Usage of `#[injectable]` without parameters
+/// ### Usage of `#[injectable]` without parameters (same as #[injectable(component)])
 ///
 /// ```rust,ignore
 /// #[injectable]
@@ -329,10 +329,10 @@ pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// ### Usage of `#[injectable(instance)]` with parameters
+/// ### Usage of `#[injectable(provider)]` with parameters
 ///
 /// ```rust,ignore
-/// #[injectable(kind = "provider")]
+/// #[injectable(provider)]
 /// pub struct Database {
 ///     db: Store,
 /// }
