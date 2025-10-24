@@ -75,7 +75,7 @@ impl TestController {
     }
 }
 
-#[injectable(kind = "provider")]
+#[injectable(provider)]
 pub struct Database {
     pub connection_string: String,
 }

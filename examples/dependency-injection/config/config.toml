@@ -4,7 +4,8 @@ port = 8080
 body_limit = "10MB"
 request_timeout_seconds = 15
 graceful_shutdown = false
-name = "MySwordApp"
+name = "Dependency Injection Example"
 
 [db-config]
-collection_name = "tasks"
+uri = "${POSTGRES_DATABASE_URL}"
+migrations_path = "config/migrations"

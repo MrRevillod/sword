@@ -6,4 +6,3 @@ edition = "2021"
 [dependencies]
 sword = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }

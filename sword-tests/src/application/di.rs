@@ -9,7 +9,7 @@ use sword::prelude::*;
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 
-#[injectable(kind = "provider")]
+#[injectable(provider)]
 pub struct Database {
     db: Store,
 }

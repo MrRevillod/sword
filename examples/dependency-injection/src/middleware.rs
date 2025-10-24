@@ -12,11 +12,15 @@ impl OnRequest for MyMiddleware {
     async fn on_request(&self, req: Request, next: Next) -> MiddlewareResult {
         let tasks = self.tasks_repository.find_all().await;
 
+        println!();
         println!("Current tasks:");
 
-        match tasks {
-            Some(tasks) => println!("{tasks:?}"),
-            None => println!("There's no tasks"),
+        if tasks.is_empty() {
+            println!("There's no tasks");
+        }
+
+        for task in tasks {
+            println!(" - [{}] {}", task.id, task.title);
         }
 
         next!(req, next)
