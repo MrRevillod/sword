@@ -24,10 +24,12 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
 
                     ::sword::__internal::mw_with_state(
                         state.clone(),
-                        move |req: ::sword::web::Request, next: ::sword::web::Next| {
+                        move |mut req: ::sword::web::Request, next: ::sword::web::Next| {
+                            req.set_next(next);
+
                             let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
-                                <#path as ::sword::web::OnRequest>::on_request(&*mw, req, next).await
+                                <#path as ::sword::web::OnRequest>::on_request(&*mw, req).await
                             }
                         }
                     )
@@ -51,14 +53,14 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
 
                     ::sword::__internal::mw_with_state(
                         state.clone(),
-                        move |req: ::sword::web::Request, next: ::sword::web::Next| {
+                        move |mut req: ::sword::web::Request, next: ::sword::web::Next| {
+                            req.set_next(next);
                             let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
                                 <#middleware as ::sword::web::OnRequestWithConfig<_>>::on_request_with_config(
                                     &*mw,
                                     #config,
                                     req,
-                                    next
                                 ).await
                             }
                         }

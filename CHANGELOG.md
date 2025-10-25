@@ -1,6 +1,19 @@
 # Sword web framework changelog
 
-## Next Release
+## [Unreleased]
+
+### Added
+
+- New `next()` method on `Request` struct. See `Changed` section for more details.
+
+### Changed
+
+- The `next!` macro has been removed. Instead, use the `req.next().await` method to pass control to the next middleware or handler in the chain. This change removes the need for a macro to do "magic" and makes the code more explicit and easier to understand.
+
+- Middleware structs marked with `#[middleware]` macro now can omit the `next` parameter in their methods. Instead, they can call `req.next().await` to pass control to the next middleware or handler.
+
+
+## [0.2.0]
 
 ### Added
 

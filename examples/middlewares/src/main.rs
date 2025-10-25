@@ -8,11 +8,11 @@ pub struct ExtensionsTestMiddleware {
 }
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -24,10 +24,9 @@ impl OnRequestWithConfig<u8> for MwWithConfig {
         &self,
         config: u8,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert::<u8>(config);
-        next!(req, next)
+        req.next().await
     }
 }
 

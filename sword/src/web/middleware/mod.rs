@@ -9,7 +9,6 @@ pub use builtin::helmet;
 pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
-pub use crate::next;
 pub use axum::middleware::Next;
 
 #[doc(hidden)]
@@ -36,20 +35,18 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 /// use sword::prelude::*;
 ///
 /// #[middleware]
-/// struct AuthMiddleware {
-///     secret: String,
-/// }
+/// struct AuthMiddleware {}
 ///
 /// impl OnRequest for AuthMiddleware {
-///     async fn on_request(&self, req: Request, next: Next) -> MiddlewareResult {
+///     async fn on_request(&self, req: Request) -> MiddlewareResult {
 ///         // Middleware logic here
-///         next!(req, next)
+///         req.next().await
 ///     }
 /// }
 /// ```
 pub trait Middleware: Clonable<Error = DependencyInjectionError> {}
 
-/// Trait for middlewares that handle requests without configuration.
+/// Trait for middlewares that handle requests
 ///
 /// This is the standard middleware trait for simple request interception.
 /// Implement this trait to create middlewares that don't require additional
@@ -60,11 +57,7 @@ pub trait OnRequest: Middleware {
     /// This method receives the request and the next middleware in the chain.
     /// It should either call `next` to continue the chain or return early with
     /// a response to short-circuit the request.
-    fn on_request(
-        &self,
-        req: Request,
-        next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
+    fn on_request(&self, req: Request) -> impl Future<Output = MiddlewareResult>;
 }
 
 /// Trait for middlewares that handle requests with route-specific configuration.
@@ -82,32 +75,5 @@ pub trait OnRequestWithConfig<C>: Middleware {
         &self,
         config: C,
         req: Request,
-        next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
-}
-
-/// A macro to simplify the next middleware call in the middleware chain.
-///
-/// It takes the current Request and the next middleware in the chain,
-/// and returns a `Result` with the response of the next middleware.
-///
-/// This macro is used to avoid boilerplate code in middleware implementations.
-/// It is used in the `handle` method of the `Middleware` trait.
-///
-/// # Example usage:
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// struct MyMiddleware;
-///
-/// impl Middleware for MyMiddleware {
-///     async fn handle(req: Request, next: Next) -> MiddlewareResult {
-///         next!(ctx, next)
-///     }
-/// }
-#[macro_export]
-macro_rules! next {
-    ($req:expr, $next:expr) => {
-        Ok($next.run($req.try_into()?).await)
-    };
+    ) -> impl Future<Output = MiddlewareResult>;
 }

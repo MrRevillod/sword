@@ -6,11 +6,13 @@ const MULTIPART_FORM_DATA: &str = "multipart/form-data";
 pub(crate) struct ContentTypeCheck;
 
 impl ContentTypeCheck {
-    pub async fn layer(req: Request, next: Next) -> MiddlewareResult {
+    pub async fn layer(mut req: Request, next: Next) -> MiddlewareResult {
+        req.set_next(next);
+
         let content_type = req.header("Content-Type").unwrap_or_default();
 
         if !req.has_body() {
-            return next!(req, next);
+            return req.next().await;
         }
 
         if content_type != APPLICATION_JSON
@@ -21,6 +23,6 @@ impl ContentTypeCheck {
             ));
         }
 
-        next!(req, next)
+        req.next().await
     }
 }

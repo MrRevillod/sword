@@ -210,11 +210,11 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
 ///
 /// ### Parameters
-/// - `MiddlewareName`: The name of the middleware struct that implements the `Middleware` or `MiddlewareWithConfig` trait.
+/// - `MiddlewareName`: The name of the middleware struct that implements the `OnRequest` or `OnRequestWithConfig` trait.
 ///   Also can receive an instance of a `tower-http` service layer like `CorsLayer`, `CompressionLayer`, `TraceLayer`, etc.
 ///   If the layer can be added without errors on `Application::with_layer` there will not be any problem using it.  
 ///
-/// - `config`: (Optional) Configuration parameters for the middleware,
+/// - `config`: (Optional) Configuration parameters for the middleware (only if the middleware implements `OnRequestWithConfig`).
 ///
 /// ### Handle errors
 /// To throw an error from a middleware, simply return an `Err` with an `HttpResponse`
@@ -222,11 +222,17 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Usage
 /// ```rust,ignore
+/// #[middleware]
 /// pub struct RoleMiddleware;
 ///
-/// impl MiddlewareWithConfig<Vec<&str>> for RoleMiddleware {
-///     async fn handle(roles: Vec<&str>, req: Request, next: Next) -> MiddlewareResult {
-///         next!(ctx, next)
+/// impl OnRequestWithConfig<Vec<&str>> for RoleMiddleware {
+///     async fn on_request_with_config(
+///         &self,
+///         roles: Vec<&str>,
+///         req: Request
+///     ) -> MiddlewareResult {
+///
+///         req.next().await
 ///     }
 /// }
 ///
@@ -236,7 +242,7 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/items")]
-///     #[uses(RoleMiddleware)]
+///     #[uses(RoleMiddleware, config = vec!["admin", "user"])]
 ///     async fn get_items(&self) -> HttpResponse {
 ///         HttpResponse::Ok().message("List of items")
 ///     }

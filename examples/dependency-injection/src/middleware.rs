@@ -9,7 +9,7 @@ pub struct MyMiddleware {
 }
 
 impl OnRequest for MyMiddleware {
-    async fn on_request(&self, req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, req: Request) -> MiddlewareResult {
         let tasks = self.tasks_repository.find_all().await;
 
         println!();
@@ -23,6 +23,6 @@ impl OnRequest for MyMiddleware {
             println!(" - [{}] {}", task.id, task.title);
         }
 
-        next!(req, next)
+        req.next().await
     }
 }
