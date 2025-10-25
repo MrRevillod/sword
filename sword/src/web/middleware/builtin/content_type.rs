@@ -10,7 +10,7 @@ impl ContentTypeCheck {
         let content_type = req.header("Content-Type").unwrap_or_default();
 
         if !req.has_body() {
-            return next!(req, next);
+            return req.run(next).await;
         }
 
         if content_type != APPLICATION_JSON
@@ -21,6 +21,6 @@ impl ContentTypeCheck {
             ));
         }
 
-        next!(req, next)
+        req.run(next).await
     }
 }

@@ -40,7 +40,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -52,7 +52,7 @@ impl OnRequest for ExtensionsTestMiddleware {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -62,7 +62,7 @@ struct MwWithState;
 impl OnRequest for MwWithState {
     async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
         req.extensions.insert::<u16>(8080);
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -79,7 +79,7 @@ impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
         let roles_owned: Vec<String> = roles.iter().map(|s| s.to_string()).collect();
         req.extensions.insert(roles_owned);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -95,7 +95,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware
     ) -> MiddlewareResult {
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -111,7 +111,7 @@ impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -127,7 +127,7 @@ impl OnRequestWithConfig<String> for StringConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -143,7 +143,7 @@ impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config.to_string());
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -159,7 +159,7 @@ impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -175,7 +175,7 @@ impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -203,7 +203,7 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
 
         req.extensions.insert(owned_config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -219,7 +219,7 @@ impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -235,7 +235,7 @@ impl OnRequestWithConfig<i32> for MathConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -251,7 +251,7 @@ impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config.to_string());
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -267,7 +267,7 @@ impl OnRequestWithConfig<LogLevel> for LogMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -283,7 +283,7 @@ impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -299,7 +299,7 @@ impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -315,7 +315,7 @@ impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -331,7 +331,7 @@ impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 

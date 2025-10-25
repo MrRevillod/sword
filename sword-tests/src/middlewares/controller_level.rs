@@ -10,7 +10,7 @@ impl OnRequest for ExtensionsTestMiddleware {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -20,7 +20,7 @@ struct MwWithState;
 impl OnRequest for MwWithState {
     async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
         req.extensions.insert::<u16>(8080);
-        next!(req, next)
+        req.run(next).await
     }
 }
 

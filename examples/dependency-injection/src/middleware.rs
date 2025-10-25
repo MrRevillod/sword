@@ -23,6 +23,6 @@ impl OnRequest for MyMiddleware {
             println!(" - [{}] {}", task.id, task.title);
         }
 
-        next!(req, next)
+        req.run(next).await
     }
 }

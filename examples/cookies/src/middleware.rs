@@ -15,6 +15,6 @@ impl OnRequest for SetCookieMw {
 
         cookies.add(cookie);
 
-        next!(req, next)
+        req.run(next).await
     }
 }

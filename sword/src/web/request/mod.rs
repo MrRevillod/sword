@@ -13,11 +13,14 @@ pub mod validator;
 use axum::{
     body::Bytes,
     http::{Extensions, Method, Uri},
+    middleware::Next,
 };
 
 pub use error::RequestError;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
+
+use crate::web::MiddlewareResult;
 
 /// Represents the incoming request in the Sword framework.
 ///
@@ -301,5 +304,13 @@ impl Request {
     /// Returns `true` if the request has a body with content, `false` if empty.
     pub(crate) const fn has_body(&self) -> bool {
         !self.body_bytes.is_empty()
+    }
+
+    /// Runs the next middleware or handler in the chain.
+    ///
+    /// This method must be used only in middleware implementations to
+    /// pass control to the next middleware or the final request handler.
+    pub async fn run(&self, next: Next) -> MiddlewareResult {
+        Ok(next.run(self.clone().try_into()?).await)
     }
 }

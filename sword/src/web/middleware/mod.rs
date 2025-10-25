@@ -1,7 +1,7 @@
 mod builtin;
 mod registrar;
 
-use axum::response::Response as AxumResponse;
+use axum::response::{IntoResponse, Response as AxumResponse};
 
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
@@ -9,6 +9,7 @@ pub use builtin::helmet;
 pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
+#[allow(deprecated)]
 pub use crate::next;
 pub use axum::middleware::Next;
 
@@ -49,7 +50,7 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 /// ```
 pub trait Middleware: Clonable<Error = DependencyInjectionError> {}
 
-/// Trait for middlewares that handle requests without configuration.
+/// Trait for middlewares that handle requests
 ///
 /// This is the standard middleware trait for simple request interception.
 /// Implement this trait to create middlewares that don't require additional
@@ -64,7 +65,7 @@ pub trait OnRequest: Middleware {
         &self,
         req: Request,
         next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
+    ) -> impl Future<Output = MiddlewareResult>;
 }
 
 /// Trait for middlewares that handle requests with route-specific configuration.
@@ -83,16 +84,31 @@ pub trait OnRequestWithConfig<C>: Middleware {
         config: C,
         req: Request,
         next: Next,
-    ) -> impl Future<Output = MiddlewareResult> + Send;
+    ) -> impl Future<Output = MiddlewareResult>;
+}
+
+pub struct SwordNext {
+    inner: axum::middleware::Next,
+}
+
+impl SwordNext {
+    pub fn new(inner: axum::middleware::Next) -> Self {
+        Self { inner }
+    }
+
+    pub async fn run(self, req: Request) -> AxumResponse {
+        let Ok(axum_req) = req.try_into() else {
+            return HttpResponse::InternalServerError().into_response();
+        };
+
+        self.inner.run(axum_req).await
+    }
 }
 
 /// A macro to simplify the next middleware call in the middleware chain.
 ///
-/// It takes the current Request and the next middleware in the chain,
-/// and returns a `Result` with the response of the next middleware.
-///
-/// This macro is used to avoid boilerplate code in middleware implementations.
-/// It is used in the `handle` method of the `Middleware` trait.
+/// Deprecated: Use the `req.run(next).await` method instead.
+/// This macro will be removed in future versions.
 ///
 /// # Example usage:
 /// ```rust,ignore
@@ -102,9 +118,11 @@ pub trait OnRequestWithConfig<C>: Middleware {
 ///
 /// impl Middleware for MyMiddleware {
 ///     async fn handle(req: Request, next: Next) -> MiddlewareResult {
-///         next!(ctx, next)
+///         // before: next!(ctx, next)
+///         // now: req.run(next).await
 ///     }
 /// }
+#[deprecated(note = "Use the `req.run(next).await` method instead.")]
 #[macro_export]
 macro_rules! next {
     ($req:expr, $next:expr) => {

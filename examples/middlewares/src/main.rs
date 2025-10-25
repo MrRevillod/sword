@@ -12,7 +12,7 @@ impl OnRequest for ExtensionsTestMiddleware {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.run(next).await
     }
 }
 
@@ -27,7 +27,7 @@ impl OnRequestWithConfig<u8> for MwWithConfig {
         next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert::<u8>(config);
-        next!(req, next)
+        req.run(next).await
     }
 }
 
