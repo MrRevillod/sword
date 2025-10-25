@@ -5,8 +5,8 @@ use sword::prelude::*;
 struct SetCookieMw {}
 
 impl OnRequest for SetCookieMw {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
-        let cookies = req.cookies_mut()?;
+    async fn on_request(&self, req: Request) -> MiddlewareResult {
+        let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("session_id", "abc123")
             .path("/")
@@ -26,8 +26,8 @@ struct CookieController {}
 #[routes]
 impl CookieController {
     #[get("/set")]
-    async fn set_cookie(&self, mut req: Request) -> HttpResult {
-        let cookies = req.cookies_mut()?;
+    async fn set_cookie(&self, req: Request) -> HttpResult {
+        let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("username", "sword_user")
             .path("/")
@@ -42,8 +42,8 @@ impl CookieController {
 
     #[get("/with_middleware")]
     #[uses(SetCookieMw)]
-    async fn with_middleware(&self, mut req: Request) -> HttpResult {
-        let cookies = req.cookies_mut()?;
+    async fn with_middleware(&self, req: Request) -> HttpResult {
+        let cookies = req.cookies()?;
 
         let session_cookie = cookies.get("session_id").ok_or(
             HttpResponse::Unauthorized().message("Session cookie not found"),

@@ -18,8 +18,8 @@ struct CookieController {
 #[routes]
 impl CookieController {
     #[get("/set")]
-    async fn set_cookie(&self, mut req: Request) -> HttpResult {
-        let cookies = req.cookies_mut()?;
+    async fn set_cookie(&self, req: Request) -> HttpResult {
+        let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("username", "sword_user")
             .path("/")
@@ -34,8 +34,8 @@ impl CookieController {
 
     #[get("/with_middleware")]
     #[uses(SetCookieMw)]
-    async fn with_middleware(&self, mut req: Request) -> HttpResult {
-        let cookies = req.cookies_mut()?;
+    async fn with_middleware(&self, req: Request) -> HttpResult {
+        let cookies = req.cookies()?;
 
         let session_cookie = cookies.get("session_id").ok_or_else(|| {
             HttpResponse::Unauthorized().message("Session cookie not found")
@@ -46,9 +46,9 @@ impl CookieController {
     }
 
     #[get("/private-counter")]
-    async fn private_counter(&self, mut req: Request) -> HttpResult {
+    async fn private_counter(&self, req: Request) -> HttpResult {
         let key = Key::from(self.cookies_config.key.as_bytes());
-        let private = req.cookies_mut()?.private(&key);
+        let private = req.cookies()?.private(&key);
 
         let count = private
             .get("visited_private")
