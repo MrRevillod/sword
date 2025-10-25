@@ -1,7 +1,7 @@
 mod builtin;
 mod registrar;
 
-use axum::response::{IntoResponse, Response as AxumResponse};
+use axum::response::Response as AxumResponse;
 
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
@@ -9,8 +9,6 @@ pub use builtin::helmet;
 pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 
-#[allow(deprecated)]
-pub use crate::next;
 pub use axum::middleware::Next;
 
 #[doc(hidden)]
@@ -37,14 +35,12 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 /// use sword::prelude::*;
 ///
 /// #[middleware]
-/// struct AuthMiddleware {
-///     secret: String,
-/// }
+/// struct AuthMiddleware {}
 ///
 /// impl OnRequest for AuthMiddleware {
-///     async fn on_request(&self, req: Request, next: Next) -> MiddlewareResult {
+///     async fn on_request(&self, req: Request) -> MiddlewareResult {
 ///         // Middleware logic here
-///         next!(req, next)
+///         req.next().await
 ///     }
 /// }
 /// ```
@@ -61,11 +57,7 @@ pub trait OnRequest: Middleware {
     /// This method receives the request and the next middleware in the chain.
     /// It should either call `next` to continue the chain or return early with
     /// a response to short-circuit the request.
-    fn on_request(
-        &self,
-        req: Request,
-        next: Next,
-    ) -> impl Future<Output = MiddlewareResult>;
+    fn on_request(&self, req: Request) -> impl Future<Output = MiddlewareResult>;
 }
 
 /// Trait for middlewares that handle requests with route-specific configuration.
@@ -83,49 +75,5 @@ pub trait OnRequestWithConfig<C>: Middleware {
         &self,
         config: C,
         req: Request,
-        next: Next,
     ) -> impl Future<Output = MiddlewareResult>;
-}
-
-pub struct SwordNext {
-    inner: axum::middleware::Next,
-}
-
-impl SwordNext {
-    pub fn new(inner: axum::middleware::Next) -> Self {
-        Self { inner }
-    }
-
-    pub async fn run(self, req: Request) -> AxumResponse {
-        let Ok(axum_req) = req.try_into() else {
-            return HttpResponse::InternalServerError().into_response();
-        };
-
-        self.inner.run(axum_req).await
-    }
-}
-
-/// A macro to simplify the next middleware call in the middleware chain.
-///
-/// Deprecated: Use the `req.run(next).await` method instead.
-/// This macro will be removed in future versions.
-///
-/// # Example usage:
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// struct MyMiddleware;
-///
-/// impl Middleware for MyMiddleware {
-///     async fn handle(req: Request, next: Next) -> MiddlewareResult {
-///         // before: next!(ctx, next)
-///         // now: req.run(next).await
-///     }
-/// }
-#[deprecated(note = "Use the `req.run(next).await` method instead.")]
-#[macro_export]
-macro_rules! next {
-    ($req:expr, $next:expr) => {
-        Ok($next.run($req.try_into()?).await)
-    };
 }
