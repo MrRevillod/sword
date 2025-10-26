@@ -25,7 +25,10 @@ pub mod prelude;
 
 pub mod web;
 
-pub use sword_macros::main;
+pub use sword_macros::{
+    main, on_connection, on_disconnect, subscribe_message, web_socket,
+    web_socket_gateway,
+};
 
 #[doc(hidden)]
 pub mod __internal {
@@ -45,6 +48,8 @@ pub mod __internal {
     pub use inventory;
 
     pub use tokio::runtime as tokio_runtime;
+
+    pub use tracing;
 
     #[cfg(feature = "hot-reload")]
     pub use dioxus_devtools;

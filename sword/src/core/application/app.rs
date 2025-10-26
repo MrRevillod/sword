@@ -1,5 +1,7 @@
 use axum::routing::Router;
 use axum_responses::http::HttpResponse;
+#[cfg(feature = "websocket")]
+use socketioxide::SocketIo;
 use tokio::net::TcpListener as Listener;
 
 use crate::core::{
@@ -13,13 +15,33 @@ use crate::core::{
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    router: Router,
-    config: Config,
+    pub(crate) router: Router,
+    pub(crate) config: Config,
+    pub(crate) state: crate::core::State,
+    #[cfg(feature = "websocket")]
+    pub(crate) socket_setups:
+        Vec<(&'static str, crate::web::websocket::SocketSetupFn)>,
 }
 
 impl Application {
-    pub fn new(router: Router, config: Config) -> Self {
-        Self { router, config }
+    pub fn new(router: Router, config: Config, state: crate::core::State) -> Self {
+        Self {
+            router,
+            config,
+            state,
+            #[cfg(feature = "websocket")]
+            socket_setups: Vec::new(),
+        }
+    }
+
+    #[cfg(feature = "websocket")]
+    pub(crate) fn with_socket_setup(
+        mut self,
+        path: &'static str,
+        setup_fn: crate::web::websocket::SocketSetupFn,
+    ) -> Self {
+        self.socket_setups.push((path, setup_fn));
+        self
     }
 
     /// Creates a new application builder for configuring the application.
@@ -94,10 +116,32 @@ impl Application {
             HttpResponse::NotFound().message("The requested resource was not found")
         });
 
-        axum::serve(listener, router)
-            .await
-            .map_err(|e| ApplicationError::ServerError { source: e })
-            .expect("Internal server error");
+        #[cfg(feature = "websocket")]
+        {
+            let (layer, io) = SocketIo::new_layer();
+
+            // Register all socket setups
+            for (_path, setup_fn) in &self.socket_setups {
+                // Call the setup function which handles namespace registration 💀
+                // This allows handlers to be registered properly for each namespace
+                setup_fn(&io, self.state.clone());
+            }
+
+            let router = router.layer(layer);
+
+            axum::serve(listener, router)
+                .await
+                .map_err(|e| ApplicationError::ServerError { source: e })
+                .expect("Internal server error");
+        }
+
+        #[cfg(not(feature = "websocket"))]
+        {
+            axum::serve(listener, router)
+                .await
+                .map_err(|e| ApplicationError::ServerError { source: e })
+                .expect("Internal server error");
+        }
     }
 
     /// Runs the application server with graceful shutdown support.

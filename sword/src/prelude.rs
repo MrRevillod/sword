@@ -73,5 +73,8 @@ pub use crate::web::cookies::*;
 #[cfg(feature = "multipart")]
 pub use crate::web::multipart;
 
+#[cfg(feature = "websocket")]
+pub use crate::web::websocket::*;
+
 #[cfg(feature = "validator")]
 pub use crate::web::request_validator::*;

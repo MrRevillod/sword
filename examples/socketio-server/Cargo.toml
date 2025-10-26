@@ -1,0 +1,11 @@
+[package]
+name = "socketio-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sword = { workspace = true, features = ["websocket"] }
+sword-macros = { workspace = true }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "time"] }
+serde = { workspace = true }
+dotenv = "0.15.0"

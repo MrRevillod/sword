@@ -37,7 +37,7 @@ use crate::{
 ///     .with_layer(tower_http::cors::CorsLayer::permissive())
 ///     .build();
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ApplicationBuilder {
     /// The internal Axum router that handles HTTP requests.
     router: Router,
@@ -53,6 +53,10 @@ pub struct ApplicationBuilder {
 
     /// Flag to track if middlewares have been registered
     middlewares_registered: bool,
+
+    /// Socket.IO setup configurations
+    #[cfg(feature = "websocket")]
+    socket_setups: Vec<(&'static str, crate::web::websocket::SocketSetupFn)>,
 }
 
 impl ApplicationBuilder {
@@ -94,6 +98,8 @@ impl ApplicationBuilder {
             config,
             prefix: None,
             middlewares_registered: false,
+            #[cfg(feature = "websocket")]
+            socket_setups: Vec::new(),
         }
     }
 
@@ -147,6 +153,65 @@ impl ApplicationBuilder {
             config: self.config,
             prefix: self.prefix,
             middlewares_registered: self.middlewares_registered,
+            #[cfg(feature = "websocket")]
+            socket_setups: self.socket_setups,
+        }
+    }
+
+    /// Registers a WebSocket gateway in the application.
+    ///
+    /// This could be used to add WebSocket support.
+    /// Currently is used just with Socket.IO via `socketioxide`.
+    ///
+    /// ### Type Parameters
+    ///
+    /// * `W` - A type implementing `WebSocketGateway` that defines the WebSocket handlers
+    ///
+    /// ### Example
+    ///
+    /// ```rust,ignore
+    /// use sword::prelude::*;
+    ///
+    /// #[web_socket_gateway]
+    /// struct SocketController;
+    ///
+    /// #[web_socket("/socket")]
+    /// impl SocketController {
+    ///     #[on_connection]
+    ///     async fn on_connect(&self, socket: SocketRef) {
+    ///         println!("Connected");
+    ///     }
+    /// }
+    ///
+    /// let app = Application::builder()
+    ///     .with_socket::<SocketController>()
+    ///     .build();
+    /// ```
+    #[cfg(feature = "websocket")]
+    pub fn with_socket<W>(self) -> Self
+    where
+        W: crate::web::websocket::WebSocketProvider + Clone + Send + Sync + 'static,
+        W: crate::core::Build,
+    {
+        let path = W::path();
+
+        if let Ok(controller) = W::build(&self.state) {
+            let _ = self.state.insert(controller);
+        }
+
+        let setup_fn = W::get_setup_fn(self.state.clone());
+
+        let mut socket_setups = self.socket_setups;
+        socket_setups.push((path, setup_fn));
+
+        Self {
+            router: self.router,
+            state: self.state,
+            config: self.config,
+            prefix: self.prefix,
+            middlewares_registered: self.middlewares_registered,
+            #[cfg(feature = "websocket")]
+            socket_setups,
         }
     }
 
@@ -188,6 +253,8 @@ impl ApplicationBuilder {
             config: self.config,
             prefix: self.prefix,
             middlewares_registered: self.middlewares_registered,
+            #[cfg(feature = "websocket")]
+            socket_setups: self.socket_setups,
         }
     }
 
@@ -210,6 +277,8 @@ impl ApplicationBuilder {
             config: self.config,
             prefix: self.prefix,
             middlewares_registered: self.middlewares_registered,
+            #[cfg(feature = "websocket")]
+            socket_setups: self.socket_setups,
         }
     }
 
@@ -224,6 +293,8 @@ impl ApplicationBuilder {
             config: self.config,
             prefix: Some(prefix.into()),
             middlewares_registered: self.middlewares_registered,
+            #[cfg(feature = "websocket")]
+            socket_setups: self.socket_setups,
         }
     }
 
@@ -271,7 +342,16 @@ impl ApplicationBuilder {
             router = Router::new().nest(prefix, router);
         }
 
-        Application::new(router, self.config)
+        let mut app = Application::new(router, self.config, self.state.clone());
+
+        #[cfg(feature = "websocket")]
+        {
+            for (path, setup_fn) in self.socket_setups {
+                app = app.with_socket_setup(path, setup_fn);
+            }
+        }
+
+        app
     }
 }
 

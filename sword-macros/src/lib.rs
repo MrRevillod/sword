@@ -28,6 +28,8 @@ mod middlewares;
 
 mod injectable;
 
+mod websocket;
+
 /// Defines a handler for HTTP GET requests.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
 ///
@@ -642,4 +644,147 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     output.into()
+}
+
+/// Marks a struct as a WebSocket gateway controller.
+/// This macro should be used in combination with the `#[web_socket]` macro for handler implementation.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[web_socket_gateway]
+/// struct ChatSocket;
+///
+/// #[web_socket("/chat")]
+/// impl ChatSocket {
+///     #[on_connection]
+///     async fn on_connect(&self, socket: SocketRef) {
+///         println!("Client connected");
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn web_socket_gateway(attr: TokenStream, item: TokenStream) -> TokenStream {
+    websocket::expand_websocket_gateway(attr, item)
+}
+
+/// Defines WebSocket handlers for a struct.
+/// This macro should be used inside an `impl` block of a struct annotated with the `#[web_socket_gateway]` macro.
+///
+/// ### Parameters
+/// - `path`: The path for the WebSocket endpoint, e.g., `"/socket"`
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[web_socket_gateway]
+/// struct SocketController;
+///
+/// #[web_socket("/socket")]
+/// impl SocketController {
+///     #[on_connection]
+///     async fn on_connect(&self, socket: SocketRef) {
+///         println!("Client connected");
+///     }
+///
+///     #[subscribe_message("message")]
+///     async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
+///         println!("Received: {}", msg);
+///     }
+///
+///     #[on_disconnect]
+///     async fn on_disconnect(&self, socket: WebSocket) {
+///         println!("Client disconnected");
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn web_socket(attr: TokenStream, item: TokenStream) -> TokenStream {
+    websocket::expand_websocket(attr, item)
+}
+
+/// Marks a method as a WebSocket connection handler.
+/// This method will be called when a client establishes a WebSocket connection.
+///
+/// ### Parameters
+/// The handler receives a `SocketRef` parameter for interacting with the connected client.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_connection]
+/// async fn on_connect(&self, socket: SocketRef) {
+///     println!("Client connected: {}", socket.id);
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_connection(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+/// Marks a method as a WebSocket disconnection handler.
+/// This method will be called when a client disconnects from the WebSocket.
+///
+/// ### Parameters
+/// The handler receives a `WebSocket` parameter with the disconnected client's information.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_disconnect]
+/// async fn on_disconnect(&self, socket: WebSocket) {
+///     println!("Client disconnected: {}", socket.id());
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_disconnect(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+/// Marks a method as a WebSocket message handler.
+/// This method will be called when the client emits an event with the specified message type.
+///
+/// ### Parameters
+/// - `message_type`: The name of the event to handle, e.g., `"message"` or `"*"` for any event
+///
+/// ### Parameters in handler
+/// - `socket: SocketRef` - The connected client's socket
+/// - `Data(data): Data<T>` - The message payload deserialized to type T
+/// - `ack: AckSender` (optional) - For sending acknowledgments back to the client
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[subscribe_message("message")]
+/// async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
+///     println!("Received: {}", msg);
+/// }
+///
+/// #[subscribe_message("request")]
+/// async fn on_request(&self, Data(req): Data<Request>, ack: AckSender) {
+///     ack.send("response").ok();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn subscribe_message(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+/// Marks a method as a WebSocket fallback handler.
+/// This method will be called for any event that doesn't match a specific `#[subscribe_message]` handler.
+/// It's useful for debugging or handling dynamic events.
+///
+/// ### Parameters in handler
+/// - `Event(name): Event` - The event name
+/// - `Data(data): Data<T>` - The message payload
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_fallback]
+/// async fn on_fallback(&self, Event(event): Event, Data(data): Data<Value>) {
+///     println!("Unhandled event: {} with data: {:?}", event, data);
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_fallback(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
 }
