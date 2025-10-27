@@ -49,6 +49,7 @@ subsecond = { version = "0.7.0-rc.1", optional = true }
 dioxus-devtools = { version = "0.7.0-rc.1", features = [
     "serve",
 ], optional = true }
+futures = "0.3.31"
 
 [features]
 default = []

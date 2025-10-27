@@ -47,7 +47,7 @@ impl DependencyContainer {
     ///
     /// Dependencies are resolved automatically using topological sorting based on
     /// the dependency graph.
-    pub fn register_component<T: Component>(mut self) -> Self {
+    pub fn register_component<T: Component>(&mut self) {
         let type_id = TypeId::of::<T>();
         let type_name = type_name::<T>();
 
@@ -62,8 +62,6 @@ impl DependencyContainer {
 
         self.dependency_graph.insert(type_id, T::deps());
         self.dependency_builders.insert(type_id, dependency_builder);
-
-        self
     }
 
     /// Registers a pre-built dependency provider.
@@ -72,12 +70,11 @@ impl DependencyContainer {
     /// to be injected into other components. Typical use cases include database
     /// connections, HTTP clients, or external service configurations that cannot
     /// be auto-constructed from the State.
-    pub fn register_provider<T>(mut self, provider: T) -> Self
+    pub fn register_provider<T>(&mut self, provider: T)
     where
         T: Provider,
     {
         self.instances.insert(TypeId::of::<T>(), Arc::new(provider));
-        self
     }
 
     pub fn build(self) -> Self {

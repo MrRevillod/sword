@@ -11,5 +11,5 @@ cargo install cargo install --git https://github.com/DioxusLabs/dioxus dioxus-cl
 The run the server with:
 
 ```bash
-dx serve --hot-reload
+dx serve --hot-patch
 ```

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use sword::prelude::*;
 
-use crate::TaskRepository;
+use super::TaskRepository;
 
 #[middleware]
 pub struct MyMiddleware {

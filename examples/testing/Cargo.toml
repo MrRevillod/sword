@@ -1,0 +1,11 @@
+[package]
+name = "testing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum-test = "17.3.0"
+tokio = { workspace = true, features = ["full"] }
+sword = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -2,8 +2,11 @@ mod application;
 mod build;
 mod config;
 mod di;
+mod module;
 mod state;
 mod utils;
+
+pub use module::Module;
 
 pub use build::*;
 pub use di::*;

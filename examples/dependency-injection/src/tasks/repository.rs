@@ -1,15 +1,8 @@
-use crate::database::Database;
+use super::entity::Task;
+use crate::shared::database::Database;
 
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use std::sync::Arc;
 use sword::core::injectable;
-
-#[derive(Clone, Serialize, Deserialize, FromRow)]
-pub struct Task {
-    pub id: i32,
-    pub title: String,
-}
 
 #[injectable]
 pub struct TaskRepository {

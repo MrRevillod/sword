@@ -1,15 +1,8 @@
-use std::{path::Path, sync::Arc};
-
-use serde::Deserialize;
 use sqlx::{migrate::Migrator, PgPool};
+use std::{path::Path, sync::Arc};
 use sword::prelude::*;
 
-#[derive(Clone, Deserialize)]
-#[config(key = "db-config")]
-pub struct DatabaseConfig {
-    uri: String,
-    migrations_path: String,
-}
+use super::DatabaseConfig;
 
 #[injectable(provider)]
 pub struct Database {

@@ -71,6 +71,8 @@ pub struct ApplicationConfig {
     /// Optional environment name (e.g., "development", "production").
     /// This can be used to alter behavior based on the environment.
     pub environment: Option<String>,
+
+    pub global_prefix: Option<String>,
 }
 
 impl ApplicationConfig {
