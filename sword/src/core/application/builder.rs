@@ -24,9 +24,24 @@ pub struct ApplicationBuilder {
     config: Config,
     controllers: Vec<fn(State) -> Router>,
     container: DependencyContainer,
+    layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
 }
 
 impl ApplicationBuilder {
+    // Builder for constructing a Sword application with various configuration options.
+    //
+    // `ApplicationBuilder` provides a fluent interface for configuring a Sword application
+    // before building the final `Application` instance. It allows you to register
+    // controllers, add middleware layers, configure shared state, and set up dependency injection.
+    //
+    // ### Example
+    //
+    // ```rust,ignore
+    // use sword::prelude::*;
+    //
+    // let app = Application::builder()
+    //     .build();
+    // ```
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -47,23 +62,22 @@ impl ApplicationBuilder {
             config,
             controllers: Vec::new(),
             container: DependencyContainer::builder(),
+            layers: Vec::new(),
         }
     }
 
-    pub fn with_module<M, C>(mut self) -> Self
+    pub fn with_module<M>(mut self) -> Self
     where
-        M: Module<C>,
-        C: Controller,
+        M: Module,
     {
         futures::executor::block_on(async {
-            M::register_providers(&self.config, &self.state, &mut self.container)
-                .await;
+            M::register_providers(&self.config, &mut self.container).await;
         });
 
         M::register_components(&mut self.container);
 
-        if let Some(router_fn) = M::router_factory() {
-            self.controllers.push(router_fn);
+        if M::is_controller_module() {
+            self.controllers.push(M::Controller::router);
         }
 
         Self {
@@ -72,10 +86,11 @@ impl ApplicationBuilder {
             config: self.config,
             controllers: self.controllers,
             container: self.container,
+            layers: self.layers,
         }
     }
 
-    pub fn with_layer<L>(self, layer: L) -> Self
+    pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
         L::Service: Service<AxumRequest> + Clone + Send + Sync + 'static,
@@ -83,14 +98,16 @@ impl ApplicationBuilder {
         <L::Service as Service<AxumRequest>>::Error: Into<Infallible> + 'static,
         <L::Service as Service<AxumRequest>>::Future: Send + 'static,
     {
-        let router = self.router.layer(layer);
+        self.layers
+            .push(Box::new(move |router| router.layer(layer.clone())));
 
         Self {
-            router,
+            router: self.router,
             state: self.state,
             config: self.config,
             container: self.container,
             controllers: self.controllers,
+            layers: self.layers,
         }
     }
 
@@ -118,6 +135,10 @@ impl ApplicationBuilder {
         for controller_router_fn in self.controllers {
             let controller = controller_router_fn(self.state.clone());
             router = router.merge(controller);
+        }
+
+        for layer_fn in self.layers {
+            router = layer_fn(router);
         }
 
         router = router

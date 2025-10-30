@@ -6,7 +6,7 @@ mod module;
 mod state;
 mod utils;
 
-pub use module::Module;
+pub use module::{Module, NonControllerModule};
 
 pub use build::*;
 pub use di::*;

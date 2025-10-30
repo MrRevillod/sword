@@ -26,11 +26,15 @@ impl TestController {
     }
 }
 
+struct ConfigModule;
+
+impl Module for ConfigModule {
+    type Controller = TestController;
+}
+
 #[tokio::test]
 async fn test_application() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<ConfigModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 

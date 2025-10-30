@@ -54,11 +54,15 @@ impl CookieController {
     }
 }
 
+struct CookieModule;
+
+impl Module for CookieModule {
+    type Controller = CookieController;
+}
+
 #[tokio::test]
 async fn test_set_cookie() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<CookieController>()
-        .build();
+    let app = Application::builder().with_module::<CookieModule>().build();
 
     let server = TestServer::new(app.router())?;
 
@@ -83,9 +87,7 @@ async fn test_set_cookie() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_with_middleware() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<CookieController>()
-        .build();
+    let app = Application::builder().with_module::<CookieModule>().build();
 
     let server = TestServer::new(app.router())?;
 

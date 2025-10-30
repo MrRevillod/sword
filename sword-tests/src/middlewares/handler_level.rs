@@ -467,13 +467,21 @@ impl TestController {
     }
 }
 
+struct TestModule;
+
+impl Module for TestModule {
+    type Controller = TestController;
+}
+
+fn test_server() -> TestServer {
+    let app = Application::builder().with_module::<TestModule>().build();
+
+    TestServer::new(app.router()).unwrap()
+}
+
 #[tokio::test]
 async fn extensions_mw_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/extensions-test").await;
     assert_eq!(response.status_code(), 200);
 
@@ -486,11 +494,7 @@ async fn extensions_mw_test() {
 
 #[tokio::test]
 async fn middleware_state() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/middleware-state").await;
 
     assert_eq!(response.status_code(), 200);
@@ -505,11 +509,7 @@ async fn middleware_state() {
 
 #[tokio::test]
 async fn role_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/role-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -523,11 +523,7 @@ async fn role_middleware_test() {
 
 #[tokio::test]
 async fn error_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/error-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -541,11 +537,7 @@ async fn error_middleware_test() {
 
 #[tokio::test]
 async fn tower_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/tower-middleware-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -559,11 +551,7 @@ async fn tower_middleware_test() {
 
 #[tokio::test]
 async fn tuple_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/tuple-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -575,11 +563,7 @@ async fn tuple_config_middleware_test() {
 
 #[tokio::test]
 async fn array_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/array-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -591,11 +575,7 @@ async fn array_config_middleware_test() {
 
 #[tokio::test]
 async fn string_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/string-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -607,11 +587,7 @@ async fn string_config_middleware_test() {
 
 #[tokio::test]
 async fn str_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/str-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -623,11 +599,7 @@ async fn str_config_middleware_test() {
 
 #[tokio::test]
 async fn number_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/number-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -639,11 +611,7 @@ async fn number_config_middleware_test() {
 
 #[tokio::test]
 async fn bool_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/bool-config-test").await;
 
     assert_eq!(response.status_code(), 200);

@@ -4,9 +4,7 @@ use sword::prelude::*;
 use validator::Validate;
 
 fn test_server() -> TestServer {
-    let app = Application::builder()
-        .with_controller::<UserController>()
-        .build();
+    let app = Application::builder().with_module::<UserModule>().build();
 
     TestServer::new(app.router()).unwrap()
 }
@@ -136,6 +134,12 @@ impl UserController {
                 .message("Users retrieved with default parameters")),
         }
     }
+}
+
+struct UserModule;
+
+impl Module for UserModule {
+    type Controller = UserController;
 }
 
 #[tokio::test]
