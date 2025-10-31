@@ -236,9 +236,9 @@ dependencies = [
 
 [[package]]
 name = "axum_responses"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e22a526438158a67a0110c9357e2e7d29a5af7dd2ac197ac2ae2d40566754f5f"
+checksum = "0714a57b3e22def615536f5cf4839ec932dff8db9f6641e9bb96cd87d10235ad"
 dependencies = [
  "axum",
  "chrono",
