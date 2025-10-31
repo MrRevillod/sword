@@ -213,6 +213,10 @@ impl Application {
         self.config.get::<T>()
     }
 
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
+
     async fn pre_run(&self) -> Listener {
         let config = self
             .config
