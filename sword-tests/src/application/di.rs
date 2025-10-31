@@ -106,18 +106,17 @@ impl Module for TasksModule {
         c.register_component::<TaskRepository>();
         c.register_component::<TasksService>();
     }
-
-    async fn register_providers(_: &Config, c: &mut DependencyContainer) {
-        let db = Database::new();
-        c.register_provider(db);
-    }
 }
 
 #[tokio::test]
 async fn test_get_tasks_empty() {
-    let app = Application::builder().with_module::<TasksModule>().build();
+    let mut app = Application::builder();
 
-    let server = TestServer::new(app.router()).unwrap();
+    let db = Database::new();
+
+    app = app.with_provider(db).with_module::<TasksModule>();
+
+    let server = TestServer::new(app.build().router()).unwrap();
 
     let response = server.get("/v1/tasks").await;
 
@@ -132,9 +131,13 @@ async fn test_get_tasks_empty() {
 
 #[tokio::test]
 async fn test_create_task() {
-    let app = Application::builder().with_module::<TasksModule>().build();
+    let mut app = Application::builder();
 
-    let server = TestServer::new(app.router()).unwrap();
+    let db = Database::new();
+
+    app = app.with_provider(db).with_module::<TasksModule>();
+
+    let server = TestServer::new(app.build().router()).unwrap();
 
     let response = server.post("/v1/tasks").await;
 

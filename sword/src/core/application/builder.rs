@@ -113,6 +113,22 @@ impl ApplicationBuilder {
         }
     }
 
+    pub fn with_provider<T>(mut self, provider: T) -> Self
+    where
+        T: Provider,
+    {
+        self.container.register_provider(provider);
+
+        Self {
+            router: self.router,
+            state: self.state,
+            config: self.config,
+            container: self.container,
+            controllers: self.controllers,
+            layers: self.layers,
+        }
+    }
+
     pub fn config<T>(&self) -> Result<T, ConfigError>
     where
         T: ConfigItem,
