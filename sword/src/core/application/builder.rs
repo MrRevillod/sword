@@ -120,6 +120,10 @@ impl ApplicationBuilder {
         self.config.get::<T>()
     }
 
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
+
     pub fn build(self) -> Application {
         let mut router = self.router.clone();
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
