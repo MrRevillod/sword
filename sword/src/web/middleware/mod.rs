@@ -6,6 +6,8 @@ use axum::response::Response as AxumResponse;
 #[cfg(feature = "helmet")]
 pub use builtin::helmet;
 
+pub use builtin::cors::{CorsConfig, CorsLayer};
+
 pub(crate) use builtin::content_type::ContentTypeCheck;
 pub(crate) use builtin::prettifier::ResponsePrettifier;
 

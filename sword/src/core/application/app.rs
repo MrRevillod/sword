@@ -71,7 +71,7 @@ impl Application {
     /// #[sword::main]
     /// async fn main() {
     ///     let app = Application::builder()
-    ///         .with_controller::<MyController>()
+    ///         .with_module::<MyModule>()
     ///         .build();
     ///     
     ///     app.run().await;
@@ -127,11 +127,13 @@ impl Application {
     ///     }
     /// }
     ///
+    /// ... module definition ...
+    ///
     /// #[sword::main]
     /// async fn main() {
     ///     let app = Application::builder()
-    ///         .with_controller::<AppController>()
-    ///         .with_controller::<AdminController>()
+    ///         .with_module::<MyModule>()
+    ///         .with_module::<MySecondModule>()
     ///         .build();
     ///
     ///     app.run_with_graceful_shutdown(shutdown_signal()).await;
@@ -194,7 +196,7 @@ impl Application {
     /// use sword::prelude::*;
     ///
     /// let app = Application::builder()
-    ///     .with_controller::<MyController>()
+    ///     .with_module::<MyModule>()
     ///     .build();
     ///
     /// let router = app.router();

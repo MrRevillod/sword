@@ -8,3 +8,9 @@ graceful_shutdown = false
 [my-custom-section]
 custom_key = "value"
 env_user = "${USER:default_value}"
+
+[cors]
+allow_headers = ["Content-Type", "Authorization"]
+allow_methods = ["GET", "POST", "PUT", "DELETE"]
+allow_credentials = true
+allow_origins = ["http://localhost:3000", "https://example.com"]

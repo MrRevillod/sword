@@ -1,6 +1,8 @@
 mod formatting;
 
 pub use axum_responses::http::{HttpResponse, ResponseBody};
+pub use axum_responses::{ContentDisposition, FileResponse, FileResult};
+
 pub type HttpResult = axum_responses::Result<HttpResponse>;
 
 #[cfg(feature = "validator")]

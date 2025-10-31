@@ -7,6 +7,8 @@ use axum::{
     routing::{Route, Router},
 };
 
+use crate::web::{CorsConfig, CorsLayer};
+
 use tower::{Layer, Service};
 use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 
@@ -144,6 +146,10 @@ impl ApplicationBuilder {
         router = router
             .layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer))
             .layer(RequestBodyLimitLayer::new(app_config.body_limit.parsed));
+
+        if let Ok(cors_config) = self.config.get::<CorsConfig>() {
+            router = router.layer(CorsLayer::new(&cors_config))
+        };
 
         if let Some(timeout_secs) = app_config.request_timeout_seconds {
             router =

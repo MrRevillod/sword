@@ -4,7 +4,7 @@ use byte_unit::Byte;
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Config, ConfigError, ConfigItem, State};
+use crate::core::{Config, ConfigError, ConfigItem, ConfigRegistrar, State};
 
 /// Configuration structure for the Sword application.
 ///
@@ -205,6 +205,14 @@ impl ConfigItem for ApplicationConfig {
         })
     }
 }
+
+const _: () = {
+    inventory::submit! {
+        ConfigRegistrar::new(|config, state| {
+            ApplicationConfig::register_in_state(config, state)
+        })
+    }
+};
 
 fn default_host() -> String {
     "0.0.0.0".to_string()
