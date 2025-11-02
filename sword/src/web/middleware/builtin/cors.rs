@@ -18,6 +18,7 @@ pub struct CorsConfig {
 pub struct CorsLayer {}
 
 impl CorsLayer {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(config: &CorsConfig) -> TowerCorsLayer {
         let mut layer = TowerCorsLayer::new();
 
