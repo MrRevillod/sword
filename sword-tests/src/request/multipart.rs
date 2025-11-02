@@ -44,11 +44,15 @@ impl TestController {
     }
 }
 
+struct TestModule;
+
+impl Module for TestModule {
+    type Controller = TestController;
+}
+
 #[tokio::test]
 async fn exceed_limit() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 
@@ -80,9 +84,7 @@ async fn exceed_limit() -> Result<(), Box<dyn std::error::Error>> {
 /// The effective limit is ~975KB due to multipart headers/boundaries overhead.
 #[tokio::test]
 async fn body_limit_exactly_at_limit() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 
@@ -108,9 +110,7 @@ async fn body_limit_exactly_at_limit() -> Result<(), Box<dyn std::error::Error>>
 
 #[tokio::test]
 async fn body_limit_just_under_limit() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 
@@ -136,9 +136,7 @@ async fn body_limit_just_under_limit() -> Result<(), Box<dyn std::error::Error>>
 
 #[tokio::test]
 async fn body_limit_just_over_limit() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 
@@ -169,9 +167,7 @@ async fn body_limit_just_over_limit() -> Result<(), Box<dyn std::error::Error>> 
 #[tokio::test]
 async fn body_limit_multiple_fields_exceed_limit()
 -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 
@@ -212,9 +208,7 @@ async fn body_limit_multiple_fields_exceed_limit()
 #[tokio::test]
 async fn body_limit_small_fields_within_limit()
 -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
 

@@ -69,7 +69,7 @@ impl TaskRepository {
 }
 
 #[controller("/tasks", version = "v1")]
-struct TasksController {
+pub struct TasksController {
     tasks: TasksService,
 }
 
@@ -97,22 +97,26 @@ impl TasksController {
     }
 }
 
+pub struct TasksModule;
+
+impl Module for TasksModule {
+    type Controller = TasksController;
+
+    fn register_components(c: &mut DependencyContainer) {
+        c.register_component::<TaskRepository>();
+        c.register_component::<TasksService>();
+    }
+}
+
 #[tokio::test]
 async fn test_get_tasks_empty() {
+    let mut app = Application::builder();
+
     let db = Database::new();
 
-    let container = DependencyContainer::builder()
-        .register_provider(db)
-        .register_component::<TaskRepository>()
-        .register_component::<TasksService>()
-        .build();
+    app = app.with_provider(db).with_module::<TasksModule>();
 
-    let app = Application::builder()
-        .with_dependency_container(container)
-        .with_controller::<TasksController>()
-        .build();
-
-    let server = TestServer::new(app.router()).unwrap();
+    let server = TestServer::new(app.build().router()).unwrap();
 
     let response = server.get("/v1/tasks").await;
 
@@ -127,20 +131,13 @@ async fn test_get_tasks_empty() {
 
 #[tokio::test]
 async fn test_create_task() {
+    let mut app = Application::builder();
+
     let db = Database::new();
 
-    let container = DependencyContainer::builder()
-        .register_provider(db)
-        .register_component::<TaskRepository>()
-        .register_component::<TasksService>()
-        .build();
+    app = app.with_provider(db).with_module::<TasksModule>();
 
-    let app = Application::builder()
-        .with_dependency_container(container)
-        .with_controller::<TasksController>()
-        .build();
-
-    let server = TestServer::new(app.router()).unwrap();
+    let server = TestServer::new(app.build().router()).unwrap();
 
     let response = server.post("/v1/tasks").await;
 

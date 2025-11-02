@@ -46,7 +46,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! sword = { version = "0.1.9", features = ["cookies", "multipart", "helmet"] }
+//! sword = { version = "0.2.1", features = ["cookies", "multipart", "helmet"] }
 //! ```
 //!
 //! Available features:

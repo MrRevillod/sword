@@ -1,0 +1,14 @@
+[package]
+name = "users-managment"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sword = { workspace = true, features = ["validator"] }
+serde = { workspace = true }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid"] }
+uuid = { workspace = true }
+validator = { workspace = true }
+
+dotenv = "0.15.0"
+bcrypt = "0.17.1"

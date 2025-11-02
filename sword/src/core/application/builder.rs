@@ -7,6 +7,8 @@ use axum::{
     routing::{Route, Router},
 };
 
+use crate::web::{CorsConfig, CorsLayer};
+
 use tower::{Layer, Service};
 use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 
@@ -18,62 +20,30 @@ use crate::{
     web::{ContentTypeCheck, Controller, MiddlewareRegistrar, ResponsePrettifier},
 };
 
-/// Builder for constructing a Sword application with various configuration options.
-///
-/// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
-/// before building the final `Application` instance. It allows you to register
-/// controllers, add middleware layers, configure shared state, and set up dependency injection.
-///
-/// ### Example
-///
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// #[controller]
-/// struct HomeController;
-///
-/// let app = Application::builder()
-///     .with_controller::<HomeController>()
-///     .with_layer(tower_http::cors::CorsLayer::permissive())
-///     .build();
-/// ```
-#[derive(Debug, Clone)]
 pub struct ApplicationBuilder {
-    /// The internal Axum router that handles HTTP requests.
     router: Router,
-
-    /// Shared application state for dependency injection and data sharing.
     state: State,
-
-    /// Application configuration loaded from TOML files.
     config: Config,
-
-    /// Optional URL prefix for all routes in the application.
-    prefix: Option<String>,
-
-    /// Flag to track if middlewares have been registered
-    middlewares_registered: bool,
+    controllers: Vec<fn(State) -> Router>,
+    container: DependencyContainer,
+    layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
 }
 
 impl ApplicationBuilder {
-    /// Creates a new application builder with default configuration.
-    ///
-    /// This method initializes a new builder with:
-    /// - Empty router
-    /// - Fresh state container
-    /// - Configuration loaded from `config/config.toml`
-    ///
-    /// ### Returns
-    ///
-    /// Returns `Ok(ApplicationBuilder)` if initialization succeeds, or
-    /// `Err(ApplicationError)` if configuration loading fails.
-    ///
-    /// ### Errors
-    ///
-    /// This function will return an error if:
-    /// - The configuration file cannot be found or read
-    /// - The TOML syntax is invalid
-    /// - Environment variable interpolation fails
+    // Builder for constructing a Sword application with various configuration options.
+    //
+    // `ApplicationBuilder` provides a fluent interface for configuring a Sword application
+    // before building the final `Application` instance. It allows you to register
+    // controllers, add middleware layers, configure shared state, and set up dependency injection.
+    //
+    // ### Example
+    //
+    // ```rust,ignore
+    // use sword::prelude::*;
+    //
+    // let app = Application::builder()
+    //     .build();
+    // ```
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -92,87 +62,37 @@ impl ApplicationBuilder {
             router,
             state,
             config,
-            prefix: None,
-            middlewares_registered: false,
+            controllers: Vec::new(),
+            container: DependencyContainer::builder(),
+            layers: Vec::new(),
         }
     }
 
-    /// Registers a controller in the application.
-    ///
-    /// This method adds a controller and its routes to the application's router.
-    /// Controllers must implement the `RouterProvider` trait, which is typically
-    /// done using the `#[controller]` and `#[routes]` macros.
-    ///
-    /// ### Type Parameters
-    ///
-    /// * `R` - A type implementing `RouterProvider` that defines the controller's routes
-    ///
-    /// ### Example
-    ///
-    /// ```rust,ignore
-    /// use sword::prelude::*;
-    ///
-    /// #[controller("/")]
-    /// struct HomeController;
-    ///
-    /// #[routes]
-    /// impl HomeController {
-    ///     #[get("/")]
-    ///     async fn index(&self) -> HttpResult<HttpResponse> {
-    ///         Ok(HttpResponse::Ok().message("Welcome to the Home Page"))
-    ///     }
-    /// }
-    ///
-    /// let app = Application::builder()
-    ///     .with_controller::<HomeController>()
-    ///     .build();
-    /// ```
-    pub fn with_controller<C: Controller>(mut self) -> Self {
-        if !self.middlewares_registered {
-            for MiddlewareRegistrar { register_fn } in
-                inventory::iter::<MiddlewareRegistrar>
-            {
-                (register_fn)(&self.state).expect("Failed to register middleware");
-            }
+    pub fn with_module<M>(mut self) -> Self
+    where
+        M: Module,
+    {
+        futures::executor::block_on(async {
+            M::register_providers(&self.config, &mut self.container).await;
+        });
 
-            self.middlewares_registered = true;
+        M::register_components(&mut self.container);
+
+        if M::is_controller_module() {
+            self.controllers.push(M::Controller::router);
         }
-
-        let controller_router = C::router(self.state.clone());
-        let router = self.router.clone().merge(controller_router);
 
         Self {
-            router,
+            router: self.router,
             state: self.state,
             config: self.config,
-            prefix: self.prefix,
-            middlewares_registered: self.middlewares_registered,
+            controllers: self.controllers,
+            container: self.container,
+            layers: self.layers,
         }
     }
 
-    /// Registers a middleware layer in the application.
-    ///
-    /// This method allows you to add Tower-based middleware or other layers
-    /// that implement the `Layer` trait. Layers are applied to all routes
-    /// in the application and can modify requests and responses.
-    ///
-    /// ### Arguments
-    ///
-    /// * `layer` - The middleware layer to add to the application
-    ///
-    /// ### Example
-    ///
-    /// ```rust,ignore
-    /// use sword::prelude::*;
-    /// use tower_http::cors::CorsLayer;
-    /// use tower_http::trace::TraceLayer;
-    ///
-    /// let app = Application::builder()
-    ///     .with_layer(CorsLayer::permissive())
-    ///     .with_layer(TraceLayer::new_for_http())
-    ///     .build();
-    /// ```
-    pub fn with_layer<L>(self, layer: L) -> Self
+    pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
         L::Service: Service<AxumRequest> + Clone + Send + Sync + 'static,
@@ -180,50 +100,32 @@ impl ApplicationBuilder {
         <L::Service as Service<AxumRequest>>::Error: Into<Infallible> + 'static,
         <L::Service as Service<AxumRequest>>::Future: Send + 'static,
     {
-        let router = self.router.layer(layer);
-
-        Self {
-            router,
-            state: self.state,
-            config: self.config,
-            prefix: self.prefix,
-            middlewares_registered: self.middlewares_registered,
-        }
-    }
-
-    /// Registers the provided dependency container in the application.
-    ///
-    /// Config types marked with `#[config]` are automatically registered in the state
-    /// during application initialization, so they can be injected into dependencies.
-    ///
-    /// This method adds a dependency container to the application, allowing you to
-    /// register providers and services that can be resolved later.
-    /// ```
-    pub fn with_dependency_container(self, container: DependencyContainer) -> Self {
-        container
-            .build_all(&self.state)
-            .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
+        self.layers
+            .push(Box::new(move |router| router.layer(layer.clone())));
 
         Self {
             router: self.router,
             state: self.state,
             config: self.config,
-            prefix: self.prefix,
-            middlewares_registered: self.middlewares_registered,
+            container: self.container,
+            controllers: self.controllers,
+            layers: self.layers,
         }
     }
 
-    /// Sets a URL prefix for all routes in the application.
-    ///
-    /// This method allows you to specify a common prefix that will be
-    /// applied to all routes registered in the application.
-    pub fn with_prefix<S: Into<String>>(self, prefix: S) -> Self {
+    pub fn with_provider<T>(mut self, provider: T) -> Self
+    where
+        T: Provider,
+    {
+        self.container.register_provider(provider);
+
         Self {
             router: self.router,
             state: self.state,
             config: self.config,
-            prefix: Some(prefix.into()),
-            middlewares_registered: self.middlewares_registered,
+            container: self.container,
+            controllers: self.controllers,
+            layers: self.layers,
         }
     }
 
@@ -234,25 +136,40 @@ impl ApplicationBuilder {
         self.config.get::<T>()
     }
 
-    /// Builds the final application instance.
-    ///
-    /// This method finalizes the application configuration and creates the
-    /// `Application` instance. It applies all configured middleware layers,
-    /// sets up request body limits, and prepares the application for running.
-    ///
-    /// ### Built-in Middleware
-    ///
-    /// The following middleware is automatically applied:
-    /// - Content-Type validation middleware
-    /// - Request body size limiting middleware
-    /// - Cookie management layer (if `cookies` feature is enabled)
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
+
     pub fn build(self) -> Application {
         let mut router = self.router.clone();
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
 
+        self.container
+            .build_all(&self.state)
+            .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
+
+        for MiddlewareRegistrar { register_fn } in
+            inventory::iter::<MiddlewareRegistrar>
+        {
+            (register_fn)(&self.state).expect("Failed to register middleware");
+        }
+
+        for controller_router_fn in self.controllers {
+            let controller = controller_router_fn(self.state.clone());
+            router = router.merge(controller);
+        }
+
+        for layer_fn in self.layers {
+            router = layer_fn(router);
+        }
+
         router = router
             .layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer))
             .layer(RequestBodyLimitLayer::new(app_config.body_limit.parsed));
+
+        if let Ok(cors_config) = self.config.get::<CorsConfig>() {
+            router = router.layer(CorsLayer::new(&cors_config))
+        };
 
         if let Some(timeout_secs) = app_config.request_timeout_seconds {
             router =
@@ -267,8 +184,8 @@ impl ApplicationBuilder {
         router = router
             .layer(mw_with_state(self.state.clone(), ResponsePrettifier::layer));
 
-        if let Some(prefix) = &self.prefix {
-            router = Router::new().nest(prefix, router);
+        if let Some(prefix) = app_config.global_prefix {
+            router = Router::new().nest(&prefix, router);
         }
 
         Application::new(router, self.config)

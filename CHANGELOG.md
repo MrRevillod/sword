@@ -5,12 +5,15 @@
 ### Added
 
 - New `next()` method on `Request` struct. See `Changed` section for more details.
+- Added `Module` trait for creating and registering controllers and injectables as a modules.
 
 ### Changed
 
 - The `next!` macro has been removed. Instead, use the `req.next().await` method to pass control to the next middleware or handler in the chain. This change removes the need for a macro to do "magic" and makes the code more explicit and easier to understand.
 
 - Middleware structs marked with `#[middleware]` macro now can omit the `next` parameter in their methods. Instead, they can call `req.next().await` to pass control to the next middleware or handler.
+
+- The global router prefix was moved from `Application` struct to `Config` struct. Now, you can set the global prefix in the configuration file under the `application` key with `global_prefix` field.
 
 
 ## [0.2.0]

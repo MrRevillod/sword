@@ -12,4 +12,5 @@ pub(crate) mod content_type;
 #[cfg(feature = "helmet")]
 pub mod helmet;
 
+pub mod cors;
 pub(crate) mod prettifier;
