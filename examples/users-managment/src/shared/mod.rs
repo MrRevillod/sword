@@ -1,4 +1,5 @@
 pub mod database;
+pub mod errors;
 pub mod hasher;
 
 pub use database::*;
@@ -18,7 +19,12 @@ impl Module for SharedModule {
         let db_config = config.get::<DatabaseConfig>().unwrap();
         let hasher_config = config.get::<HasherConfig>().unwrap();
 
-        container.register_provider(Database::new(db_config).await);
+        container.register_provider(
+            Database::new(db_config)
+                .await
+                .expect("Failed to create Database provider"),
+        );
+
         container.register_provider(Hasher::new(&hasher_config));
     }
 }

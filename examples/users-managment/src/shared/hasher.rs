@@ -2,6 +2,8 @@ use bcrypt::hash;
 use serde::Deserialize;
 use sword::prelude::*;
 
+use crate::shared::errors::AppResult;
+
 #[derive(Clone, Deserialize)]
 #[config(key = "hasher")]
 pub struct HasherConfig {
@@ -18,7 +20,7 @@ impl Hasher {
         Self { cost: config.cost }
     }
 
-    pub fn hash(&self, password: &str) -> Result<String, bcrypt::BcryptError> {
-        hash(password, self.cost)
+    pub fn hash(&self, password: &str) -> AppResult<String> {
+        Ok(hash(password, self.cost)?)
     }
 }

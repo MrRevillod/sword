@@ -1,5 +1,5 @@
 use super::entity::User;
-use crate::shared::database::Database;
+use crate::shared::{database::Database, errors::AppResult};
 
 use std::sync::Arc;
 use sword::core::injectable;
@@ -11,40 +11,49 @@ pub struct UserRepository {
 }
 
 impl UserRepository {
-    pub async fn find_by_id(&self, id: &Uuid) -> Option<User> {
-        sqlx::query_as::<_, User>(
-            "SELECT id, username, password FROM users WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.db.get_pool())
-        .await
-        .expect("Failed to fetch user")
+    pub async fn find_by_id(&self, id: &Uuid) -> AppResult<Option<User>> {
+        let result = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.db.get_pool())
+            .await?;
+
+        Ok(result)
     }
 
-    pub async fn find_all(&self) -> Vec<User> {
-        sqlx::query_as::<_, User>("SELECT id, username, password FROM users")
+    pub async fn find_all(&self) -> AppResult<Vec<User>> {
+        let result = sqlx::query_as::<_, User>("SELECT * FROM users")
             .fetch_all(self.db.get_pool())
-            .await
-            .expect("Failed to fetch users")
+            .await?;
+
+        Ok(result)
     }
 
-    pub async fn create(&self, user: &User) {
+    pub async fn save(&self, user: &User) -> AppResult<()> {
         sqlx::query(
-            "INSERT INTO users (id, username, password) VALUES ($1, $2, $3)",
+            r#"
+            INSERT INTO users (id, username, password) 
+            VALUES ($1, $2, $3) 
+            ON CONFLICT (id) 
+            DO UPDATE SET 
+                username = EXCLUDED.username, 
+                password = EXCLUDED.password
+        "#,
         )
         .bind(user.id)
         .bind(&user.username)
         .bind(&user.password)
         .execute(self.db.get_pool())
-        .await
-        .expect("Failed to insert user");
+        .await?;
+
+        Ok(())
     }
 
-    pub async fn delete(&self, id: &Uuid) {
+    pub async fn delete(&self, id: &Uuid) -> AppResult<()> {
         sqlx::query("DELETE FROM users WHERE id = $1")
             .bind(id)
             .execute(self.db.get_pool())
-            .await
-            .expect("Failed to delete user");
+            .await?;
+
+        Ok(())
     }
 }

@@ -3017,6 +3017,7 @@ dependencies = [
  "serde",
  "sqlx",
  "sword",
+ "thiserror",
  "uuid",
  "validator",
 ]
