@@ -1,3 +1,4 @@
+#[cfg(feature = "validator")]
 mod formatting;
 
 pub use axum_responses::http::{HttpResponse, ResponseBody};
@@ -36,11 +37,6 @@ impl From<RequestError> for HttpResponse {
 
             RequestError::UnsupportedMediaType(message) => {
                 HttpResponse::UnsupportedMediaType().message(message)
-            }
-
-            RequestError::InternalError(message) => {
-                eprintln!("Internal server error: {message}");
-                HttpResponse::InternalServerError().message("Internal server error")
             }
         }
     }
@@ -87,13 +83,8 @@ impl From<DependencyInjectionError> for HttpResponse {
 impl From<ConfigError> for HttpResponse {
     fn from(error: ConfigError) -> Self {
         match error {
-            ConfigError::DeserializeError(message) => {
-                eprintln!("Configuration error: {message}");
-                HttpResponse::InternalServerError().message("Configuration error")
-            }
             ConfigError::KeyNotFound(key) => {
-                let message = format!("Key '{key}' not found in configuration");
-                eprintln!("{message}");
+                eprintln!("{}", format!("Key '{key}' not found in configuration"));
                 HttpResponse::InternalServerError().message("Configuration error")
             }
 

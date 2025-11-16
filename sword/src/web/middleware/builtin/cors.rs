@@ -4,7 +4,7 @@ use axum::http::HeaderValue;
 use serde::Deserialize;
 use tower_http::cors::CorsLayer as TowerCorsLayer;
 
-use crate::core::{Config, ConfigError, ConfigItem, ConfigRegistrar, State};
+use crate::core::{ConfigItem, ConfigRegistrar};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct CorsConfig {
@@ -68,14 +68,5 @@ const _: () = {
 impl ConfigItem for CorsConfig {
     fn toml_key() -> &'static str {
         "cors"
-    }
-
-    fn register_in_state(config: &Config, state: &State) -> Result<(), ConfigError> {
-        state.insert(config.get::<Self>()?).map_err(|_| {
-            ConfigError::ParseError(format!(
-                "Failed to register config '{}' in state",
-                Self::toml_key()
-            ))
-        })
     }
 }

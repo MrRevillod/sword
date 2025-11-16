@@ -13,4 +13,3 @@ pub(crate) mod content_type;
 pub mod helmet;
 
 pub mod cors;
-pub(crate) mod prettifier;

@@ -3,13 +3,14 @@ use std::{convert::Infallible, time::Duration};
 use axum::{
     extract::Request as AxumRequest,
     middleware::from_fn_with_state as mw_with_state,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{Route, Router},
 };
 
 use crate::web::{CorsConfig, CorsLayer};
+use axum_responses::http::HttpResponse;
 
-use tower::{Layer, Service};
+use tower::{Layer, Service, ServiceBuilder};
 use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
 
 #[cfg(feature = "cookies")]
@@ -17,7 +18,7 @@ use tower_cookies::CookieManagerLayer;
 
 use crate::{
     core::*,
-    web::{ContentTypeCheck, Controller, MiddlewareRegistrar, ResponsePrettifier},
+    web::{ContentTypeCheck, Controller, MiddlewareRegistrar},
 };
 
 pub struct ApplicationBuilder {
@@ -30,20 +31,11 @@ pub struct ApplicationBuilder {
 }
 
 impl ApplicationBuilder {
-    // Builder for constructing a Sword application with various configuration options.
-    //
-    // `ApplicationBuilder` provides a fluent interface for configuring a Sword application
-    // before building the final `Application` instance. It allows you to register
-    // controllers, add middleware layers, configure shared state, and set up dependency injection.
-    //
-    // ### Example
-    //
-    // ```rust,ignore
-    // use sword::prelude::*;
-    //
-    // let app = Application::builder()
-    //     .build();
-    // ```
+    /// Builder for constructing a Sword application with various configuration options.
+    ///
+    /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
+    /// before building the final `Application` instance. It allows you to register
+    /// controllers, add middleware layers, configure shared state, and set up dependency injection.
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -140,10 +132,74 @@ impl ApplicationBuilder {
         &self.config
     }
 
-    pub fn build(self) -> Application {
+    fn build_router(&self) -> Router {
         let mut router = self.router.clone();
+
+        // Merge all the "controllers" routers into the main router
+        // In fact, controllers are just functions that return a Router
+        for controller in &self.controllers {
+            let controller = controller(self.state.clone());
+            router = router.merge(controller);
+        }
+
+        // Apply all the layers setted via `with_layer` method
+        for layer_fn_applier in &self.layers {
+            router = layer_fn_applier(router);
+        }
+
+        router =
+            router.layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer));
+
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
 
+        let request_body_limit_service = ServiceBuilder::new()
+            .layer(RequestBodyLimitLayer::new(app_config.body_limit.parsed))
+            .map_response(|r: Response| {
+                if r.status().as_u16() != 413 {
+                    return r;
+                }
+
+                HttpResponse::PayloadTooLarge()
+                    .message("The request body exceeds the maximum allowed size by the server")
+                    .into_response()
+            });
+
+        router = router.layer(request_body_limit_service);
+
+        if let Some(timeout_secs) = app_config.request_timeout_seconds {
+            let timeout_service = ServiceBuilder::new()
+                .layer(TimeoutLayer::new(Duration::from_secs(timeout_secs)));
+
+            let timeout_response_layer =
+                ServiceBuilder::new().map_response(|res: Response| {
+                    if res.status().as_u16() == 408 {
+                        return HttpResponse::RequestTimeout().into_response();
+                    }
+
+                    res
+                });
+
+            router = router.layer(timeout_service);
+            router = router.layer(timeout_response_layer);
+        }
+
+        if let Ok(cors_config) = self.config.get::<CorsConfig>() {
+            router = router.layer(CorsLayer::new(&cors_config))
+        };
+
+        #[cfg(feature = "cookies")]
+        {
+            router = router.layer(CookieManagerLayer::new());
+        }
+
+        if let Some(prefix) = app_config.global_prefix {
+            router = Router::new().nest(&prefix, router);
+        }
+
+        router
+    }
+
+    pub fn build(self) -> Application {
         self.container
             .build_all(&self.state)
             .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
@@ -154,39 +210,7 @@ impl ApplicationBuilder {
             (register_fn)(&self.state).expect("Failed to register middleware");
         }
 
-        for controller_router_fn in self.controllers {
-            let controller = controller_router_fn(self.state.clone());
-            router = router.merge(controller);
-        }
-
-        for layer_fn in self.layers {
-            router = layer_fn(router);
-        }
-
-        router = router
-            .layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer))
-            .layer(RequestBodyLimitLayer::new(app_config.body_limit.parsed));
-
-        if let Ok(cors_config) = self.config.get::<CorsConfig>() {
-            router = router.layer(CorsLayer::new(&cors_config))
-        };
-
-        if let Some(timeout_secs) = app_config.request_timeout_seconds {
-            router =
-                router.layer(TimeoutLayer::new(Duration::from_secs(timeout_secs)));
-        }
-
-        #[cfg(feature = "cookies")]
-        {
-            router = router.layer(CookieManagerLayer::new());
-        }
-
-        router = router
-            .layer(mw_with_state(self.state.clone(), ResponsePrettifier::layer));
-
-        if let Some(prefix) = app_config.global_prefix {
-            router = Router::new().nest(&prefix, router);
-        }
+        let router = self.build_router();
 
         Application::new(router, self.config)
     }
