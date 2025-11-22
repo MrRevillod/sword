@@ -1,6 +1,6 @@
 use axum_test::TestServer;
+use sword::core::helmet::*;
 use sword::prelude::*;
-use sword::web::helmet::*;
 
 #[controller("/test")]
 struct HelmetTestController;

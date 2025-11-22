@@ -1,16 +1,7 @@
-mod builtin;
 mod registrar;
 
-use axum::response::Response as AxumResponse;
-
-#[cfg(feature = "helmet")]
-pub use builtin::helmet;
-
-pub use builtin::cors::{CorsConfig, CorsLayer};
-
-pub(crate) use builtin::content_type::ContentTypeCheck;
-
 pub use axum::middleware::Next;
+use axum::response::Response as AxumResponse;
 
 #[doc(hidden)]
 pub use registrar::MiddlewareRegistrar;

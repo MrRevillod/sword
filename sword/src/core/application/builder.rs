@@ -1,24 +1,24 @@
-use std::{convert::Infallible, time::Duration};
+use std::convert::Infallible;
 
 use axum::{
     extract::Request as AxumRequest,
     middleware::from_fn_with_state as mw_with_state,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     routing::{Route, Router},
 };
 
-use crate::web::{CorsConfig, CorsLayer};
-use axum_responses::http::HttpResponse;
+use crate::core::middlewares::{
+    BodyLimitLayer, LimitsMiddlewareConfig, TimeoutLayer,
+};
 
-use tower::{Layer, Service, ServiceBuilder};
-use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer};
+use tower::{Layer, Service};
 
 #[cfg(feature = "cookies")]
 use tower_cookies::CookieManagerLayer;
 
 use crate::{
     core::*,
-    web::{ContentTypeCheck, Controller, MiddlewareRegistrar},
+    web::{Controller, MiddlewareRegistrar},
 };
 
 pub struct ApplicationBuilder {
@@ -151,36 +151,15 @@ impl ApplicationBuilder {
             router.layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer));
 
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
+        let limits_config = self.config.get::<LimitsMiddlewareConfig>().unwrap();
 
-        let request_body_limit_service = ServiceBuilder::new()
-            .layer(RequestBodyLimitLayer::new(app_config.body_limit.parsed))
-            .map_response(|r: Response| {
-                if r.status().as_u16() != 413 {
-                    return r;
-                }
+        router = router.layer(BodyLimitLayer::new(limits_config.body.parsed));
 
-                HttpResponse::PayloadTooLarge()
-                    .message("The request body exceeds the maximum allowed size by the server")
-                    .into_response()
-            });
-
-        router = router.layer(request_body_limit_service);
-
-        if let Some(timeout_secs) = app_config.request_timeout_seconds {
-            let timeout_service = ServiceBuilder::new()
-                .layer(TimeoutLayer::new(Duration::from_secs(timeout_secs)));
-
-            let timeout_response_layer =
-                ServiceBuilder::new().map_response(|res: Response| {
-                    if res.status().as_u16() == 408 {
-                        return HttpResponse::RequestTimeout().into_response();
-                    }
-
-                    res
-                });
+        if let Some(timeout_secs) = limits_config.request_timeout {
+            let (timeout_service, response_mapper) = TimeoutLayer::new(timeout_secs);
 
             router = router.layer(timeout_service);
-            router = router.layer(timeout_response_layer);
+            router = router.layer(response_mapper);
         }
 
         if let Ok(cors_config) = self.config.get::<CorsConfig>() {

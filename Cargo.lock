@@ -764,6 +764,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
+name = "duration-str"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9add086174f60bcbcfde7175e71dcfd99da24dfd12f611d0faf74f4f26e15a06"
+dependencies = [
+ "chrono",
+ "rust_decimal",
+ "serde",
+ "thiserror",
+ "time",
+ "winnow",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2572,6 +2586,7 @@ dependencies = [
  "bytes",
  "colored",
  "dioxus-devtools",
+ "duration-str",
  "form_urlencoded",
  "futures",
  "http-body-util",
@@ -2589,6 +2604,7 @@ dependencies = [
  "tower",
  "tower-cookies",
  "tower-http",
+ "tower-layer",
  "validator",
 ]
 
