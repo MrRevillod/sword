@@ -6,6 +6,7 @@ use crate::{
     web::{Controller, ControllerBuilder},
 };
 
+#[derive(Debug, Clone)]
 pub struct NonControllerModule;
 
 impl Controller for NonControllerModule {
@@ -15,8 +16,7 @@ impl Controller for NonControllerModule {
 }
 
 impl Build for NonControllerModule {
-    type Error = DependencyInjectionError;
-    fn build(_: &State) -> Result<Self, Self::Error>
+    fn build(_: &State) -> Result<Self, DependencyInjectionError>
     where
         Self: Sized,
     {

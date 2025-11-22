@@ -7,7 +7,7 @@ use axum::response::Response as AxumResponse;
 pub use registrar::MiddlewareRegistrar;
 pub use sword_macros::{middleware, uses};
 
-use crate::core::{Clonable, DependencyInjectionError};
+use crate::core::Build;
 use crate::web::{HttpResponse, Request};
 use std::future::Future;
 
@@ -36,7 +36,7 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 ///     }
 /// }
 /// ```
-pub trait Middleware: Clonable<Error = DependencyInjectionError> {}
+pub trait Middleware: Build {}
 
 /// Trait for middlewares that handle requests
 ///

@@ -7,15 +7,6 @@ use crate::core::{ConfigItem, ConfigRegistrar};
 ///
 /// This struct contains all the configuration options that can be specified
 /// in the `config/config.toml` file under the `[application]` section.
-///
-/// ### Configuration File Example
-///
-/// ```toml,ignore
-/// [application]
-/// host = "127.0.0.1"
-/// port = 3000
-/// graceful_shutdown = true
-/// ```
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ApplicationConfig {
     /// The hostname or IP address to bind the server to.
@@ -52,7 +43,6 @@ pub struct ApplicationConfig {
 impl ApplicationConfig {
     pub fn display(&self) {
         let banner_top = "▪──────────────── ⚔ S W O R D ⚔ ──────────────▪".white();
-        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
 
         println!("\n{}", banner_top);
 
@@ -74,8 +64,6 @@ impl ApplicationConfig {
         if let Some(env) = &self.environment {
             println!("Environment: {}", env.bright_blue());
         }
-
-        println!("{}", banner_bot);
     }
 }
 

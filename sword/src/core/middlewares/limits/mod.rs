@@ -2,11 +2,11 @@ mod body;
 mod timeout;
 
 use crate::core::{ConfigItem, ConfigRegistrar};
+use colored::Colorize;
+use serde::{Deserialize, Serialize};
 
 pub(crate) use body::{BodyLimit, BodyLimitLayer};
 pub(crate) use timeout::{TimeoutLayer, TimeoutLimit};
-
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct LimitsMiddlewareConfig {
@@ -19,6 +19,26 @@ pub struct LimitsMiddlewareConfig {
     /// Optional request timeout in seconds.
     /// If not specified, no timeout is applied.
     pub request_timeout: Option<TimeoutLimit>,
+}
+
+impl LimitsMiddlewareConfig {
+    pub fn display(&self) {
+        let banner_top = "▪─────────────── ⚔ L I M I T S ⚔ ─────────────▪".white();
+        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
+
+        println!();
+        println!("{banner_top}");
+
+        println!("Max Body Size: {}", self.body.raw.bright_green());
+
+        if let Some(timeout) = &self.request_timeout {
+            println!("Request Timeout: {}", timeout.raw.bright_green());
+        } else {
+            println!("Request Timeout: {}", "none".bright_yellow());
+        }
+
+        println!("{banner_bot}");
+    }
 }
 
 impl ConfigItem for LimitsMiddlewareConfig {

@@ -15,7 +15,7 @@ pub struct CorsConfig {
     pub max_age: Option<u64>,
 }
 
-pub struct CorsLayer;
+pub(crate) struct CorsLayer;
 
 impl CorsLayer {
     #[allow(clippy::new_ret_no_self)]

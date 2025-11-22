@@ -1,4 +1,4 @@
-use crate::core::{DependencyInjectionError, HasDeps, State};
+use crate::core::{HasDeps, State};
 use axum::Router as AxumRouter;
 
 pub use sword_macros::{controller, delete, get, patch, post, put, routes};
@@ -32,7 +32,7 @@ pub trait Controller: ControllerBuilder {
 ///     }
 /// }
 /// ```
-pub trait ControllerBuilder: HasDeps<Error = DependencyInjectionError> {
+pub trait ControllerBuilder: HasDeps {
     fn base_path() -> &'static str;
     fn apply_middlewares(router: AxumRouter, state: State) -> AxumRouter;
 }

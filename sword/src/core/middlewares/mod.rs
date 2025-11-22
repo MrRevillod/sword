@@ -6,8 +6,8 @@ pub mod helmet;
 mod limits;
 
 pub(crate) use content_type::ContentTypeCheck;
-pub(crate) use cors::*;
-pub(crate) use limits::*;
+pub use cors::*;
+pub use limits::*;
 
 use axum::{body::Body, http::Response};
 

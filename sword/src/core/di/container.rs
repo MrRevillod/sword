@@ -6,7 +6,7 @@ use std::{
 
 use crate::core::{
     Component, Provider, State,
-    di::{Dependency, DependencyBuilder, DependencyInjectionError},
+    di::{Dependency, DependencyBuilderFn, DependencyInjectionError},
 };
 
 /// A container for managing dependencies and their builders.
@@ -26,7 +26,7 @@ use crate::core::{
 /// their dependencies automatically.
 pub struct DependencyContainer {
     pub(crate) instances: HashMap<TypeId, Dependency>,
-    pub(crate) dependency_builders: HashMap<TypeId, DependencyBuilder>,
+    pub(crate) dependency_builders: HashMap<TypeId, DependencyBuilderFn>,
     pub(crate) dependency_graph: HashMap<TypeId, Vec<TypeId>>,
 }
 
@@ -136,7 +136,7 @@ impl DependencyContainer {
 
         if visiting.contains(type_id) {
             return Err(DependencyInjectionError::CircularDependency {
-                type_name: std::any::type_name::<()>().to_string(),
+                type_name: type_name::<()>().to_string(),
             });
         }
 

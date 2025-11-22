@@ -1,6 +1,6 @@
 use crate::web::*;
 
-pub struct ContentTypeCheck;
+pub(crate) struct ContentTypeCheck;
 
 impl ContentTypeCheck {
     pub async fn layer(mut req: Request, next: Next) -> MiddlewareResult {

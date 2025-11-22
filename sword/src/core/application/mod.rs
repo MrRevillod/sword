@@ -8,7 +8,7 @@ use axum::routing::Router;
 use axum_responses::http::HttpResponse;
 use tokio::net::TcpListener;
 
-use crate::core::Config;
+use crate::core::{Config, LimitsMiddlewareConfig};
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -110,10 +110,20 @@ impl Application {
     }
 
     async fn build_listener(&self) -> TcpListener {
-        let ApplicationConfig { host, port, .. } = self
+        let app_config = self
             .config
             .get::<ApplicationConfig>()
             .expect("Failed to get application config");
+
+        let limits_config = self
+            .config
+            .get::<LimitsMiddlewareConfig>()
+            .expect("Failed to get limits middleware config");
+
+        app_config.display();
+        limits_config.display();
+
+        let ApplicationConfig { host, port, .. } = app_config;
 
         TcpListener::bind(&format!("{host}:{port}"))
             .await

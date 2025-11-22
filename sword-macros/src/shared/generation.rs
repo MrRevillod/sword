@@ -95,19 +95,13 @@ pub fn generate_field_assignments(fields: &[(Ident, Type)]) -> TokenStream {
 ///
 /// The generated code extracts dependencies from the State and uses them to
 /// construct the component instance.
-pub fn gen_build(
-    name: &Ident,
-    fields: &[(Ident, Type)],
-    error_type: &TokenStream,
-) -> TokenStream {
+pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let extracts = generate_field_extractions(fields);
     let assigns = generate_field_assignments(fields);
 
     quote! {
         impl ::sword::core::Build for #name {
-            type Error = #error_type;
-
-            fn build(state: &::sword::core::State) -> Result<Self, Self::Error>
+            fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError>
             where
                 Self: Sized,
             {

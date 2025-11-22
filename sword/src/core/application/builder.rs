@@ -35,7 +35,7 @@ impl ApplicationBuilder {
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
-    /// controllers, add middleware layers, configure shared state, and set up dependency injection.
+    /// modules, add middleware layers, and set up dependency injection.
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -58,6 +58,10 @@ impl ApplicationBuilder {
         }
     }
 
+    /// Register a module with the application builder.
+    ///
+    /// Can be used with any type that implements the `Module` trait. No matter if the module
+    /// has controllers or not, this method will handle both cases.
     pub fn with_module<M>(mut self) -> Self
     where
         M: Module,
@@ -82,6 +86,9 @@ impl ApplicationBuilder {
         }
     }
 
+    /// Adds a `tower::Layer` to the application builder.
+    /// This method is equivalent to Axum's `Router::layer` method, allowing you to
+    /// apply middleware layers to the application's router.
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
@@ -103,6 +110,10 @@ impl ApplicationBuilder {
         }
     }
 
+    /// Register a provider with the application's dependency injection container.
+    ///
+    /// This method can be used to add providers directly to the container, avoiding the need
+    /// to create a full module when only a provider is needed.
     pub fn with_provider<T>(mut self, provider: T) -> Self
     where
         T: Provider,
@@ -165,6 +176,9 @@ impl ApplicationBuilder {
         router
     }
 
+    /// Build the `Application` instance with the configured options.
+    /// This method ends the builder pattern and constructs the final `Application`
+    /// instance ready to run.
     pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)
