@@ -161,4 +161,10 @@ impl DependencyContainer {
 
         Ok(())
     }
+
+    pub(crate) fn clear(&mut self) {
+        self.instances.clear();
+        self.dependency_builders.clear();
+        self.dependency_graph.clear();
+    }
 }
