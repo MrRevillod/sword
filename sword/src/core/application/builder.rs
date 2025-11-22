@@ -165,10 +165,10 @@ impl ApplicationBuilder {
         router
     }
 
-    pub fn build(self) -> Application {
+    pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)
-            .unwrap_or_else(|e| panic!("Failed to build dependencies: {e}"));
+            .expect("Failed to build dependency injection container");
 
         for MiddlewareRegistrar { register_fn } in
             inventory::iter::<MiddlewareRegistrar>
@@ -177,6 +177,10 @@ impl ApplicationBuilder {
         }
 
         let router = self.build_router();
+
+        self.layers.clear();
+        self.controllers.clear();
+        self.container.clear();
 
         Application::new(router, self.config)
     }

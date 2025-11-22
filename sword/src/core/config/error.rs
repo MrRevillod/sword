@@ -5,8 +5,11 @@ pub enum ConfigError {
     #[error("Configuration file not found at config/config.toml")]
     FileNotFound,
 
-    #[error("Failed to read configuration file: {0}")]
-    ReadError(std::io::Error),
+    #[error("Failed to read configuration file: {source}")]
+    ReadError {
+        #[from]
+        source: std::io::Error,
+    },
 
     #[error("Failed to interpolate environment variables in configuration: {0}")]
     InterpolationError(String),

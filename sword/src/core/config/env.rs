@@ -1,7 +1,7 @@
 use regex_lite::Regex;
 use std::env;
 
-pub fn expand_env_vars(content: &str) -> Result<String, String> {
+pub fn expand_env_variables(content: &str) -> Result<String, String> {
     let re = Regex::new(r"\$\{([A-Za-z_][A-Za-z0-9_]*):?([^}]*)\}")
         .map_err(|e| format!("Regex error: {e}"))?;
 

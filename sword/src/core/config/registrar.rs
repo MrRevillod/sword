@@ -21,7 +21,7 @@ inventory::collect!(ConfigRegistrar);
 /// Trait for configuration section types.
 ///
 /// Types implementing this trait can be used with `Config::get()` to extract
-/// and deserialize specific sections from the configuration file.
+/// and deserialize specific sections from the configuration table.
 ///
 /// Use the `#[config(key = "section_name")]` macro to automatically implement this trait.
 /// The macro will also auto-register the config type using the `inventory` crate.

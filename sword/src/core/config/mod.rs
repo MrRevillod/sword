@@ -2,7 +2,7 @@ mod env;
 mod error;
 mod registrar;
 
-use env::expand_env_vars;
+use env::expand_env_variables;
 use serde::de::{DeserializeOwned, IntoDeserializer};
 use std::{env::current_exe, fs, path::Path, str::FromStr, sync::Arc};
 use toml::{Table, Value};
@@ -18,25 +18,10 @@ pub struct Config {
 
 impl Config {
     pub(crate) fn new() -> Result<Self, ConfigError> {
-        let path = Path::new("config/config.toml");
+        let content = Self::load_config_file()?;
 
-        let content = if path.exists() {
-            fs::read_to_string(path).map_err(ConfigError::ReadError)?
-        } else {
-            let exe_path = current_exe().map_err(|_| ConfigError::FileNotFound)?;
-            let exe_dir = exe_path.parent().ok_or(ConfigError::FileNotFound)?;
-
-            let fallback_path = exe_dir.join("config/config.toml");
-
-            if !fallback_path.exists() {
-                return Err(ConfigError::FileNotFound);
-            }
-
-            fs::read_to_string(fallback_path).map_err(ConfigError::ReadError)?
-        };
-
-        let expanded =
-            expand_env_vars(&content).map_err(ConfigError::InterpolationError)?;
+        let expanded = expand_env_variables(&content)
+            .map_err(ConfigError::InterpolationError)?;
 
         Ok(Self {
             inner: Arc::new(Table::from_str(&expanded)?),
@@ -46,13 +31,13 @@ impl Config {
     /// Retrieves and deserializes a configuration section.
     ///
     /// This method extracts a specific section from the loaded TOML configuration
-    /// and deserializes it to the specified type. The type must implement both
+    /// and deserializes it to the specified type.
+    ///
+    /// The `T` type must implement both
     /// `DeserializeOwned` for parsing and `ConfigItem` to specify which section
     /// to load from.
     ///
-    /// ### Type Parameters
-    ///
-    /// * `T` - The configuration type to deserialize (must implement `DeserializeOwned`)
+    /// The `ConfigItem` is implemented using the `#[config(key = "section_name")]` macro
     pub fn get<T: DeserializeOwned + ConfigItem>(&self) -> Result<T, ConfigError> {
         let key = T::toml_key();
 
@@ -63,5 +48,28 @@ impl Config {
         let value = Value::into_deserializer(config_item);
 
         Ok(T::deserialize(value)?)
+    }
+
+    fn load_config_file() -> Result<String, ConfigError> {
+        let primary_path = Path::new("config/config.toml");
+
+        if primary_path.exists() {
+            return Ok(fs::read_to_string(primary_path)?);
+        }
+
+        Self::load_from_exe_directory()
+    }
+
+    fn load_from_exe_directory() -> Result<String, ConfigError> {
+        let exe_path = current_exe().map_err(|_| ConfigError::FileNotFound)?;
+        let exe_dir = exe_path.parent().ok_or(ConfigError::FileNotFound)?;
+
+        let fallback_path = exe_dir.join("config/config.toml");
+
+        if !fallback_path.exists() {
+            return Err(ConfigError::FileNotFound);
+        }
+
+        Ok(fs::read_to_string(fallback_path)?)
     }
 }
