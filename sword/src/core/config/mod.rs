@@ -1,9 +1,11 @@
+mod env;
 mod error;
 mod registrar;
 
+use env::expand_env_vars;
 use serde::de::{DeserializeOwned, IntoDeserializer};
-use std::{env, fs, path::Path, str::FromStr, sync::Arc};
-use toml::Table;
+use std::{env::current_exe, fs, path::Path, str::FromStr, sync::Arc};
+use toml::{Table, Value};
 
 pub use error::ConfigError;
 pub use registrar::*;
@@ -21,8 +23,7 @@ impl Config {
         let content = if path.exists() {
             fs::read_to_string(path).map_err(ConfigError::ReadError)?
         } else {
-            let exe_path =
-                env::current_exe().map_err(|_| ConfigError::FileNotFound)?;
+            let exe_path = current_exe().map_err(|_| ConfigError::FileNotFound)?;
             let exe_dir = exe_path.parent().ok_or(ConfigError::FileNotFound)?;
 
             let fallback_path = exe_dir.join("config/config.toml");
@@ -34,8 +35,8 @@ impl Config {
             fs::read_to_string(fallback_path).map_err(ConfigError::ReadError)?
         };
 
-        let expanded = crate::core::utils::expand_env_vars(&content)
-            .map_err(ConfigError::InterpolationError)?;
+        let expanded =
+            expand_env_vars(&content).map_err(ConfigError::InterpolationError)?;
 
         Ok(Self {
             inner: Arc::new(Table::from_str(&expanded)?),
@@ -59,7 +60,7 @@ impl Config {
             return Err(ConfigError::KeyNotFound(key.to_owned()));
         };
 
-        let value = toml::Value::into_deserializer(config_item);
+        let value = Value::into_deserializer(config_item);
 
         Ok(T::deserialize(value)?)
     }

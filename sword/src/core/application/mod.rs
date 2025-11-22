@@ -8,7 +8,7 @@ use axum::routing::Router;
 use axum_responses::http::HttpResponse;
 use tokio::net::TcpListener;
 
-use crate::core::{Config, ConfigError, ConfigItem};
+use crate::core::Config;
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -17,7 +17,7 @@ use crate::core::{Config, ConfigError, ConfigItem};
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
     router: Router,
-    config: Config,
+    pub config: Config,
 }
 
 impl Application {
@@ -107,17 +107,6 @@ impl Application {
     /// with other Axum-based systems.
     pub fn router(&self) -> Router {
         self.router.clone()
-    }
-
-    pub fn config<T>(&self) -> Result<T, ConfigError>
-    where
-        T: ConfigItem,
-    {
-        self.config.get::<T>()
-    }
-
-    pub fn get_config(&self) -> &Config {
-        &self.config
     }
 
     async fn build_listener(&self) -> TcpListener {

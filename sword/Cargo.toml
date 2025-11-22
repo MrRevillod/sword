@@ -51,7 +51,6 @@ dioxus-devtools = { version = "0.7.0", features = ["serve"], optional = true }
 tower-layer = "0.3.3"
 duration-str = "0.17.0"
 
-
 [features]
 default = []
 

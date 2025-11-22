@@ -5,7 +5,7 @@ graceful_shutdown = false
 
 [limits]
 body = "1MB"
-request_timeout = 2
+request_timeout = "2s"
 
 [my-custom-section]
 custom_key = "value"

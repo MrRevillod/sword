@@ -16,26 +16,16 @@ use crate::core::{ConfigItem, ConfigRegistrar};
 /// port = 3000
 /// graceful_shutdown = true
 /// ```
-///
-/// ### Environment Variable Interpolation
-///
-/// Configuration values support environment variable interpolation:
-///
-/// ```toml,ignore
-/// [application]
-/// host = "${HOST:127.0.0.1}"
-/// port = "${PORT:3000}"
-/// ```
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ApplicationConfig {
     /// The hostname or IP address to bind the server to.
     /// Defaults to "0.0.0.0" if not specified.
-    #[serde(default = "default_host")]
+    #[serde(default)]
     pub host: String,
 
     /// The port number to bind the server to.
     /// Defaults to 8000 if not specified.
-    #[serde(default = "default_port")]
+    #[serde(default)]
     pub port: u16,
 
     /// Whether to enable graceful shutdown of the server.
@@ -44,7 +34,7 @@ pub struct ApplicationConfig {
     ///
     /// If you want to use a custom signal handler, you can disable this
     /// and implement your own signal with the `run_with_graceful_shutdown` method.
-    #[serde(default = "default_graceful_shutdown")]
+    #[serde(default)]
     pub graceful_shutdown: bool,
 
     /// Optional name of the application.
@@ -55,6 +45,7 @@ pub struct ApplicationConfig {
     /// This can be used to alter behavior based on the environment.
     pub environment: Option<String>,
 
+    /// Optional global prefix for all routes.
     pub global_prefix: Option<String>,
 }
 
@@ -110,14 +101,15 @@ const _: () = {
     }
 };
 
-fn default_host() -> String {
-    "0.0.0.0".to_string()
-}
-
-fn default_port() -> u16 {
-    8000
-}
-
-fn default_graceful_shutdown() -> bool {
-    false
+impl Default for ApplicationConfig {
+    fn default() -> Self {
+        Self {
+            host: "0.0.0.0".to_string(),
+            port: 8000,
+            graceful_shutdown: false,
+            name: None,
+            environment: None,
+            global_prefix: None,
+        }
+    }
 }

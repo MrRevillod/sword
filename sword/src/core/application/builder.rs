@@ -22,9 +22,9 @@ use crate::{
 };
 
 pub struct ApplicationBuilder {
+    pub config: Config,
     router: Router,
     state: State,
-    config: Config,
     controllers: Vec<fn(State) -> Router>,
     container: DependencyContainer,
     layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
@@ -55,7 +55,7 @@ impl ApplicationBuilder {
             state,
             config,
             controllers: Vec::new(),
-            container: DependencyContainer::builder(),
+            container: DependencyContainer::new(),
             layers: Vec::new(),
         }
     }
@@ -121,17 +121,6 @@ impl ApplicationBuilder {
         }
     }
 
-    pub fn config<T>(&self) -> Result<T, ConfigError>
-    where
-        T: ConfigItem,
-    {
-        self.config.get::<T>()
-    }
-
-    pub fn get_config(&self) -> &Config {
-        &self.config
-    }
-
     fn build_router(&self) -> Router {
         let mut router = self.router.clone();
 
@@ -155,8 +144,8 @@ impl ApplicationBuilder {
 
         router = router.layer(BodyLimitLayer::new(limits_config.body.parsed));
 
-        if let Some(timeout_secs) = limits_config.request_timeout {
-            let (timeout_service, response_mapper) = TimeoutLayer::new(timeout_secs);
+        if let Some(TimeoutLimit { parsed, .. }) = limits_config.request_timeout {
+            let (timeout_service, response_mapper) = TimeoutLayer::new(parsed);
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);

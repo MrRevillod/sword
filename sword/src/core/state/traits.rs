@@ -1,9 +1,9 @@
 use crate::core::{State, StateError};
 use std::sync::Arc;
 
-/// Trait for types that can be extracted from the application State.
+/// Trait for types that can be extracted from the State.
 ///
-/// This trait is automatically implemented for all cloneable types.
+/// Implemented for all cloneable types.
 /// Use this when you want to extract an owned copy of the value.
 pub trait FromState: Sized {
     fn from_state(state: &State) -> Result<Self, StateError>;

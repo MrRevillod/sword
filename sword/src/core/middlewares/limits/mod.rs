@@ -1,10 +1,11 @@
 mod body;
 mod timeout;
 
-pub(crate) use body::{BodyLimit, BodyLimitLayer};
-pub(crate) use timeout::TimeoutLayer;
-
 use crate::core::{ConfigItem, ConfigRegistrar};
+
+pub(crate) use body::{BodyLimit, BodyLimitLayer};
+pub(crate) use timeout::{TimeoutLayer, TimeoutLimit};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -17,7 +18,7 @@ pub struct LimitsMiddlewareConfig {
 
     /// Optional request timeout in seconds.
     /// If not specified, no timeout is applied.
-    pub request_timeout: Option<u64>,
+    pub request_timeout: Option<TimeoutLimit>,
 }
 
 impl ConfigItem for LimitsMiddlewareConfig {

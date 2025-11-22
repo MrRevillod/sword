@@ -31,7 +31,7 @@ pub struct DependencyContainer {
 }
 
 impl DependencyContainer {
-    pub fn builder() -> Self {
+    pub fn new() -> Self {
         Self {
             instances: HashMap::new(),
             dependency_builders: HashMap::new(),

@@ -5,7 +5,6 @@ mod di;
 mod middlewares;
 mod module;
 mod state;
-mod utils;
 
 pub use middlewares::*;
 
@@ -13,7 +12,6 @@ pub use module::{Module, NonControllerModule};
 
 pub use build::*;
 pub use di::*;
-pub use utils::deserialize_size;
 
 pub use application::*;
 pub use config::{Config, ConfigError, ConfigItem, config};
