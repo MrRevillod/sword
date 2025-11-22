@@ -10,7 +10,7 @@ pub type HttpResult = axum_responses::Result<HttpResponse>;
 use formatting::format_validator_errors;
 
 use crate::{
-    core::{ConfigError, DependencyInjectionError, StateError},
+    core::{ConfigError, DependencyInjectionError},
     web::RequestError,
 };
 
@@ -42,15 +42,6 @@ impl From<RequestError> for HttpResponse {
     }
 }
 
-impl From<StateError> for HttpResponse {
-    fn from(error: StateError) -> Self {
-        match error {
-            StateError::TypeNotFound { .. } => HttpResponse::InternalServerError(),
-            StateError::LockError => HttpResponse::InternalServerError(),
-        }
-    }
-}
-
 impl From<DependencyInjectionError> for HttpResponse {
     fn from(error: DependencyInjectionError) -> Self {
         match error {
@@ -62,10 +53,6 @@ impl From<DependencyInjectionError> for HttpResponse {
                 eprintln!("Dependency '{type_name}' not found in container");
                 HttpResponse::InternalServerError()
                     .message("Service configuration error")
-            }
-            DependencyInjectionError::StateError { type_name, source } => {
-                eprintln!("State error while building '{type_name}': {source}",);
-                HttpResponse::InternalServerError().message("Internal server error")
             }
             DependencyInjectionError::ConfigInjectionError { source } => {
                 eprintln!("Failed to inject config: {source}");

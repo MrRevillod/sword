@@ -60,7 +60,7 @@ impl CorsLayer {
 const _: () = {
     inventory::submit! {
         ConfigRegistrar::new(|config, state| {
-            CorsConfig::register_in_state(config, state)
+            CorsConfig::register(config, state)
         })
     }
 };

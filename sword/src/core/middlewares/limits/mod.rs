@@ -30,7 +30,7 @@ impl ConfigItem for LimitsMiddlewareConfig {
 const _: () = {
     inventory::submit! {
         ConfigRegistrar::new(|config, state| {
-            LimitsMiddlewareConfig::register_in_state(config, state)
+            LimitsMiddlewareConfig::register(config, state)
         })
     }
 };

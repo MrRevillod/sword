@@ -15,7 +15,7 @@ pub use di::*;
 
 pub use application::*;
 pub use config::{Config, ConfigError, ConfigItem, config};
-pub use state::{FromState, FromStateArc, State, StateError};
+pub use state::{FromState, FromStateArc, State};
 
 #[doc(hidden)]
 pub use config::ConfigRegistrar;

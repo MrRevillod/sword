@@ -96,7 +96,7 @@ impl ConfigItem for ApplicationConfig {
 const _: () = {
     inventory::submit! {
         ConfigRegistrar::new(|config, state| {
-            ApplicationConfig::register_in_state(config, state)
+            ApplicationConfig::register(config, state)
         })
     }
 };

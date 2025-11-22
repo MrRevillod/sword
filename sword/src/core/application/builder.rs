@@ -40,9 +40,7 @@ impl ApplicationBuilder {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
 
-        state
-            .insert(config.clone())
-            .expect("Failed to insert Config into State");
+        state.insert(config.clone());
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&config, &state).expect("Failed to register config type");
