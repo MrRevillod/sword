@@ -9,10 +9,7 @@ use axum::routing::Router;
 use axum_responses::http::HttpResponse;
 use tokio::net::TcpListener;
 
-use crate::core::{
-    Config,
-    middlewares::{CompressionMiddlewareConfig, LimitsMiddlewareConfig},
-};
+use crate::core::{Config, middlewares::MiddlewaresConfig};
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -119,20 +116,42 @@ impl Application {
             .get::<ApplicationConfig>()
             .expect("Failed to get application config");
 
-        let limits_config = self
-            .config
-            .get::<LimitsMiddlewareConfig>()
-            .expect("Failed to get limits middleware config");
-
         app_config.display();
-        limits_config.display();
 
-        if let Ok(compression_config) =
-            self.config.get::<CompressionMiddlewareConfig>()
-        {
-            compression_config.display();
+        if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
+            if middlewares_config.body_limit.display {
+                println!();
+                println!("{}", console::style("Body Limit Configuration:").bold());
+                middlewares_config.body_limit.display();
+            }
+
+            if middlewares_config.request_timeout.display {
+                println!();
+                println!(
+                    "{}",
+                    console::style("Request Timeout Configuration:").bold()
+                );
+                middlewares_config.request_timeout.display();
+            }
+
+            if let Some(compression_config) = &middlewares_config.compression {
+                if compression_config.display {
+                    compression_config.display();
+                }
+            }
+
+            if let Some(cors_config) = &middlewares_config.cors {
+                if cors_config.display {
+                    cors_config.display();
+                }
+            }
+
+            if let Some(serve_dir_config) = &middlewares_config.serve_dir {
+                if serve_dir_config.display {
+                    serve_dir_config.display();
+                }
+            }
         }
-
         let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
 
         println!("\n{banner_bot}");

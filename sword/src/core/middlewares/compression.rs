@@ -1,6 +1,5 @@
-use crate::core::{ConfigItem, ConfigRegistrar};
 use serde::{Deserialize, Serialize};
-use tower_http::compression::CompressionLayer;
+use tower_http::compression::CompressionLayer as TowerCompressionLayer;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct CompressionConfig {
@@ -10,15 +9,18 @@ pub struct CompressionConfig {
     pub algorithms: Vec<String>,
 }
 
-impl CompressionConfig {
-    pub fn layer(self) -> Option<CompressionLayer> {
-        if !self.enabled {
+pub struct CompressionLayer;
+
+impl CompressionLayer {
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new(config: CompressionConfig) -> Option<TowerCompressionLayer> {
+        if !config.enabled {
             return None;
         }
 
-        let mut layer = CompressionLayer::new();
+        let mut layer = TowerCompressionLayer::new();
 
-        for algorithm in &self.algorithms {
+        for algorithm in &config.algorithms {
             match algorithm.to_lowercase().as_str() {
                 "gzip" => layer = layer.gzip(true),
                 "deflate" => layer = layer.deflate(true),
@@ -36,6 +38,13 @@ impl CompressionConfig {
 pub struct CompressionMiddlewareConfig {
     #[serde(flatten)]
     pub compression: CompressionConfig,
+
+    #[serde(default = "default_display")]
+    pub display: bool,
+}
+
+fn default_display() -> bool {
+    false
 }
 
 impl CompressionMiddlewareConfig {
@@ -59,17 +68,3 @@ impl CompressionMiddlewareConfig {
         }
     }
 }
-
-impl ConfigItem for CompressionMiddlewareConfig {
-    fn toml_key() -> &'static str {
-        "compression"
-    }
-}
-
-const _: () = {
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            CompressionMiddlewareConfig::register(config, state)
-        })
-    }
-};

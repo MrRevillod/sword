@@ -54,6 +54,23 @@ pub struct BodyLimit {
     pub max_size: String,
     #[serde(skip)]
     pub parsed: usize,
+
+    #[serde(default = "default_display")]
+    pub display: bool,
+}
+
+fn default_display() -> bool {
+    false
+}
+
+impl BodyLimit {
+    pub fn display(&self) {
+        if self.enabled {
+            println!("  ↳  Max Body Size: {}", self.max_size);
+        } else {
+            println!("  ↳  Max Body Size: disabled");
+        }
+    }
 }
 
 impl Default for BodyLimit {
@@ -64,6 +81,7 @@ impl Default for BodyLimit {
             enabled: true,
             max_size,
             parsed,
+            display: default_display(),
         }
     }
 }
@@ -83,7 +101,7 @@ impl<'de> Deserialize<'de> for BodyLimit {
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str(
-                    "a map with 'enabled' (bool) and 'max_size' (string) fields",
+                    "a map with 'enabled' (bool), 'max_size' (string), and optional 'display' (bool) fields",
                 )
             }
 
@@ -94,11 +112,13 @@ impl<'de> Deserialize<'de> for BodyLimit {
             {
                 let mut enabled = None;
                 let mut max_size = None;
+                let mut display = None;
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
                         "enabled" => enabled = Some(map.next_value()?),
                         "max_size" => max_size = Some(map.next_value()?),
+                        "display" => display = Some(map.next_value()?),
                         _ => {
                             let _: serde::de::IgnoredAny = map.next_value()?;
                         }
@@ -119,6 +139,7 @@ impl<'de> Deserialize<'de> for BodyLimit {
                     enabled,
                     max_size,
                     parsed,
+                    display: display.unwrap_or_else(default_display),
                 })
             }
         }

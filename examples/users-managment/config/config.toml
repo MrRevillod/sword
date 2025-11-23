@@ -4,25 +4,30 @@ port = 8081
 graceful_shutdown = false
 name = "Authentication Example"
 
-[limits]
-body_limit = { enabled = true, max_size = "2MB" }
-request_timeout = { enabled = false, duration = "15s" }
+[middlewares]
+body_limit = { enabled = true, max_size = "2MB", display = true }
+request_timeout = { enabled = true, duration = "15s", display = true }
+compression = { enabled = true, algorithms = [
+    "gzip",
+    "deflate",
+    "brotli",
+    "zstd",
+] }
 
-[serve_dir]
+cors = { enabled = true, allow_credentials = false, allow_methods = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+] }
+
+[middlewares.serve_dir]
 enabled = true
 static_dir = "static"
 router_path = "/static"
 compression_algorithm = "gzip"
 chunk_size = "1MB"
-
-[cors]
-allow_credentials = false
-allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-allow_headers = ["Content-Type", "Authorization"]
-
-[compression]
-enabled = true
-algorithms = ["gzip", "deflate", "brotli", "zstd"]
 
 [database]
 uri = "${POSTGRES_DATABASE_URL}"

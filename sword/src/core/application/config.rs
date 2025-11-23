@@ -49,10 +49,10 @@ impl ApplicationConfig {
         println!("\n{banner_top}");
 
         println!();
-        println!("{}", style("Application Configuration:").bold());
-
         if let Some(name) = &self.name {
-            println!("  ↳  Name: {}", name);
+            println!("{}", style(format!("{} Configuration:", name)).bold());
+        } else {
+            println!("{}", style("Application Configuration:").bold());
         }
 
         println!("  ↳  Host: {}", self.host);

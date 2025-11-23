@@ -3,20 +3,29 @@ host = "0.0.0.0"
 port = 8080
 graceful_shutdown = false
 
-[limits]
-body_limit = { enabled = true, max_size = "1MB" }
-request_timeout = { enabled = true, duration = "2s" }
+[middlewares]
+body_limit = { enabled = true, max_size = "1MB", display = true }
+request_timeout = { enabled = true, duration = "2s", display = true }
+compression = { enabled = true, algorithms = [
+    "gzip",
+    "deflate",
+    "brotli",
+    "zstd",
+], display = true }
+
+cors = { allow_headers = [
+    "Content-Type",
+    "Authorization",
+], allow_methods = [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+], allow_credentials = true, allow_origins = [
+    "http://localhost:3000",
+    "https://example.com",
+], display = true }
 
 [my-custom-section]
 custom_key = "value"
 env_user = "${USER:default_value}"
-
-[cors]
-allow_headers = ["Content-Type", "Authorization"]
-allow_methods = ["GET", "POST", "PUT", "DELETE"]
-allow_credentials = true
-allow_origins = ["http://localhost:3000", "https://example.com"]
-
-[compression]
-enabled = true
-algorithms = ["gzip", "deflate", "brotli", "zstd"]

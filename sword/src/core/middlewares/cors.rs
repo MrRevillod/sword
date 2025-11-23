@@ -1,18 +1,48 @@
 use std::time::Duration;
 
 use axum::http::HeaderValue;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer as TowerCorsLayer;
 
-use crate::core::{ConfigItem, ConfigRegistrar};
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct CorsConfig {
     pub allow_origins: Option<Vec<String>>,
     pub allow_methods: Option<Vec<String>>,
     pub allow_headers: Option<Vec<String>>,
     pub allow_credentials: Option<bool>,
     pub max_age: Option<u64>,
+
+    #[serde(default = "default_display")]
+    pub display: bool,
+}
+
+fn default_display() -> bool {
+    false
+}
+
+impl CorsConfig {
+    pub fn display(&self) {
+        use console::style;
+
+        println!();
+        println!("{}", style("CORS Configuration:").bold());
+
+        if let Some(origins) = &self.allow_origins {
+            println!("  ↳  Allowed Origins: {:?}", origins);
+        }
+        if let Some(methods) = &self.allow_methods {
+            println!("  ↳  Allowed Methods: {:?}", methods);
+        }
+        if let Some(headers) = &self.allow_headers {
+            println!("  ↳  Allowed Headers: {:?}", headers);
+        }
+        if let Some(credentials) = self.allow_credentials {
+            println!("  ↳  Allow Credentials: {}", credentials);
+        }
+        if let Some(max_age) = self.max_age {
+            println!("  ↳  Max Age: {}s", max_age);
+        }
+    }
 }
 
 pub(crate) struct CorsLayer;
@@ -54,19 +84,5 @@ impl CorsLayer {
         }
 
         layer
-    }
-}
-
-const _: () = {
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            CorsConfig::register(config, state)
-        })
-    }
-};
-
-impl ConfigItem for CorsConfig {
-    fn toml_key() -> &'static str {
-        "cors"
     }
 }

@@ -147,39 +147,39 @@ impl ApplicationBuilder {
             router.layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer));
 
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
-        let limits_config = self.config.get::<LimitsMiddlewareConfig>().unwrap();
-        let serve_dir_config = self.config.get::<ServeDirConfig>();
+        let middlewares_config = self.config.get::<MiddlewaresConfig>().unwrap();
 
-        if limits_config.body_limit.enabled {
-            router =
-                router.layer(BodyLimitLayer::new(limits_config.body_limit.parsed));
+        if middlewares_config.body_limit.enabled {
+            router = router
+                .layer(BodyLimitLayer::new(middlewares_config.body_limit.parsed));
         }
 
-        if limits_config.request_timeout.enabled {
+        if middlewares_config.request_timeout.enabled {
             let (timeout_service, response_mapper) =
-                TimeoutLayer::new(limits_config.request_timeout.parsed);
+                TimeoutLayer::new(middlewares_config.request_timeout.parsed);
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);
         }
 
-        if let Ok(cors_config) = self.config.get::<CorsConfig>() {
-            router = router.layer(CorsLayer::new(&cors_config))
+        if let Some(cors_config) = &middlewares_config.cors {
+            router = router.layer(CorsLayer::new(cors_config))
         };
 
-        if let Ok(compression_config) =
-            self.config.get::<CompressionMiddlewareConfig>()
-        {
-            if let Some(layer) = compression_config.compression.clone().layer() {
+        if let Some(compression_config) = &middlewares_config.compression {
+            if let Some(layer) =
+                CompressionLayer::new(compression_config.compression.clone())
+            {
                 router = router.layer(layer);
             }
         }
 
-        if let Ok(serve_dir_config) = serve_dir_config
-            && serve_dir_config.enabled
-        {
-            let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
-            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
+        if let Some(serve_dir_config) = &middlewares_config.serve_dir {
+            if serve_dir_config.enabled {
+                let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
+                router =
+                    router.nest_service(&serve_dir_config.router_path, serve_dir);
+            }
         }
 
         #[cfg(feature = "cookies")]

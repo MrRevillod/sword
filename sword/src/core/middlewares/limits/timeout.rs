@@ -41,6 +41,23 @@ pub struct TimeoutLimit {
     pub duration: String,
     #[serde(skip)]
     pub parsed: Duration,
+
+    #[serde(default = "default_display")]
+    pub display: bool,
+}
+
+fn default_display() -> bool {
+    false
+}
+
+impl TimeoutLimit {
+    pub fn display(&self) {
+        if self.enabled {
+            println!("  ↳  Request Timeout: {}", self.duration);
+        } else {
+            println!("  ↳  Request Timeout: disabled");
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for TimeoutLimit {
@@ -58,7 +75,7 @@ impl<'de> Deserialize<'de> for TimeoutLimit {
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str(
-                    "a map with 'enabled' (bool) and 'duration' (string) fields",
+                    "a map with 'enabled' (bool), 'duration' (string), and optional 'display' (bool) fields",
                 )
             }
 
@@ -69,11 +86,13 @@ impl<'de> Deserialize<'de> for TimeoutLimit {
             {
                 let mut enabled = None;
                 let mut duration = None;
+                let mut display = None;
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
                         "enabled" => enabled = Some(map.next_value()?),
                         "duration" => duration = Some(map.next_value()?),
+                        "display" => display = Some(map.next_value()?),
                         _ => {
                             let _: serde::de::IgnoredAny = map.next_value()?;
                         }
@@ -93,6 +112,7 @@ impl<'de> Deserialize<'de> for TimeoutLimit {
                     enabled,
                     duration,
                     parsed,
+                    display: display.unwrap_or_else(default_display),
                 })
             }
         }
@@ -109,6 +129,7 @@ impl Default for TimeoutLimit {
             enabled: false,
             duration,
             parsed,
+            display: default_display(),
         }
     }
 }
