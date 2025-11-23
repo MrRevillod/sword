@@ -10,6 +10,9 @@ pub use middleware::*;
 pub use request::{Request, RequestError};
 pub use response::*;
 
+#[cfg(feature = "helmet")]
+pub use crate::core::middlewares::helmet;
+
 #[cfg(feature = "multipart")]
 pub use request::multipart;
 

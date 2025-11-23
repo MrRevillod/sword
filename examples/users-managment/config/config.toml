@@ -6,7 +6,19 @@ name = "Authentication Example"
 
 [limits]
 body_limit = "10MB"
-request_timeout_seconds = 15
+request_timeout = "30s"
+
+[serve_dir]
+enabled = true
+static_dir = "static"
+router_path = "/static"
+compression_algorithm = "gzip"
+chunk_size = "1MB"
+
+[cors]
+allow_credentials = false
+allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+allow_headers = ["Content-Type", "Authorization"]
 
 [database]
 uri = "${POSTGRES_DATABASE_URL}"
@@ -14,8 +26,3 @@ migrations_path = "config/migrations"
 
 [hasher]
 cost = 12
-
-[cors]
-allow_credentials = false
-allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-allow_headers = ["Content-Type", "Authorization"]

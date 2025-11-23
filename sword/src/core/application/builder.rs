@@ -7,9 +7,7 @@ use axum::{
     routing::{Route, Router},
 };
 
-use crate::core::middlewares::{
-    BodyLimitLayer, LimitsMiddlewareConfig, TimeoutLayer,
-};
+use crate::core::middlewares::*;
 
 use tower::{Layer, Service};
 
@@ -150,6 +148,7 @@ impl ApplicationBuilder {
 
         let app_config = self.config.get::<ApplicationConfig>().unwrap();
         let limits_config = self.config.get::<LimitsMiddlewareConfig>().unwrap();
+        let serve_dir_config = self.config.get::<ServeDirConfig>();
 
         router = router.layer(BodyLimitLayer::new(limits_config.body.parsed));
 
@@ -163,6 +162,13 @@ impl ApplicationBuilder {
         if let Ok(cors_config) = self.config.get::<CorsConfig>() {
             router = router.layer(CorsLayer::new(&cors_config))
         };
+
+        if let Ok(serve_dir_config) = serve_dir_config
+            && serve_dir_config.enabled
+        {
+            let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
+            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
+        }
 
         #[cfg(feature = "cookies")]
         {

@@ -11,7 +11,7 @@ use crate::core::{
 
 /// A container for managing dependencies and their builders.
 ///
-/// Basically it support two types of registrations:
+/// It support two types of registrations:
 ///
 /// 1. Providers:
 ///

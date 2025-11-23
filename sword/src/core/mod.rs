@@ -1,13 +1,12 @@
 mod application;
 mod config;
 mod di;
-mod middlewares;
 mod module;
 mod state;
 
-pub use di::*;
-pub use middlewares::*;
+pub mod middlewares;
 
+pub use di::*;
 pub use module::{Module, NonControllerModule};
 
 pub use application::*;

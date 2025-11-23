@@ -3,12 +3,15 @@ mod cors;
 
 #[cfg(feature = "helmet")]
 pub mod helmet;
+
 mod limits;
+mod servedir;
 
 pub(crate) use content_type::ContentTypeCheck;
-pub use cors::*;
-pub use limits::*;
+pub(crate) use cors::*;
+pub(crate) use limits::*;
+pub(crate) use servedir::*;
 
 use axum::{body::Body, http::Response};
 
-pub(crate) type ResponseFnMapper = fn(Response<Body>) -> Response<Body>;
+pub(self) type ResponseFnMapper = fn(Response<Body>) -> Response<Body>;

@@ -1,5 +1,5 @@
 use crate::{
-    core::{Config, LimitsMiddlewareConfig, State},
+    core::{Config, State, middlewares::LimitsMiddlewareConfig},
     web::{HttpResponse, Request, RequestError},
 };
 

@@ -8,7 +8,7 @@ use axum::routing::Router;
 use axum_responses::http::HttpResponse;
 use tokio::net::TcpListener;
 
-use crate::core::{Config, LimitsMiddlewareConfig};
+use crate::core::{Config, middlewares::LimitsMiddlewareConfig};
 
 /// The main application struct that holds the router and configuration.
 ///
