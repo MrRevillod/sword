@@ -50,15 +50,20 @@ impl BodyLimitLayer {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BodyLimit {
-    pub raw: String,
+    pub enabled: bool,
+    pub max_size: String,
+    #[serde(skip)]
     pub parsed: usize,
 }
 
 impl Default for BodyLimit {
     fn default() -> Self {
+        let max_size = "10MB".to_string();
+        let parsed = Byte::from_str(&max_size).unwrap().as_u64() as usize;
         BodyLimit {
-            raw: "10MB".to_string(),
-            parsed: Byte::from_str("10MB").unwrap().as_u64() as usize,
+            enabled: true,
+            max_size,
+            parsed,
         }
     }
 }
@@ -78,46 +83,42 @@ impl<'de> Deserialize<'de> for BodyLimit {
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str(
-                    "a string like \"10MB\" or an object with raw and parsed fields",
+                    "a map with 'enabled' (bool) and 'max_size' (string) fields",
                 )
             }
 
-            // Deserialize from a string (from TOML config)
-            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                let parsed = Byte::from_str(value)
-                    .map(|b| b.as_u64() as usize)
-                    .map_err(Error::custom)?;
-
-                Ok(BodyLimit {
-                    raw: value.to_string(),
-                    parsed,
-                })
-            }
-
-            // Deserialize from a map/object (from JSON serialization)
+            // Deserialize from a map/object
             fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
             where
                 M: MapAccess<'de>,
             {
-                let mut raw = None;
-                let mut parsed = None;
+                let mut enabled = None;
+                let mut max_size = None;
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
-                        "raw" => raw = Some(map.next_value()?),
-                        "parsed" => parsed = Some(map.next_value()?),
+                        "enabled" => enabled = Some(map.next_value()?),
+                        "max_size" => max_size = Some(map.next_value()?),
                         _ => {
                             let _: serde::de::IgnoredAny = map.next_value()?;
                         }
                     }
                 }
 
+                let enabled =
+                    enabled.ok_or_else(|| Error::missing_field("enabled"))?;
+
+                let max_size: String =
+                    max_size.ok_or_else(|| Error::missing_field("max_size"))?;
+
+                let parsed = Byte::from_str(&max_size)
+                    .map(|b| b.as_u64() as usize)
+                    .map_err(Error::custom)?;
+
                 Ok(BodyLimit {
-                    raw: raw.ok_or_else(|| Error::missing_field("raw"))?,
-                    parsed: parsed.ok_or_else(|| Error::missing_field("parsed"))?,
+                    enabled,
+                    max_size,
+                    parsed,
                 })
             }
         }

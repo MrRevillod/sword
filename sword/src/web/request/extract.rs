@@ -43,7 +43,7 @@ where
         let body_limit = state
             .get::<Config>()?
             .get::<LimitsMiddlewareConfig>()
-            .map(|app_config| app_config.body.parsed)
+            .map(|app_config| app_config.body_limit.parsed)
             .unwrap_or(usize::MAX);
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {

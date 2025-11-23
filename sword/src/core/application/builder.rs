@@ -150,10 +150,12 @@ impl ApplicationBuilder {
         let limits_config = self.config.get::<LimitsMiddlewareConfig>().unwrap();
         let serve_dir_config = self.config.get::<ServeDirConfig>();
 
-        router = router.layer(BodyLimitLayer::new(limits_config.body.parsed));
+        if limits_config.body_limit.enabled {
+            router = router.layer(BodyLimitLayer::new(limits_config.body_limit.parsed));
+        }
 
-        if let Some(TimeoutLimit { parsed, .. }) = limits_config.request_timeout {
-            let (timeout_service, response_mapper) = TimeoutLayer::new(parsed);
+        if limits_config.request_timeout.enabled {
+            let (timeout_service, response_mapper) = TimeoutLayer::new(limits_config.request_timeout.parsed);
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);

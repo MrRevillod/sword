@@ -5,8 +5,8 @@ graceful_shutdown = false
 name = "Authentication Example"
 
 [limits]
-body_limit = "10MB"
-request_timeout = "30s"
+body_limit = { enabled = true, max_size = "2MB" }
+request_timeout = { enabled = true, duration = "15s" }
 
 [serve_dir]
 enabled = true

@@ -4,8 +4,8 @@ port = 8080
 graceful_shutdown = false
 
 [limits]
-body = "1MB"
-request_timeout = "2s"
+body_limit = { enabled = true, max_size = "1MB" }
+request_timeout = { enabled = true, duration = "2s" }
 
 [my-custom-section]
 custom_key = "value"

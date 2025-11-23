@@ -37,7 +37,9 @@ impl TimeoutLayer {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct TimeoutLimit {
-    pub raw: String,
+    pub enabled: bool,
+    pub duration: String,
+    #[serde(skip)]
     pub parsed: Duration,
 }
 
@@ -56,48 +58,57 @@ impl<'de> Deserialize<'de> for TimeoutLimit {
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str(
-                    "a string representing duration (e.g., '30s', '1m') or an object with 'raw' and 'parsed' fields",
+                    "a map with 'enabled' (bool) and 'duration' (string) fields",
                 )
             }
 
-            // Deserialize from a string (from TOML config)
-            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-            where
-                E: Error,
-            {
-                let parsed = duration_str::parse(value).map_err(Error::custom)?;
-
-                Ok(TimeoutLimit {
-                    raw: value.to_string(),
-                    parsed,
-                })
-            }
-
-            // Deserialize from a map/object (from JSON serialization)
+            // Deserialize from a map/object
             fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
             where
                 M: MapAccess<'de>,
             {
-                let mut raw = None;
-                let mut parsed = None;
+                let mut enabled = None;
+                let mut duration = None;
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
-                        "raw" => raw = Some(map.next_value()?),
-                        "parsed" => parsed = Some(map.next_value()?),
+                        "enabled" => enabled = Some(map.next_value()?),
+                        "duration" => duration = Some(map.next_value()?),
                         _ => {
                             let _: serde::de::IgnoredAny = map.next_value()?;
                         }
                     }
                 }
 
+                let enabled =
+                    enabled.ok_or_else(|| Error::missing_field("enabled"))?;
+
+                let duration: String =
+                    duration.ok_or_else(|| Error::missing_field("duration"))?;
+
+                let parsed =
+                    duration_str::parse(&duration).map_err(Error::custom)?;
+
                 Ok(TimeoutLimit {
-                    raw: raw.ok_or_else(|| Error::missing_field("raw"))?,
-                    parsed: parsed.ok_or_else(|| Error::missing_field("parsed"))?,
+                    enabled,
+                    duration,
+                    parsed,
                 })
             }
         }
 
         deserializer.deserialize_any(TimeoutLimitVisitor)
+    }
+}
+
+impl Default for TimeoutLimit {
+    fn default() -> Self {
+        let duration = "30s".to_string();
+        let parsed = duration_str::parse(&duration).unwrap();
+        TimeoutLimit {
+            enabled: false,
+            duration,
+            parsed,
+        }
     }
 }

@@ -11,14 +11,12 @@ pub(crate) use timeout::{TimeoutLayer, TimeoutLimit};
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct LimitsMiddlewareConfig {
     /// Limit for the maximum allowed size of request bodies in bytes.
-    /// This can be specified as a human-readable string like "10MB", "500KB", etc.
-    /// If not specified, defaults to 10MB.
     #[serde(default)]
-    pub body: BodyLimit,
+    pub body_limit: BodyLimit,
 
-    /// Optional request timeout in seconds.
-    /// If not specified, no timeout is applied.
-    pub request_timeout: Option<TimeoutLimit>,
+    /// Request timeout configuration.
+    #[serde(default)]
+    pub request_timeout: TimeoutLimit,
 }
 
 impl LimitsMiddlewareConfig {
@@ -29,12 +27,16 @@ impl LimitsMiddlewareConfig {
         println!();
         println!("{banner_top}");
 
-        println!("Max Body Size: {}", self.body.raw.bright_green());
-
-        if let Some(timeout) = &self.request_timeout {
-            println!("Request Timeout: {}", timeout.raw.bright_green());
+        if self.body_limit.enabled {
+            println!("Max Body Size: {} ({})", self.body_limit.max_size.bright_green(), "enabled".bright_green());
         } else {
-            println!("Request Timeout: {}", "none".bright_yellow());
+            println!("Max Body Size: {} ({})", self.body_limit.max_size.bright_yellow(), "disabled".bright_yellow());
+        }
+
+        if self.request_timeout.enabled {
+            println!("Request Timeout: {} ({})", self.request_timeout.duration.bright_green(), "enabled".bright_green());
+        } else {
+            println!("Request Timeout: {} ({})", self.request_timeout.duration.bright_yellow(), "disabled".bright_yellow());
         }
 
         println!("{banner_bot}");
