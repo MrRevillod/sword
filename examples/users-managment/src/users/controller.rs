@@ -1,3 +1,4 @@
+use serde_json::json;
 use std::sync::Arc;
 use sword::prelude::*;
 use uuid::Uuid;
@@ -75,5 +76,18 @@ impl UsersController {
         self.users.delete(&id).await?;
 
         Ok(HttpResponse::Ok().message("User deleted"))
+    }
+
+    #[get("/test-compression")]
+    async fn test_compression(&self) -> HttpResult {
+        let repeated_data = "x".repeat(5000); // 5KB de 'x'
+        let large_json = json!({
+            "size_kb": 5,
+            "data": repeated_data,
+        });
+
+        Ok(HttpResponse::Ok()
+            .data(large_json)
+            .message("Test compression data"))
     }
 }

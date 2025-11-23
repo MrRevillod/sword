@@ -1,3 +1,4 @@
+mod compression;
 mod content_type;
 mod cors;
 
@@ -7,6 +8,7 @@ pub mod helmet;
 mod limits;
 mod servedir;
 
+pub(crate) use compression::*;
 pub(crate) use content_type::ContentTypeCheck;
 pub(crate) use cors::*;
 pub(crate) use limits::*;

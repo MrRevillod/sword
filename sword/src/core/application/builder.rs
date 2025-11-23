@@ -151,11 +151,13 @@ impl ApplicationBuilder {
         let serve_dir_config = self.config.get::<ServeDirConfig>();
 
         if limits_config.body_limit.enabled {
-            router = router.layer(BodyLimitLayer::new(limits_config.body_limit.parsed));
+            router =
+                router.layer(BodyLimitLayer::new(limits_config.body_limit.parsed));
         }
 
         if limits_config.request_timeout.enabled {
-            let (timeout_service, response_mapper) = TimeoutLayer::new(limits_config.request_timeout.parsed);
+            let (timeout_service, response_mapper) =
+                TimeoutLayer::new(limits_config.request_timeout.parsed);
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);
@@ -164,6 +166,14 @@ impl ApplicationBuilder {
         if let Ok(cors_config) = self.config.get::<CorsConfig>() {
             router = router.layer(CorsLayer::new(&cors_config))
         };
+
+        if let Ok(compression_config) =
+            self.config.get::<CompressionMiddlewareConfig>()
+        {
+            if let Some(layer) = compression_config.compression.clone().layer() {
+                router = router.layer(layer);
+            }
+        }
 
         if let Ok(serve_dir_config) = serve_dir_config
             && serve_dir_config.enabled

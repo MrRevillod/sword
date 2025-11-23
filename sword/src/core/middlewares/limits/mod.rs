@@ -2,7 +2,6 @@ mod body;
 mod timeout;
 
 use crate::core::{ConfigItem, ConfigRegistrar};
-use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 pub(crate) use body::{BodyLimit, BodyLimitLayer};
@@ -49,10 +48,6 @@ impl LimitsMiddlewareConfig {
                 .red()
             );
         }
-
-        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
-
-        println!("\n{banner_bot}");
     }
 }
 

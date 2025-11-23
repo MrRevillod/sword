@@ -2,13 +2,17 @@ mod builder;
 mod config;
 
 pub use builder::ApplicationBuilder;
+use colored::Colorize;
 pub use config::ApplicationConfig;
 
 use axum::routing::Router;
 use axum_responses::http::HttpResponse;
 use tokio::net::TcpListener;
 
-use crate::core::{Config, middlewares::LimitsMiddlewareConfig};
+use crate::core::{
+    Config,
+    middlewares::{CompressionMiddlewareConfig, LimitsMiddlewareConfig},
+};
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -122,6 +126,16 @@ impl Application {
 
         app_config.display();
         limits_config.display();
+
+        if let Ok(compression_config) =
+            self.config.get::<CompressionMiddlewareConfig>()
+        {
+            compression_config.display();
+        }
+
+        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
+
+        println!("\n{banner_bot}");
 
         let ApplicationConfig { host, port, .. } = app_config;
 
