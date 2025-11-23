@@ -11,6 +11,8 @@
 
 - Added cleanup for temporary data structures used in the application build process.
 
+- Added `Cors` middleware based on `tower_http::cors::CorsLayer`. The configuration can be set in the config file under the `cors` key.
+
 ### Changed
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.

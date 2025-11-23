@@ -10,36 +10,49 @@ pub(crate) use timeout::{TimeoutLayer, TimeoutLimit};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct LimitsMiddlewareConfig {
-    /// Limit for the maximum allowed size of request bodies in bytes.
     #[serde(default)]
     pub body_limit: BodyLimit,
 
-    /// Request timeout configuration.
     #[serde(default)]
     pub request_timeout: TimeoutLimit,
 }
 
 impl LimitsMiddlewareConfig {
     pub fn display(&self) {
-        let banner_top = "▪─────────────── ⚔ L I M I T S ⚔ ─────────────▪".white();
-        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
+        use console::style;
 
         println!();
-        println!("{banner_top}");
+        println!("{}", style("Limits Configuration:").bold());
 
         if self.body_limit.enabled {
-            println!("Max Body Size: {} ({})", self.body_limit.max_size.bright_green(), "enabled".bright_green());
+            println!("  ↳  Max Body Size: {}", self.body_limit.max_size);
         } else {
-            println!("Max Body Size: {} ({})", self.body_limit.max_size.bright_yellow(), "disabled".bright_yellow());
+            println!(
+                "  ↳  {}",
+                style(format!(
+                    "Max Body Size: {} (disabled)",
+                    self.body_limit.max_size
+                ))
+                .red()
+            );
         }
 
         if self.request_timeout.enabled {
-            println!("Request Timeout: {} ({})", self.request_timeout.duration.bright_green(), "enabled".bright_green());
+            println!("  ↳   Request Timeout: {}", self.request_timeout.duration);
         } else {
-            println!("Request Timeout: {} ({})", self.request_timeout.duration.bright_yellow(), "disabled".bright_yellow());
+            println!(
+                "  ↳  {}",
+                style(format!(
+                    "Request Timeout: {} (disabled)",
+                    self.request_timeout.duration
+                ))
+                .red()
+            );
         }
 
-        println!("{banner_bot}");
+        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
+
+        println!("\n{banner_bot}");
     }
 }
 

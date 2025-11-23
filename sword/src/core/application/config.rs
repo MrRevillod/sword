@@ -42,27 +42,30 @@ pub struct ApplicationConfig {
 
 impl ApplicationConfig {
     pub fn display(&self) {
+        use console::style;
+
         let banner_top = "▪──────────────── ⚔ S W O R D ⚔ ──────────────▪".white();
 
-        println!("\n{}", banner_top);
+        println!("\n{banner_top}");
+
+        println!();
+        println!("{}", style("Application Configuration:").bold());
 
         if let Some(name) = &self.name {
-            println!("Application: {}", name.bright_green());
+            println!("  ↳  Name: {}", name);
         }
 
-        println!("Host: {}", self.host);
-        println!("Port: {}", self.port);
+        println!("  ↳  Host: {}", self.host);
+        println!("  ↳  Port: {}", self.port);
 
-        let shutdown_display = if self.graceful_shutdown {
-            "enabled".bright_green()
+        if self.graceful_shutdown {
+            println!("  ↳  Graceful Shutdown");
         } else {
-            "disabled".bright_red()
-        };
-
-        println!("Graceful Shutdown: {}", shutdown_display);
+            println!("  ↳  {}", style("Graceful Shutdown: disabled").red());
+        }
 
         if let Some(env) = &self.environment {
-            println!("Environment: {}", env.bright_blue());
+            println!("  ↳  Environment: {}", env);
         }
     }
 }
