@@ -10,6 +10,8 @@ pub mod cookies;
 #[cfg(feature = "validator")]
 pub mod validator;
 
+mod extras;
+
 use axum::{
     body::Bytes,
     http::{Extensions, Method, Uri},

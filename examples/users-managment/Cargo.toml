@@ -12,3 +12,5 @@ validator = { workspace = true }
 
 dotenv = "0.15.0"
 bcrypt = "0.17.1"
+thiserror = "2.0.17"
+serde_json.workspace = true

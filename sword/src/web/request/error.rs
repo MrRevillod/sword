@@ -17,7 +17,4 @@ pub enum RequestError {
 
     #[error("Unsupported media type: {0}")]
     UnsupportedMediaType(String),
-
-    #[error("Internal server error: {0}")]
-    InternalError(String),
 }

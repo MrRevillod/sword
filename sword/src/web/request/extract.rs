@@ -1,5 +1,5 @@
 use crate::{
-    core::{ApplicationConfig, Config, State},
+    core::{Config, State, middlewares::MiddlewaresConfig},
     web::{HttpResponse, Request, RequestError},
 };
 
@@ -42,8 +42,8 @@ where
 
         let body_limit = state
             .get::<Config>()?
-            .get::<ApplicationConfig>()
-            .map(|app_config| app_config.body_limit.parsed)
+            .get::<MiddlewaresConfig>()
+            .map(|middlewares_config| middlewares_config.body_limit.parsed)
             .unwrap_or(usize::MAX);
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {

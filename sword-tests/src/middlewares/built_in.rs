@@ -315,3 +315,65 @@ async fn content_type_json_with_charset() {
     assert_eq!(json.code, 415);
     assert!(!json.success);
 }
+
+#[tokio::test]
+async fn compression_gzip() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "gzip")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    // Check if response has compression headers
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "gzip");
+}
+
+#[tokio::test]
+async fn compression_deflate() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "deflate")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "deflate");
+}
+
+#[tokio::test]
+async fn compression_brotli() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "br")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "br");
+}
+
+#[tokio::test]
+async fn compression_no_preference() {
+    let test_app = test_server();
+
+    let response = test_app.get("/test/no-body").await;
+
+    assert_eq!(response.status_code(), 200);
+
+    // Without Accept-Encoding, should not compress
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_none());
+}

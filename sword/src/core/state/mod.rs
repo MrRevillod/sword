@@ -1,20 +1,19 @@
-mod error;
 mod traits;
+pub use traits::*;
 
 use std::{
-    any::{Any, TypeId},
+    any::{Any, TypeId, type_name},
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
-pub use error::StateError;
-pub use traits::*;
+use crate::core::DependencyInjectionError;
+use parking_lot::RwLock;
 
 /// Application state container for type-safe dependency injection and data sharing.
 ///
 /// `State` provides a thread-safe way to store and retrieve shared data across
-/// the entire application. It uses `TypeId` as keys to ensure type safety and
-/// prevents type confusion. State is automatically managed by the framework.
+/// the entire application. It uses `TypeId` as keys to ensure type safety.
 #[derive(Clone, Debug)]
 pub struct State {
     inner: Arc<RwLock<HashMap<TypeId, Arc<dyn Any + Send + Sync>>>>,
@@ -28,69 +27,58 @@ impl State {
     }
 
     /// Extract a clone of the stored value of type `T` from the state.
-    pub fn get<T>(&self) -> Result<T, StateError>
+    pub fn get<T>(&self) -> Result<T, DependencyInjectionError>
     where
         T: Clone + Send + Sync + 'static,
     {
-        let map = self.inner.read().map_err(|_| StateError::LockError)?;
-        let type_name = std::any::type_name::<T>().to_string();
+        let map = self.inner.read();
+        let type_name = type_name::<T>().to_string();
 
-        let state_ref =
-            map.get(&TypeId::of::<T>())
-                .ok_or(StateError::TypeNotFound {
-                    type_name: type_name.to_string(),
-                })?;
+        let state_ref = map.get(&TypeId::of::<T>()).ok_or(
+            DependencyInjectionError::DependencyNotFound {
+                type_name: type_name.clone(),
+            },
+        )?;
 
         state_ref
             .downcast_ref::<T>()
             .cloned()
-            .ok_or(StateError::TypeNotFound { type_name })
+            .ok_or(DependencyInjectionError::DependencyNotFound { type_name })
     }
 
     /// Borrow an `Arc` to the stored value of type `T` from the state.
     /// This returns an `Arc<T>` without cloning the underlying value.
-    pub fn borrow<T>(&self) -> Result<Arc<T>, StateError>
+    pub fn borrow<T>(&self) -> Result<Arc<T>, DependencyInjectionError>
     where
         T: Send + Sync + 'static,
     {
-        let map = self.inner.read().map_err(|_| StateError::LockError)?;
-        let type_name = std::any::type_name::<T>().to_string();
+        let map = self.inner.read();
+        let type_name = type_name::<T>().to_string();
 
-        let state_ref =
-            map.get(&TypeId::of::<T>())
-                .ok_or_else(|| StateError::TypeNotFound {
-                    type_name: type_name.clone(),
-                })?;
+        let state_ref = map.get(&TypeId::of::<T>()).ok_or(
+            DependencyInjectionError::DependencyNotFound {
+                type_name: type_name.clone(),
+            },
+        )?;
 
         state_ref
             .clone()
             .downcast::<T>()
-            .map_err(|_| StateError::TypeNotFound { type_name })
+            .map_err(|_| DependencyInjectionError::DependencyNotFound { type_name })
     }
 
-    pub fn insert<T: Send + Sync + 'static>(
-        &self,
-        state: T,
-    ) -> Result<(), StateError> {
+    pub fn insert<T: Send + Sync + 'static>(&self, state: T) {
         self.inner
             .write()
-            .map_err(|_| StateError::LockError)?
             .insert(TypeId::of::<T>(), Arc::new(state));
-
-        Ok(())
     }
 
     pub(crate) fn insert_dependency(
         &self,
         type_id: TypeId,
         instance: Arc<dyn Any + Send + Sync>,
-    ) -> Result<(), StateError> {
-        self.inner
-            .write()
-            .map_err(|_| StateError::LockError)?
-            .insert(type_id, instance);
-
-        Ok(())
+    ) {
+        self.inner.write().insert(type_id, instance);
     }
 }
 

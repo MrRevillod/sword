@@ -1,23 +1,13 @@
-mod builtin;
 mod registrar;
 
-use axum::response::Response as AxumResponse;
-
-#[cfg(feature = "helmet")]
-pub use builtin::helmet;
-
-pub use builtin::cors::{CorsConfig, CorsLayer};
-
-pub(crate) use builtin::content_type::ContentTypeCheck;
-pub(crate) use builtin::prettifier::ResponsePrettifier;
-
 pub use axum::middleware::Next;
+use axum::response::Response as AxumResponse;
 
 #[doc(hidden)]
 pub use registrar::MiddlewareRegistrar;
 pub use sword_macros::{middleware, uses};
 
-use crate::core::{Clonable, DependencyInjectionError};
+use crate::core::Build;
 use crate::web::{HttpResponse, Request};
 use std::future::Future;
 
@@ -46,7 +36,7 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 ///     }
 /// }
 /// ```
-pub trait Middleware: Clonable<Error = DependencyInjectionError> {}
+pub trait Middleware: Build {}
 
 /// Trait for middlewares that handle requests
 ///

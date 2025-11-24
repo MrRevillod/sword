@@ -4,7 +4,7 @@ mod entity;
 mod repository;
 
 pub use controller::UsersController;
-pub use dtos::CreateUserDto;
+pub use dtos::{CreateUserDto, UpdateUserDto};
 pub use entity::User;
 pub use repository::UserRepository;
 
