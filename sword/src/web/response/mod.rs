@@ -71,7 +71,7 @@ impl From<ConfigError> for HttpResponse {
     fn from(error: ConfigError) -> Self {
         match error {
             ConfigError::KeyNotFound(key) => {
-                eprintln!("{}", format!("Key '{key}' not found in configuration"));
+                eprintln!("Key '{key}' not found in configuration");
                 HttpResponse::InternalServerError().message("Configuration error")
             }
 

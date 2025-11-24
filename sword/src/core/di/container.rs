@@ -168,3 +168,9 @@ impl DependencyContainer {
         self.dependency_graph.clear();
     }
 }
+
+impl Default for DependencyContainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}

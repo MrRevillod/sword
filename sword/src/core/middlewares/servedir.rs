@@ -73,10 +73,10 @@ impl ServeDirMiddleware {
             }
         }
 
-        if let Some(chunk_size_str) = &config.chunk_size {
-            if let Ok(chunk_size) = chunk_size_str.parse::<Byte>() {
-                layer = layer.with_buf_chunk_size(chunk_size.as_u64() as usize);
-            }
+        if let Some(chunk_size_str) = &config.chunk_size
+            && let Ok(chunk_size) = chunk_size_str.parse::<Byte>()
+        {
+            layer = layer.with_buf_chunk_size(chunk_size.as_u64() as usize);
         }
 
         layer

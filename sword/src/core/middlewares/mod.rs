@@ -19,7 +19,7 @@ use axum::{body::Body, http::Response};
 
 use crate::core::{ConfigItem, ConfigRegistrar};
 
-pub(self) type ResponseFnMapper = fn(Response<Body>) -> Response<Body>;
+pub type ResponseFnMapper = fn(Response<Body>) -> Response<Body>;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct MiddlewaresConfig {

@@ -41,6 +41,7 @@ pub trait ConfigItem: DeserializeOwned + Clone + Send + Sync + 'static {
     /// Registers this config type in the application State.
     /// This is called automatically during application bootstrap.
     fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
-        Ok(state.insert(config.get::<Self>()?))
+        state.insert(config.get::<Self>()?);
+        Ok(())
     }
 }

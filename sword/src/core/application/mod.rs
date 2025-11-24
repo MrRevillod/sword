@@ -134,22 +134,22 @@ impl Application {
                 middlewares_config.request_timeout.display();
             }
 
-            if let Some(compression_config) = &middlewares_config.compression {
-                if compression_config.display {
-                    compression_config.display();
-                }
+            if let Some(compression_config) = &middlewares_config.compression
+                && compression_config.display
+            {
+                compression_config.display();
             }
 
-            if let Some(cors_config) = &middlewares_config.cors {
-                if cors_config.display {
-                    cors_config.display();
-                }
+            if let Some(cors_config) = &middlewares_config.cors
+                && cors_config.display
+            {
+                cors_config.display();
             }
 
-            if let Some(serve_dir_config) = &middlewares_config.serve_dir {
-                if serve_dir_config.display {
-                    serve_dir_config.display();
-                }
+            if let Some(serve_dir_config) = &middlewares_config.serve_dir
+                && serve_dir_config.display
+            {
+                serve_dir_config.display();
             }
         }
 

@@ -218,20 +218,18 @@ impl ApplicationBuilder {
             router = router.layer(CorsLayer::new(cors_config))
         };
 
-        if let Some(compression_config) = &middlewares_config.compression {
-            if let Some(layer) =
+        if let Some(compression_config) = &middlewares_config.compression
+            && let Some(layer) =
                 CompressionLayer::new(compression_config.compression.clone())
-            {
-                router = router.layer(layer);
-            }
+        {
+            router = router.layer(layer);
         }
 
-        if let Some(serve_dir_config) = &middlewares_config.serve_dir {
-            if serve_dir_config.enabled {
-                let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
-                router =
-                    router.nest_service(&serve_dir_config.router_path, serve_dir);
-            }
+        if let Some(serve_dir_config) = &middlewares_config.serve_dir
+            && serve_dir_config.enabled
+        {
+            let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
+            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
         }
 
         #[cfg(feature = "cookies")]
