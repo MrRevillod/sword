@@ -2,7 +2,7 @@ use std::convert::Infallible;
 
 use axum::{
     extract::Request as AxumRequest,
-    middleware::from_fn_with_state as mw_with_state,
+    middleware::from_fn_with_state as mw,
     response::IntoResponse,
     routing::{Route, Router},
 };
@@ -131,23 +131,75 @@ impl ApplicationBuilder {
     fn build_router(&self) -> Router {
         let mut router = self.router.clone();
 
-        // Merge all the "controllers" routers into the main router
-        // In fact, controllers are just functions that return a Router
+        router = self.apply_controllers(router);
+        router = self.apply_layers(router);
+        router = self.apply_tower_layers(router);
+
+        router = router.layer(mw(self.state.clone(), ContentTypeCheck::layer));
+
+        let app_config = self.config.get::<ApplicationConfig>()
+            .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");
+
+        if let Some(prefix) = app_config.global_prefix {
+            router = Router::new().nest(&prefix, router);
+        }
+
+        router
+    }
+
+    /// Build the `Application` instance with the configured options.
+    /// This method ends the builder pattern and constructs the final `Application`
+    /// instance ready to run.
+    pub fn build(mut self) -> Application {
+        self.container
+            .build_all(&self.state)
+            .expect("Failed to build dependency injection container");
+
+        for MiddlewareRegistrar { register_fn } in
+            inventory::iter::<MiddlewareRegistrar>
+        {
+            (register_fn)(&self.state).expect("Failed to register middleware");
+        }
+
+        let router = self.build_router();
+
+        self.layers.clear();
+        self.controllers.clear();
+        self.container.clear();
+
+        Application::new(router, self.config)
+    }
+
+    fn apply_layers(&self, router: Router) -> Router {
+        let mut router = router;
+
+        for layer_fn_applier in &self.layers {
+            router = layer_fn_applier(router);
+        }
+
+        router
+    }
+
+    // Merge all the "controllers" routers into the main router
+    // In fact, controllers are just functions that return a Router
+    fn apply_controllers(&self, router: Router) -> Router {
+        let mut router = router;
+
         for controller in &self.controllers {
             let controller = controller(self.state.clone());
             router = router.merge(controller);
         }
 
-        // Apply all the layers setted via `with_layer` method
-        for layer_fn_applier in &self.layers {
-            router = layer_fn_applier(router);
-        }
+        router
+    }
 
-        router =
-            router.layer(mw_with_state(self.state.clone(), ContentTypeCheck::layer));
+    fn apply_tower_layers(&self, router: Router) -> Router {
+        let mut router = router;
 
-        let app_config = self.config.get::<ApplicationConfig>().unwrap();
-        let middlewares_config = self.config.get::<MiddlewaresConfig>().unwrap();
+        let middlewares_config = self
+            .config
+            .get::<MiddlewaresConfig>()
+            .expect("Failed to get MiddlewaresConfig. Ensure it is present in the config file.");
 
         if middlewares_config.body_limit.enabled {
             router = router
@@ -187,34 +239,7 @@ impl ApplicationBuilder {
             router = router.layer(CookieManagerLayer::new());
         }
 
-        if let Some(prefix) = app_config.global_prefix {
-            router = Router::new().nest(&prefix, router);
-        }
-
         router
-    }
-
-    /// Build the `Application` instance with the configured options.
-    /// This method ends the builder pattern and constructs the final `Application`
-    /// instance ready to run.
-    pub fn build(mut self) -> Application {
-        self.container
-            .build_all(&self.state)
-            .expect("Failed to build dependency injection container");
-
-        for MiddlewareRegistrar { register_fn } in
-            inventory::iter::<MiddlewareRegistrar>
-        {
-            (register_fn)(&self.state).expect("Failed to register middleware");
-        }
-
-        let router = self.build_router();
-
-        self.layers.clear();
-        self.controllers.clear();
-        self.container.clear();
-
-        Application::new(router, self.config)
     }
 }
 

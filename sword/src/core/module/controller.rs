@@ -6,6 +6,10 @@ use crate::{
     web::{Controller, ControllerBuilder},
 };
 
+/// Controller for modules that do not define any routes.
+///
+/// This is useful for modules that only provide services or dependencies
+/// without exposing any HTTP endpoints.
 #[derive(Debug, Clone)]
 pub struct NonControllerModule;
 

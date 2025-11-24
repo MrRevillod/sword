@@ -13,6 +13,10 @@
 
 - Added `Cors` middleware based on `tower_http::cors::CorsLayer`. The configuration can be set in the config file under the `cors` key.
 
+- Added `middlewares` field to `Config` struct. This allows to define global middlewares in the configuration file.
+
+- Added `Compression` middleware based on `tower_http::compression::CompressionLayer`. The configuration can be set in the config file under the `compression` key.
+
 ### Changed
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
@@ -24,6 +28,8 @@
 - Middleware structs marked with `#[middleware]` macro now can omit the `next` parameter in their methods. Instead, they can call `req.next().await` to pass control to the next middleware or handler.
 
 - The global router prefix was moved from `Application` struct to `Config` struct. Now, you can set the global prefix in the configuration file under the `application` key with `global_prefix` field.
+
+- The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
 
 ## [0.2.0]
 

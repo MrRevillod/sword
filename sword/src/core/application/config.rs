@@ -1,4 +1,5 @@
 use colored::Colorize;
+use console::style;
 use serde::{Deserialize, Serialize};
 
 use crate::core::{ConfigItem, ConfigRegistrar};
@@ -42,8 +43,6 @@ pub struct ApplicationConfig {
 
 impl ApplicationConfig {
     pub fn display(&self) {
-        use console::style;
-
         let banner_top = "▪──────────────── ⚔ S W O R D ⚔ ──────────────▪".white();
 
         println!("\n{banner_top}");

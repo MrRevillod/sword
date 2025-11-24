@@ -152,6 +152,7 @@ impl Application {
                 }
             }
         }
+
         let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
 
         println!("\n{banner_bot}");

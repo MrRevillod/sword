@@ -11,6 +11,10 @@ pub use error::ConfigError;
 pub use registrar::*;
 pub use sword_macros::config;
 
+/// Struct representing the application's configuration.
+///
+/// This struct loads and holds the configuration data from a TOML file,
+/// allowing retrieval of specific configuration sections through the `get` method.
 #[derive(Debug, Clone, Default)]
 pub struct Config {
     inner: Arc<Table>,
