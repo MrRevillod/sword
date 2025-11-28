@@ -35,12 +35,11 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -48,11 +47,11 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -60,9 +59,9 @@ impl OnRequest for ExtensionsTestMiddleware {
 struct MwWithState;
 
 impl OnRequest for MwWithState {
-    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
         req.extensions.insert::<u16>(8080);
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -74,12 +73,11 @@ impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
         &self,
         roles: Vec<&'static str>,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         let roles_owned: Vec<String> = roles.iter().map(|s| s.to_string()).collect();
         req.extensions.insert(roles_owned);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -91,11 +89,10 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -107,11 +104,10 @@ impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
         &self,
         config: [i32; 3],
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -123,11 +119,10 @@ impl OnRequestWithConfig<String> for StringConfigMiddleware {
         &self,
         config: String,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -139,11 +134,10 @@ impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
         &self,
         config: &'static str,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config.to_string());
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -155,11 +149,10 @@ impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
         &self,
         config: i32,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -171,11 +164,10 @@ impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
         &self,
         config: bool,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -189,7 +181,6 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
         &self,
         config: (Vec<&'static str>, i32, bool),
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         let owned_config = (
             config
@@ -203,7 +194,7 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
 
         req.extensions.insert(owned_config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -215,11 +206,10 @@ impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
         &self,
         config: Vec<String>,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -231,11 +221,10 @@ impl OnRequestWithConfig<i32> for MathConfigMiddleware {
         &self,
         config: i32,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -247,11 +236,10 @@ impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
         &self,
         config: &'static str,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config.to_string());
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -263,11 +251,10 @@ impl OnRequestWithConfig<LogLevel> for LogMiddleware {
         &self,
         config: LogLevel,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -279,11 +266,10 @@ impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
         &self,
         config: DatabaseConfig,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -295,11 +281,10 @@ impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
         &self,
         config: AuthMethod,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -311,11 +296,10 @@ impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
         &self,
         config: Option<LogLevel>,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -327,11 +311,10 @@ impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
         &self,
         config: Vec<LogLevel>,
         mut req: Request,
-        next: Next,
     ) -> MiddlewareResult {
         req.extensions.insert(config);
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -484,13 +467,21 @@ impl TestController {
     }
 }
 
+struct TestModule;
+
+impl Module for TestModule {
+    type Controller = TestController;
+}
+
+fn test_server() -> TestServer {
+    let app = Application::builder().with_module::<TestModule>().build();
+
+    TestServer::new(app.router()).unwrap()
+}
+
 #[tokio::test]
 async fn extensions_mw_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/extensions-test").await;
     assert_eq!(response.status_code(), 200);
 
@@ -503,11 +494,7 @@ async fn extensions_mw_test() {
 
 #[tokio::test]
 async fn middleware_state() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/middleware-state").await;
 
     assert_eq!(response.status_code(), 200);
@@ -522,11 +509,7 @@ async fn middleware_state() {
 
 #[tokio::test]
 async fn role_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/role-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -540,11 +523,7 @@ async fn role_middleware_test() {
 
 #[tokio::test]
 async fn error_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/error-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -558,11 +537,7 @@ async fn error_middleware_test() {
 
 #[tokio::test]
 async fn tower_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/tower-middleware-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -576,11 +551,7 @@ async fn tower_middleware_test() {
 
 #[tokio::test]
 async fn tuple_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/tuple-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -592,11 +563,7 @@ async fn tuple_config_middleware_test() {
 
 #[tokio::test]
 async fn array_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/array-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -608,11 +575,7 @@ async fn array_config_middleware_test() {
 
 #[tokio::test]
 async fn string_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/string-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -624,11 +587,7 @@ async fn string_config_middleware_test() {
 
 #[tokio::test]
 async fn str_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/str-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -640,11 +599,7 @@ async fn str_config_middleware_test() {
 
 #[tokio::test]
 async fn number_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/number-config-test").await;
 
     assert_eq!(response.status_code(), 200);
@@ -656,11 +611,7 @@ async fn number_config_middleware_test() {
 
 #[tokio::test]
 async fn bool_config_middleware_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test = TestServer::new(app.router()).unwrap();
+    let test = test_server();
     let response = test.get("/test/bool-config-test").await;
 
     assert_eq!(response.status_code(), 200);

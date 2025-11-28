@@ -13,6 +13,12 @@ impl HelmetTestController {
     }
 }
 
+struct HelmetTestModule;
+
+impl Module for HelmetTestModule {
+    type Controller = HelmetTestController;
+}
+
 #[tokio::test]
 async fn test_basic_security_headers() {
     let helmet = Helmet::builder()
@@ -21,7 +27,7 @@ async fn test_basic_security_headers() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -43,7 +49,7 @@ async fn test_x_content_type_options() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -62,7 +68,7 @@ async fn test_x_frame_options() {
     let helmet_deny = Helmet::builder().with_header(XFrameOptions::deny()).build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_deny)
         .build();
 
@@ -77,7 +83,7 @@ async fn test_x_frame_options() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_sameorigin)
         .build();
 
@@ -96,7 +102,7 @@ async fn test_x_xss_protection() {
     let helmet_on = Helmet::builder().with_header(XXSSProtection::on()).build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_on)
         .build();
 
@@ -109,7 +115,7 @@ async fn test_x_xss_protection() {
     let helmet_off = Helmet::builder().with_header(XXSSProtection::off()).build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_off)
         .build();
 
@@ -127,7 +133,7 @@ async fn test_strict_transport_security() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -149,7 +155,7 @@ async fn test_referrer_policy() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -170,7 +176,7 @@ async fn test_x_dns_prefetch_control() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_off)
         .build();
 
@@ -188,7 +194,7 @@ async fn test_x_dns_prefetch_control() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet_on)
         .build();
 
@@ -209,7 +215,7 @@ async fn test_x_download_options() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -230,7 +236,7 @@ async fn test_x_powered_by() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -251,7 +257,7 @@ async fn test_x_permitted_cross_domain_policies() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -275,7 +281,7 @@ async fn test_cross_origin_embedder_policy() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -299,7 +305,7 @@ async fn test_cross_origin_opener_policy() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -323,7 +329,7 @@ async fn test_cross_origin_resource_policy() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -347,7 +353,7 @@ async fn test_origin_agent_cluster() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -368,7 +374,7 @@ async fn test_content_security_policy() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -401,7 +407,7 @@ async fn test_multiple_security_headers() {
         .build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 
@@ -442,7 +448,7 @@ async fn test_empty_helmet() {
     let helmet = Helmet::builder().build();
 
     let app = Application::builder()
-        .with_controller::<HelmetTestController>()
+        .with_module::<HelmetTestModule>()
         .with_layer(helmet)
         .build();
 

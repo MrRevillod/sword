@@ -1,133 +1,79 @@
+mod env;
 mod error;
 mod registrar;
 
+use env::expand_env_variables;
 use serde::de::{DeserializeOwned, IntoDeserializer};
-use std::{fs, path::Path, str::FromStr, sync::Arc};
-use toml::Table;
+use std::{env::current_exe, fs, path::Path, str::FromStr, sync::Arc};
+use toml::{Table, Value};
 
 pub use error::ConfigError;
 pub use registrar::*;
 pub use sword_macros::config;
 
-use crate::core::State;
-
+/// Struct representing the application's configuration.
+///
+/// This struct loads and holds the configuration data from a TOML file,
+/// allowing retrieval of specific configuration sections through the `get` method.
 #[derive(Debug, Clone, Default)]
 pub struct Config {
     inner: Arc<Table>,
 }
 
-/// Trait for configuration section types.
-///
-/// Types implementing this trait can be used with `Config::get()` to extract
-/// and deserialize specific sections from the configuration file.
-///
-/// Use the `#[config(key = "section_name")]` macro to automatically implement this trait.
-/// The macro will also auto-register the config type using the `inventory` crate.
-///
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// #[config(key = "my_section")]
-/// struct MyConfig {
-///     value: String,
-/// }
-/// ```
-pub trait ConfigItem: DeserializeOwned + Clone + Send + Sync + 'static {
-    /// Returns the TOML section key for this configuration type.
-    fn toml_key() -> &'static str;
-
-    /// Registers this config type in the application State.
-    /// This is called automatically during application bootstrap.
-    fn register_in_state(config: &Config, state: &State) -> Result<(), ConfigError> {
-        state.insert(config.get::<Self>()?).map_err(|_| {
-            ConfigError::ParseError(format!(
-                "Failed to register config '{}' in state",
-                Self::toml_key()
-            ))
-        })
-    }
-}
-
 impl Config {
     pub(crate) fn new() -> Result<Self, ConfigError> {
-        let path = Path::new("config/config.toml");
+        let content = Self::load_config_file()?;
 
-        let content = if path.exists() {
-            fs::read_to_string(path).map_err(ConfigError::ReadError)?
-        } else {
-            let exe_path = std::env::current_exe()
-                .map_err(|_| ConfigError::FileNotFound("config/config.toml"))?;
-
-            let exe_dir = exe_path
-                .parent()
-                .ok_or(ConfigError::FileNotFound("config/config.toml"))?;
-
-            let fallback_path = exe_dir.join("config/config.toml");
-
-            if !fallback_path.exists() {
-                return Err(ConfigError::FileNotFound("config/config.toml"));
-            }
-
-            fs::read_to_string(fallback_path).map_err(ConfigError::ReadError)?
-        };
-
-        let expanded = crate::core::utils::expand_env_vars(&content)
+        let expanded = expand_env_variables(&content)
             .map_err(ConfigError::InterpolationError)?;
 
-        let table = Table::from_str(&expanded)
-            .map_err(|e| ConfigError::ParseError(e.to_string()))?;
-
         Ok(Self {
-            inner: Arc::new(table),
+            inner: Arc::new(Table::from_str(&expanded)?),
         })
     }
 
     /// Retrieves and deserializes a configuration section.
     ///
     /// This method extracts a specific section from the loaded TOML configuration
-    /// and deserializes it to the specified type. The type must implement both
+    /// and deserializes it to the specified type.
+    ///
+    /// The `T` type must implement both
     /// `DeserializeOwned` for parsing and `ConfigItem` to specify which section
     /// to load from.
     ///
-    /// ### Type Parameters
-    ///
-    /// * `T` - The configuration type to deserialize (must implement `DeserializeOwned`)
-    ///
-    /// ### Example
-    ///
-    /// ```rust,ignore
-    /// use sword::prelude::*;
-    /// use serde::{Serialize, Deserialize};
-    ///
-    /// #[derive(Serialize, Deserialize)]
-    /// #[config(key = "application")]
-    /// struct DatabaseConfig {
-    ///     url: String,
-    /// }
-    ///
-    /// // Then in a route handler:
-    ///
-    /// #[controller("/")]
-    /// struct MyController {
-    ///     db_config: DatabaseConfig,
-    /// }
-    ///
-    /// #[routes]
-    /// impl MyController {
-    ///     #[get("/db-info")]
-    ///     async fn db_info(&self) -> HttpResponse {
-    ///         HttpResponse::Ok().data(&self.db_config)
-    ///     }
-    /// }
-    /// ```
+    /// The `ConfigItem` is implemented using the `#[config(key = "section_name")]` macro
     pub fn get<T: DeserializeOwned + ConfigItem>(&self) -> Result<T, ConfigError> {
-        let Some(config_item) = self.inner.get(T::toml_key()) else {
-            return Err(ConfigError::KeyNotFound(T::toml_key().to_string()));
+        let key = T::toml_key();
+
+        let Some(config_item) = self.inner.get(key).cloned() else {
+            return Err(ConfigError::KeyNotFound(key.to_owned()));
         };
 
-        let value = toml::Value::into_deserializer(config_item.clone());
+        let value = Value::into_deserializer(config_item);
 
-        T::deserialize(value)
-            .map_err(|e| ConfigError::DeserializeError(e.to_string()))
+        Ok(T::deserialize(value)?)
+    }
+
+    fn load_config_file() -> Result<String, ConfigError> {
+        let primary_path = Path::new("config/config.toml");
+
+        if primary_path.exists() {
+            return Ok(fs::read_to_string(primary_path)?);
+        }
+
+        Self::load_from_exe_directory()
+    }
+
+    fn load_from_exe_directory() -> Result<String, ConfigError> {
+        let exe_path = current_exe().map_err(|_| ConfigError::FileNotFound)?;
+        let exe_dir = exe_path.parent().ok_or(ConfigError::FileNotFound)?;
+
+        let fallback_path = exe_dir.join("config/config.toml");
+
+        if !fallback_path.exists() {
+            return Err(ConfigError::FileNotFound);
+        }
+
+        Ok(fs::read_to_string(fallback_path)?)
     }
 }

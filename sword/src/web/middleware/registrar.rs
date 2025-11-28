@@ -1,4 +1,4 @@
-use std::{any::type_name, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
     core::{DependencyInjectionError, State},
@@ -27,9 +27,7 @@ impl MiddlewareRegistrar {
         fn register_fn<M: Middleware>(
             state: &State,
         ) -> Result<(), DependencyInjectionError> {
-            state.insert(Arc::new(M::build(state)?)).map_err(|e| {
-                DependencyInjectionError::state_error(type_name::<M>(), e)
-            })?;
+            state.insert(Arc::new(M::build(state)?));
 
             Ok(())
         }

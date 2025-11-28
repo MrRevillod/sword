@@ -1,0 +1,45 @@
+use axum::Router;
+use std::any::TypeId;
+
+use crate::{
+    core::{Build, DependencyInjectionError, HasDeps, State},
+    web::{Controller, ControllerBuilder},
+};
+
+/// Controller for modules that do not define any routes.
+///
+/// This is useful for modules that only provide services or dependencies
+/// without exposing any HTTP endpoints.
+#[derive(Debug, Clone)]
+pub struct NonControllerModule;
+
+impl Controller for NonControllerModule {
+    fn router(_state: State) -> Router {
+        Router::new()
+    }
+}
+
+impl Build for NonControllerModule {
+    fn build(_: &State) -> Result<Self, DependencyInjectionError>
+    where
+        Self: Sized,
+    {
+        Ok(NonControllerModule)
+    }
+}
+
+impl ControllerBuilder for NonControllerModule {
+    fn base_path() -> &'static str {
+        "/"
+    }
+
+    fn apply_middlewares(router: Router, _: State) -> Router {
+        router
+    }
+}
+
+impl HasDeps for NonControllerModule {
+    fn deps() -> Vec<TypeId> {
+        Vec::new()
+    }
+}

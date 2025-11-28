@@ -62,13 +62,23 @@ impl TestController {
     }
 }
 
-#[tokio::test]
-async fn timeout() {
+struct V1UsersModule;
+
+impl Module for V1UsersModule {
+    type Controller = TestController;
+}
+
+fn test_server() -> TestServer {
     let app = Application::builder()
-        .with_controller::<TestController>()
+        .with_module::<V1UsersModule>()
         .build();
 
-    let test_app = TestServer::new(app.router()).unwrap();
+    TestServer::new(app.router()).unwrap()
+}
+
+#[tokio::test]
+async fn timeout() {
+    let test_app = test_server();
 
     let response = test_app.get("/test/timeout").await;
     let json = response.json::<ResponseBody>();
@@ -91,12 +101,7 @@ async fn timeout() {
 
 #[tokio::test]
 async fn timeout_boundary_exact() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
-
+    let test_app = test_server();
     let response = test_app.get("/test/timeout-boundary").await;
 
     assert_eq!(response.status_code(), 408);
@@ -109,11 +114,7 @@ async fn timeout_boundary_exact() {
 
 #[tokio::test]
 async fn timeout_just_under_limit() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
     let response = test_app.get("/test/timeout-just-under").await;
 
     assert_eq!(response.status_code(), 200);
@@ -127,11 +128,7 @@ async fn timeout_just_under_limit() {
 
 #[tokio::test]
 async fn timeout_just_over_limit() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
     let response = test_app.get("/test/timeout-just-over").await;
 
     assert_eq!(response.status_code(), 408);
@@ -145,11 +142,7 @@ async fn timeout_just_over_limit() {
 
 #[tokio::test]
 async fn no_timeout_quick_response() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
     let response = test_app.get("/test/no-timeout").await;
 
     assert_eq!(response.status_code(), 200);
@@ -163,11 +156,7 @@ async fn no_timeout_quick_response() {
 
 #[tokio::test]
 async fn content_type_json_valid() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-json")
@@ -185,11 +174,7 @@ async fn content_type_json_valid() {
 
 #[tokio::test]
 async fn content_type_multipart_valid() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-form")
@@ -207,11 +192,7 @@ async fn content_type_multipart_valid() {
 
 #[tokio::test]
 async fn content_type_invalid() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-any")
@@ -231,11 +212,7 @@ async fn content_type_invalid() {
 
 #[tokio::test]
 async fn content_type_xml_invalid() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-any")
@@ -256,11 +233,7 @@ async fn content_type_xml_invalid() {
 
 #[tokio::test]
 async fn content_type_form_urlencoded_invalid() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-any")
@@ -281,11 +254,7 @@ async fn content_type_form_urlencoded_invalid() {
 
 #[tokio::test]
 async fn content_type_no_body_allowed() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
     let response = test_app.get("/test/no-body").await;
 
     assert_eq!(response.status_code(), 200);
@@ -298,11 +267,7 @@ async fn content_type_no_body_allowed() {
 
 #[tokio::test]
 async fn content_type_missing_header_with_body() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-any")
@@ -322,11 +287,7 @@ async fn content_type_missing_header_with_body() {
 
 #[tokio::test]
 async fn content_type_case_sensitivity() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-json")
@@ -339,11 +300,7 @@ async fn content_type_case_sensitivity() {
 
 #[tokio::test]
 async fn content_type_json_with_charset() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
-
-    let test_app = TestServer::new(app.router()).unwrap();
+    let test_app = test_server();
 
     let response = test_app
         .post("/test/content-type-json")
@@ -357,4 +314,66 @@ async fn content_type_json_with_charset() {
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
+}
+
+#[tokio::test]
+async fn compression_gzip() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "gzip")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    // Check if response has compression headers
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "gzip");
+}
+
+#[tokio::test]
+async fn compression_deflate() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "deflate")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "deflate");
+}
+
+#[tokio::test]
+async fn compression_brotli() {
+    let test_app = test_server();
+
+    let response = test_app
+        .get("/test/no-body")
+        .add_header("Accept-Encoding", "br")
+        .await;
+
+    assert_eq!(response.status_code(), 200);
+
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_some());
+    assert_eq!(headers.get("content-encoding").unwrap(), "br");
+}
+
+#[tokio::test]
+async fn compression_no_preference() {
+    let test_app = test_server();
+
+    let response = test_app.get("/test/no-body").await;
+
+    assert_eq!(response.status_code(), 200);
+
+    // Without Accept-Encoding, should not compress
+    let headers = response.headers();
+    assert!(headers.get("content-encoding").is_none());
 }

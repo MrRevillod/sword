@@ -1,6 +1,37 @@
 # Sword web framework changelog
 
-## Next Release
+## [Unreleased]
+
+### Added
+
+- New `next()` method on `Request` struct. See `Changed` section for more details.
+- Added `Module` trait for creating and registering controllers and injectables as a modules.
+
+- Added `ServeDir` middleware for serving static files from a directory. This middleware uses `tower_http::services::ServeDir` under the hood.
+
+- Added cleanup for temporary data structures used in the application build process.
+
+- Added `Cors` middleware based on `tower_http::cors::CorsLayer`. The configuration can be set in the config file under the `cors` key.
+
+- Added `middlewares` field to `Config` struct. This allows to define global middlewares in the configuration file.
+
+- Added `Compression` middleware based on `tower_http::compression::CompressionLayer`. The configuration can be set in the config file under the `compression` key.
+
+### Changed
+
+- Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
+
+- The Application config was refactored and splitted into multiple smaller config structs.
+
+- The `next!` macro has been removed. Instead, use the `req.next().await` method to pass control to the next middleware or handler in the chain. This change removes the need for a macro to do "magic" and makes the code more explicit and easier to understand.
+
+- Middleware structs marked with `#[middleware]` macro now can omit the `next` parameter in their methods. Instead, they can call `req.next().await` to pass control to the next middleware or handler.
+
+- The global router prefix was moved from `Application` struct to `Config` struct. Now, you can set the global prefix in the configuration file under the `application` key with `global_prefix` field.
+
+- The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
+
+## [0.2.0]
 
 ### Added
 

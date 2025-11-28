@@ -6,11 +6,11 @@ use sword::prelude::*;
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -18,9 +18,9 @@ impl OnRequest for ExtensionsTestMiddleware {
 struct MwWithState;
 
 impl OnRequest for MwWithState {
-    async fn on_request(&self, mut req: Request, next: Next) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
         req.extensions.insert::<u16>(8080);
-        next!(req, next)
+        req.next().await
     }
 }
 
@@ -58,11 +58,15 @@ impl TestController {
     }
 }
 
+struct TestModule;
+
+impl Module for TestModule {
+    type Controller = TestController;
+}
+
 #[tokio::test]
 async fn extensions_mw_test() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
     let response = test.get("/test/extensions-test").await;
@@ -79,9 +83,7 @@ async fn extensions_mw_test() {
 
 #[tokio::test]
 async fn middleware_state() {
-    let app = Application::builder()
-        .with_controller::<TestController>()
-        .build();
+    let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
     let response = test.get("/test/middleware-state").await;

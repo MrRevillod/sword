@@ -4,10 +4,10 @@ use sword::prelude::*;
 
 fn test_server() -> TestServer {
     let app = Application::builder()
-        .with_controller::<V1UsersController>()
-        .with_controller::<V2UsersController>()
-        .with_controller::<V1ProductsController>()
-        .with_controller::<V2ProductsController>()
+        .with_module::<V1UsersModule>()
+        .with_module::<V2UsersModule>()
+        .with_module::<V1ProductsModule>()
+        .with_module::<V2ProductsModule>()
         .build();
 
     TestServer::new(app.router()).unwrap()
@@ -61,6 +61,12 @@ impl V1UsersController {
     }
 }
 
+struct V1UsersModule;
+
+impl Module for V1UsersModule {
+    type Controller = V1UsersController;
+}
+
 #[controller("/products", version = "v1")]
 pub struct V1ProductsController {}
 
@@ -94,6 +100,12 @@ impl V1ProductsController {
             }))
             .message("Product retrieved (v1)"))
     }
+}
+
+struct V1ProductsModule;
+
+impl Module for V1ProductsModule {
+    type Controller = V1ProductsController;
 }
 
 // ================== V2 Controllers ==================
@@ -154,6 +166,12 @@ impl V2UsersController {
     }
 }
 
+struct V2UsersModule;
+
+impl Module for V2UsersModule {
+    type Controller = V2UsersController;
+}
+
 #[controller("/products", version = "v2")]
 pub struct V2ProductsController {}
 
@@ -209,6 +227,12 @@ impl V2ProductsController {
             }))
             .message("Product retrieved (v2)"))
     }
+}
+
+struct V2ProductsModule;
+
+impl Module for V2ProductsModule {
+    type Controller = V2ProductsController;
 }
 
 // ================== Tests ==================

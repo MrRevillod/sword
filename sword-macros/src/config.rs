@@ -63,7 +63,7 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
         const _: () = {
             ::sword::__internal::inventory::submit! {
                 ::sword::__internal::ConfigRegistrar::new(|config, state| {
-                    <#struct_name as ::sword::core::ConfigItem>::register_in_state(config, state)
+                    <#struct_name as ::sword::core::ConfigItem>::register(config, state)
                 })
             }
         };

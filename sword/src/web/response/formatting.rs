@@ -1,9 +1,6 @@
-#[cfg(feature = "validator")]
 use serde_json::{Map, Value, json};
-#[cfg(feature = "validator")]
 use validator::ValidationErrors;
 
-#[cfg(feature = "validator")]
 /// Structured JSON output for validation errors  from the `validator` crate.
 ///
 /// # Example

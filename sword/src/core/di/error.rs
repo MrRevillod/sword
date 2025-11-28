@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::core::{ConfigError, StateError};
+use crate::core::ConfigError;
 
 #[derive(Debug, Error)]
 pub enum DependencyInjectionError {
@@ -18,22 +18,6 @@ pub enum DependencyInjectionError {
         source: ConfigError,
     },
 
-    #[error("State error while building '{type_name}': {source}")]
-    StateError {
-        type_name: String,
-        #[source]
-        source: StateError,
-    },
-
     #[error("Circular dependency detected involving '{type_name}'")]
     CircularDependency { type_name: String },
-}
-
-impl DependencyInjectionError {
-    pub fn state_error(type_name: &str, source: StateError) -> Self {
-        DependencyInjectionError::StateError {
-            type_name: type_name.to_string(),
-            source,
-        }
-    }
 }

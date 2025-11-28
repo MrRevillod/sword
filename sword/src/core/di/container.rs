@@ -6,12 +6,12 @@ use std::{
 
 use crate::core::{
     Component, Provider, State,
-    di::{Dependency, DependencyBuilder, DependencyInjectionError},
+    di::{Dependency, DependencyBuilderFn, DependencyInjectionError},
 };
 
 /// A container for managing dependencies and their builders.
 ///
-/// Basically it support two types of registrations:
+/// It support two types of registrations:
 ///
 /// 1. Providers:
 ///
@@ -26,12 +26,12 @@ use crate::core::{
 /// their dependencies automatically.
 pub struct DependencyContainer {
     pub(crate) instances: HashMap<TypeId, Dependency>,
-    pub(crate) dependency_builders: HashMap<TypeId, DependencyBuilder>,
+    pub(crate) dependency_builders: HashMap<TypeId, DependencyBuilderFn>,
     pub(crate) dependency_graph: HashMap<TypeId, Vec<TypeId>>,
 }
 
 impl DependencyContainer {
-    pub fn builder() -> Self {
+    pub fn new() -> Self {
         Self {
             instances: HashMap::new(),
             dependency_builders: HashMap::new(),
@@ -47,7 +47,7 @@ impl DependencyContainer {
     ///
     /// Dependencies are resolved automatically using topological sorting based on
     /// the dependency graph.
-    pub fn register_component<T: Component>(mut self) -> Self {
+    pub fn register_component<T: Component>(&mut self) {
         let type_id = TypeId::of::<T>();
         let type_name = type_name::<T>();
 
@@ -62,8 +62,6 @@ impl DependencyContainer {
 
         self.dependency_graph.insert(type_id, T::deps());
         self.dependency_builders.insert(type_id, dependency_builder);
-
-        self
     }
 
     /// Registers a pre-built dependency provider.
@@ -72,12 +70,11 @@ impl DependencyContainer {
     /// to be injected into other components. Typical use cases include database
     /// connections, HTTP clients, or external service configurations that cannot
     /// be auto-constructed from the State.
-    pub fn register_provider<T>(mut self, provider: T) -> Self
+    pub fn register_provider<T>(&mut self, provider: T)
     where
         T: Provider,
     {
         self.instances.insert(TypeId::of::<T>(), Arc::new(provider));
-        self
     }
 
     pub fn build(self) -> Self {
@@ -103,13 +100,7 @@ impl DependencyContainer {
         // First. register all the provided instances
 
         for (type_id, instance) in &self.instances {
-            state
-                .insert_dependency(*type_id, Arc::clone(instance))
-                .map_err(|e| DependencyInjectionError::StateError {
-                    type_name: format!("{:?}", type_id),
-                    source: e,
-                })?;
-
+            state.insert_dependency(*type_id, Arc::clone(instance));
             built.insert(*type_id);
         }
 
@@ -145,7 +136,7 @@ impl DependencyContainer {
 
         if visiting.contains(type_id) {
             return Err(DependencyInjectionError::CircularDependency {
-                type_name: std::any::type_name::<()>().to_string(),
+                type_name: type_name::<()>().to_string(),
             });
         }
 
@@ -164,16 +155,22 @@ impl DependencyContainer {
         visiting.remove(type_id);
 
         if let Some(builder) = self.dependency_builders.get(type_id) {
-            state
-                .insert_dependency(*type_id, builder(state)?)
-                .map_err(|e| DependencyInjectionError::StateError {
-                    type_name: format!("{:?}", type_id),
-                    source: e,
-                })?;
-
+            state.insert_dependency(*type_id, builder(state)?);
             built.insert(*type_id);
         }
 
         Ok(())
+    }
+
+    pub(crate) fn clear(&mut self) {
+        self.instances.clear();
+        self.dependency_builders.clear();
+        self.dependency_graph.clear();
+    }
+}
+
+impl Default for DependencyContainer {
+    fn default() -> Self {
+        Self::new()
     }
 }
