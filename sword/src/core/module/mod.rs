@@ -12,8 +12,8 @@ use crate::{
 pub trait Module {
     type Controller: Controller;
 
-    fn register_components(_: &mut DependencyContainer) {}
-    async fn register_providers(_: &Config, _: &mut DependencyContainer) {}
+    fn register_components(_: &DependencyContainer) {}
+    async fn register_providers(_: &Config, _: &DependencyContainer) {}
 
     #[doc(hidden)]
     fn is_controller_module() -> bool {

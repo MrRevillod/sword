@@ -54,6 +54,23 @@ impl Config {
         Ok(T::deserialize(value)?)
     }
 
+    pub fn get_or_default<T: DeserializeOwned + ConfigItem + Default>(
+        &self,
+    ) -> Result<T, ConfigError> {
+        match self.get::<T>() {
+            Ok(value) => Ok(value),
+            Err(ConfigError::KeyNotFound(_)) => Ok(T::default()),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_or_panic<T: DeserializeOwned + ConfigItem>(&self) -> T {
+        self.get::<T>().expect(&format!(
+            "Failed to get configuration for key '{}'",
+            T::toml_key()
+        ))
+    }
+
     fn load_config_file() -> Result<String, ConfigError> {
         let primary_path = Path::new("config/config.toml");
 

@@ -12,12 +12,9 @@ pub struct SharedModule;
 impl Module for SharedModule {
     type Controller = NonControllerModule;
 
-    async fn register_providers(
-        config: &Config,
-        container: &mut DependencyContainer,
-    ) {
-        let db_config = config.get::<DatabaseConfig>().unwrap();
-        let hasher_config = config.get::<HasherConfig>().unwrap();
+    async fn register_providers(config: &Config, container: &DependencyContainer) {
+        let db_config = config.get_or_panic::<DatabaseConfig>();
+        let hasher_config = config.get_or_panic::<HasherConfig>();
 
         container.register_provider(
             Database::new(db_config)

@@ -112,7 +112,7 @@ impl ApplicationBuilder {
     ///
     /// This method can be used to add providers directly to the container, avoiding the need
     /// to create a full module when only a provider is needed.
-    pub fn with_provider<T>(mut self, provider: T) -> Self
+    pub fn with_provider<T>(self, provider: T) -> Self
     where
         T: Provider,
     {

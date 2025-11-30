@@ -15,7 +15,7 @@ pub struct UsersModule;
 impl Module for UsersModule {
     type Controller = UsersController;
 
-    fn register_components(container: &mut DependencyContainer) {
+    fn register_components(container: &DependencyContainer) {
         container.register_component::<UserRepository>();
     }
 }
