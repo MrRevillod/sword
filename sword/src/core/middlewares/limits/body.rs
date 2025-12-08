@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use axum_responses::http::HttpResponse;
+use axum_responses::JsonResponse;
 use byte_unit::Byte;
 use serde::{Deserialize, Serialize};
 use tower::layer::util::Stack;
@@ -33,7 +33,7 @@ impl BodyLimitLayer {
                 return r;
             }
 
-            HttpResponse::PayloadTooLarge()
+            JsonResponse::PayloadTooLarge()
             .message(
                 "The request body exceeds the maximum allowed size by the server",
             )

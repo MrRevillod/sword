@@ -18,7 +18,7 @@ use axum::{
     middleware::Next,
 };
 
-use axum_responses::http::HttpResponse;
+use axum_responses::JsonResponse;
 pub use error::RequestError;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
@@ -36,9 +36,9 @@ pub struct Request {
     method: Method,
     headers: HashMap<String, String>,
     uri: Uri,
+    next: Option<Next>,
     /// Axum extensions for additional request metadata.
     pub extensions: Extensions,
-    next: Option<Next>,
 }
 
 impl Request {
@@ -148,7 +148,7 @@ impl Request {
                 let message = "Invalid parameter type";
                 let details = "Failed to deserialize parameter to the required type";
 
-                return Err(RequestError::ParseError(message, details.into()));
+                return Err(RequestError::parse_error(message, details.into()));
             };
 
             return Ok(param);
@@ -157,7 +157,7 @@ impl Request {
         let message = "Parameter not found";
         let details = format!("Parameter '{key}' not found in request parameters");
 
-        Err(RequestError::ParseError(message, details))
+        Err(RequestError::parse_error(message, details))
     }
 
     pub const fn params(&self) -> &HashMap<String, String> {
@@ -212,14 +212,14 @@ impl Request {
     /// ```
     pub fn body<T: DeserializeOwned>(&self) -> Result<T, RequestError> {
         if self.body_bytes.is_empty() {
-            return Err(RequestError::BodyIsEmpty("Request body is empty"));
+            return Err(RequestError::BodyIsEmpty);
         }
 
         serde_json::from_slice(&self.body_bytes).map_err(|_| {
-            let message = "Invalid request body";
-            let details = "Failed to deserialize request body to the required type.";
-
-            RequestError::ParseError(message, details.into())
+            RequestError::deserialization_error(
+                "Invalid request body",
+                "Failed to deserialize request body to the required type.".into(),
+            )
         })
     }
 
@@ -288,10 +288,11 @@ impl Request {
         let parsed: T =
             serde_path_to_error::deserialize(deserializer).map_err(|_| {
                 // TODO: Implement tracing for loging the errors
-                let message = "Invalid query parameters";
-                let details =
-                    "Failed to deserialize query parameters to the required type.";
-                RequestError::ParseError(message, details.into())
+                RequestError::deserialization_error(
+                    "Invalid query parameters",
+                    "Failed to deserialize query parameters to the required type."
+                        .into(),
+                )
             })?;
 
         Ok(Some(parsed))
@@ -326,7 +327,7 @@ impl Request {
     /// pass control to the next middleware or the final request handler.
     pub async fn next(mut self) -> MiddlewareResult {
         let Some(next) = self.next.take() else {
-            return Err(HttpResponse::InternalServerError());
+            return Err(JsonResponse::InternalServerError());
         };
 
         Ok(next.run(self.try_into()?).await)

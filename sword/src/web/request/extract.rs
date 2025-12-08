@@ -1,6 +1,6 @@
 use crate::{
     core::{Config, State, middlewares::MiddlewaresConfig},
-    web::{HttpResponse, Request, RequestError},
+    web::{JsonResponse, Request, RequestError},
 };
 
 use axum::{
@@ -21,7 +21,7 @@ where
     S: Send + Sync + 'static,
     State: FromRef<S>,
 {
-    type Rejection = HttpResponse;
+    type Rejection = JsonResponse;
 
     async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
@@ -60,7 +60,7 @@ where
                 }
             }
 
-            RequestError::ParseError(
+            RequestError::parse_error(
                 "Failed to read request body",
                 format!("Error reading body: {err}"),
             )
@@ -107,7 +107,7 @@ impl TryFrom<Request> for AxumReq {
         let body = Body::from(req.body_bytes);
 
         let mut request = builder.body(body).map_err(|_| {
-            RequestError::ParseError(
+            RequestError::parse_error(
                 "Failed to build axum request",
                 "Error building request".to_string(),
             )

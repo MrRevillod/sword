@@ -1,5 +1,5 @@
 use axum::response::{IntoResponse, Response};
-use axum_responses::http::HttpResponse;
+use axum_responses::JsonResponse;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tower::{ServiceBuilder, util::MapResponseLayer};
@@ -22,7 +22,7 @@ impl TimeoutLayer {
 
         fn timeout_mapper(response: Response) -> Response {
             if response.status().as_u16() == 408 {
-                return HttpResponse::RequestTimeout().into_response();
+                return JsonResponse::RequestTimeout().into_response();
             }
 
             response

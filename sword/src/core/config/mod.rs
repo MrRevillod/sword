@@ -25,7 +25,7 @@ impl Config {
         let content = Self::load_config_file()?;
 
         let expanded = expand_env_variables(&content)
-            .map_err(ConfigError::InterpolationError)?;
+            .map_err(ConfigError::interpolation_error)?;
 
         Ok(Self {
             inner: Arc::new(Table::from_str(&expanded)?),
@@ -46,7 +46,7 @@ impl Config {
         let key = T::toml_key();
 
         let Some(config_item) = self.inner.get(key).cloned() else {
-            return Err(ConfigError::KeyNotFound(key.to_owned()));
+            return Err(ConfigError::key_not_found(key));
         };
 
         let value = Value::into_deserializer(config_item);

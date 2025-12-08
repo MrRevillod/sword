@@ -1,82 +1,40 @@
 #[cfg(feature = "validator")]
 mod formatting;
 
-pub use axum_responses::http::{HttpResponse, ResponseBody};
-pub use axum_responses::{ContentDisposition, FileResponse, FileResult};
-
-pub type HttpResult = axum_responses::Result<HttpResponse>;
-
-#[cfg(feature = "validator")]
-use formatting::format_validator_errors;
-
-use crate::{
-    core::{ConfigError, DependencyInjectionError},
-    web::RequestError,
+pub use axum_responses::{
+    ContentDisposition, File, HttpError, Redirect, thiserror::Error,
 };
 
-impl From<RequestError> for HttpResponse {
-    fn from(error: RequestError) -> HttpResponse {
-        match error {
-            RequestError::ParseError(message, details) => {
-                HttpResponse::BadRequest().message(message).error(details)
-            }
+pub use axum_responses::{JsonResponse, JsonResponseBody};
 
-            #[cfg(feature = "validator")]
-            RequestError::ValidatorError(message, errors) => {
-                HttpResponse::BadRequest()
-                    .message(message)
-                    .errors(format_validator_errors(errors))
-            }
+pub type HttpResult<T> = Result<T, JsonResponse>;
 
-            RequestError::BodyIsEmpty(message) => {
-                HttpResponse::BadRequest().message(message)
-            }
-            RequestError::BodyTooLarge => HttpResponse::PayloadTooLarge().message(
-                "The request body exceeds the maximum allowed size by the server",
-            ),
+#[cfg(feature = "validator")]
+pub use formatting::format_validator_errors;
 
-            RequestError::UnsupportedMediaType(message) => {
-                HttpResponse::UnsupportedMediaType().message(message)
-            }
-        }
-    }
-}
+use crate::core::DependencyInjectionError;
 
-impl From<DependencyInjectionError> for HttpResponse {
+impl From<DependencyInjectionError> for JsonResponse {
     fn from(error: DependencyInjectionError) -> Self {
         match error {
             DependencyInjectionError::BuildFailed { type_name, reason } => {
                 eprintln!("Failed to build dependency '{type_name}': {reason}");
-                HttpResponse::InternalServerError().message("Internal server error")
+                JsonResponse::InternalServerError().message("Internal server error")
             }
             DependencyInjectionError::DependencyNotFound { type_name } => {
                 eprintln!("Dependency '{type_name}' not found in container");
-                HttpResponse::InternalServerError()
+                JsonResponse::InternalServerError()
                     .message("Service configuration error")
             }
             DependencyInjectionError::ConfigInjectionError { source } => {
                 eprintln!("Failed to inject config: {source}");
-                HttpResponse::InternalServerError().message("Configuration error")
+                JsonResponse::InternalServerError().message("Configuration error")
             }
             DependencyInjectionError::CircularDependency { type_name } => {
                 eprintln!("Circular dependency detected involving '{type_name}'");
-                HttpResponse::InternalServerError()
+                JsonResponse::InternalServerError()
                     .message("Dependency injection error")
             }
-        }
-    }
-}
-
-impl From<ConfigError> for HttpResponse {
-    fn from(error: ConfigError) -> Self {
-        match error {
-            ConfigError::KeyNotFound(key) => {
-                eprintln!("Key '{key}' not found in configuration");
-                HttpResponse::InternalServerError().message("Configuration error")
-            }
-
-            _ => HttpResponse::InternalServerError()
-                .message("An error occurred while processing the app configuration"),
         }
     }
 }

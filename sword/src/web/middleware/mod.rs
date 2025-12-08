@@ -8,10 +8,10 @@ pub use registrar::MiddlewareRegistrar;
 pub use sword_macros::{middleware, uses};
 
 use crate::core::Build;
-use crate::web::{HttpResponse, Request};
+use crate::web::{JsonResponse, Request};
 use std::future::Future;
 
-pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
+pub type MiddlewareResult = Result<AxumResponse, JsonResponse>;
 
 /// Trait for middleware components that can intercept and modify requests/responses.
 ///

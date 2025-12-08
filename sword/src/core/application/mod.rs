@@ -6,7 +6,7 @@ use colored::Colorize;
 pub use config::ApplicationConfig;
 
 use axum::routing::Router;
-use axum_responses::http::HttpResponse;
+use axum_responses::JsonResponse;
 use tokio::net::TcpListener;
 
 use crate::core::{Config, middlewares::MiddlewaresConfig};
@@ -63,7 +63,7 @@ impl Application {
         let listener = self.build_listener().await;
 
         let router = self.router.clone().fallback(async || {
-            HttpResponse::NotFound().message("The requested resource was not found")
+            JsonResponse::NotFound().message("The requested resource was not found")
         });
 
         axum::serve(listener, router)
@@ -87,7 +87,7 @@ impl Application {
         let listener = self.build_listener().await;
 
         let router = self.router.clone().fallback(async || {
-            HttpResponse::NotFound().message("The requested resource was not found")
+            JsonResponse::NotFound().message("The requested resource was not found")
         });
 
         axum::serve(listener, router)
