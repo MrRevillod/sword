@@ -78,7 +78,7 @@ impl UserController {
     async fn get_users(&self, req: Request) -> HttpResult {
         let query: Option<QueryData> = req.query()?;
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(query)
             .message("Users retrieved successfully"))
     }
@@ -87,7 +87,7 @@ impl UserController {
     async fn get_users_with_validation(&self, req: Request) -> HttpResult {
         let query: Option<ValidableQueryData> = req.query_validator()?;
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(query)
             .message("Users retrieved successfully with validation"))
     }
@@ -96,7 +96,7 @@ impl UserController {
     async fn get_users_with_ergonomic_query(&self, req: Request) -> HttpResult {
         let query: OptionalQueryData = req.query()?.unwrap_or_default();
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(query)
             .message("Users retrieved with ergonomic optional query"))
     }
@@ -109,7 +109,7 @@ impl UserController {
         let query: DefaultValidableQueryData =
             req.query_validator()?.unwrap_or_default();
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(query)
             .message("Users retrieved with ergonomic validated optional query"))
     }
@@ -118,7 +118,7 @@ impl UserController {
     async fn get_users_with_complex_query(&self, req: Request) -> HttpResult {
         let query: Option<ComplexQueryData> = req.query()?;
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(query)
             .message("Users retrieved with complex query parameters"))
     }
@@ -126,10 +126,10 @@ impl UserController {
     #[get("/pattern-match-query")]
     async fn get_users_with_pattern_match(&self, req: Request) -> HttpResult {
         match req.query::<OptionalQueryData>()? {
-            Some(query) => Ok(HttpResponse::Ok()
+            Some(query) => Ok(JsonResponse::Ok()
                 .data(query)
                 .message("Users retrieved with query parameters")),
-            None => Ok(HttpResponse::Ok()
+            None => Ok(JsonResponse::Ok()
                 .data(OptionalQueryData::default())
                 .message("Users retrieved with default parameters")),
         }
@@ -147,7 +147,7 @@ async fn unvalidated_query_test() {
     let app = test_server();
 
     let response = app.get("/users/simple-query?page=1&limit=5").await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -166,7 +166,7 @@ async fn validated_query_test() {
     let app = test_server();
     let response = app.get("/users/validate-query?page=1&limit=5").await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -185,7 +185,7 @@ async fn validated_query_error_test_validator() {
     let app = test_server();
     let response = app.get("/users/validate-query?page=1001&limit=5").await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(400_u16, response.status_code().as_u16());
     assert!(json.errors.is_some());
@@ -213,7 +213,7 @@ async fn ergonomic_optional_query_with_params_test() {
         .get("/users/ergonomic-optional-query?page=1&limit=5")
         .await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -231,7 +231,7 @@ async fn ergonomic_optional_query_with_params_test() {
 async fn ergonomic_optional_query_without_params_test() {
     let app = test_server();
     let response = app.get("/users/ergonomic-optional-query").await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -251,7 +251,7 @@ async fn ergonomic_validated_optional_query_with_params_test() {
         .get("/users/ergonomic-validated-optional-query?page=1&limit=5")
         .await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -268,7 +268,7 @@ async fn ergonomic_validated_optional_query_with_params_test() {
 async fn ergonomic_validated_optional_query_without_params_test() {
     let app = test_server();
     let response = app.get("/users/ergonomic-validated-optional-query").await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());
@@ -284,7 +284,7 @@ async fn pattern_match_query_with_params_test() {
     let app = test_server();
     let response = app.get("/users/pattern-match-query?page=1&limit=5").await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert_eq!(
@@ -298,7 +298,7 @@ async fn pattern_match_query_without_params_test() {
     let app = test_server();
     let response = app.get("/users/pattern-match-query").await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert_eq!(
@@ -314,7 +314,7 @@ async fn complex_encoded_query_test() {
     let encoded_url = "/users/complex-query?page=1&limit=-10&price=99.99&search=hello%20world&category=electronics%26gadgets&active=true&user_name=john%2Bdoe&email_filter=test%40example.com";
 
     let response = app.get(encoded_url).await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(200_u16, response.status_code().as_u16());
     assert!(json.data.is_some());

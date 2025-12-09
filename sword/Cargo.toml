@@ -59,6 +59,7 @@ dioxus-devtools = { version = "0.7.0", features = ["serve"], optional = true }
 tower-layer = "0.3.3"
 duration-str = "0.17.0"
 parking_lot = "0.12.5"
+tracing = "0.1.43"
 
 [features]
 default = []

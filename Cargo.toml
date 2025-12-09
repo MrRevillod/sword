@@ -17,6 +17,7 @@ axum_responses = "0.5.3"
 
 garde = { version = "0.22.0", features = ["derive"] }
 validator = { version = "0.20.0", features = ["derive"] }
+thiserror = "2.0.17"
 uuid = { version = "1.18.0", features = ["v4", "serde"] }
 syn = { version = "2", features = ["full"] }
 quote = "1"

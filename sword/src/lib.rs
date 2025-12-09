@@ -43,11 +43,12 @@ pub mod __internal {
     pub use crate::core::ConfigRegistrar;
 
     pub use inventory;
-
     pub use tokio::runtime as tokio_runtime;
+    pub use tracing;
 
     #[cfg(feature = "hot-reload")]
     pub use dioxus_devtools;
+
     #[cfg(feature = "hot-reload")]
     pub use subsecond;
 }

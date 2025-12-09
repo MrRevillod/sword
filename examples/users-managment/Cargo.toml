@@ -6,11 +6,12 @@ edition = "2021"
 [dependencies]
 sword = { workspace = true, features = ["validator"] }
 serde = { workspace = true }
-sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid"] }
-uuid = { workspace = true }
 validator = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
 
+uuid = { workspace = true }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid"] }
 dotenv = "0.15.0"
 bcrypt = "0.17.1"
-thiserror = "2.0.17"
-serde_json.workspace = true
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }

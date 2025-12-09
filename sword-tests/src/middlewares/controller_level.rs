@@ -31,10 +31,10 @@ struct TestController {}
 #[routes]
 impl TestController {
     #[get("/extensions-test")]
-    async fn extensions_test(&self, req: Request) -> HttpResponse {
+    async fn extensions_test(&self, req: Request) -> JsonResponse {
         let extension_value = req.extensions.get::<String>();
 
-        HttpResponse::Ok()
+        JsonResponse::Ok()
             .message("Test controller response with extensions")
             .data(json!({
                 "extension_value": extension_value.cloned().unwrap_or_default()
@@ -52,7 +52,7 @@ impl TestController {
             "message": message
         });
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .message("Test controller response with middleware state")
             .data(json))
     }
@@ -72,7 +72,7 @@ async fn extensions_mw_test() {
     let response = test.get("/test/extensions-test").await;
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert!(json.data.is_some());
 
@@ -90,7 +90,7 @@ async fn middleware_state() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert!(json.data.is_some());
 

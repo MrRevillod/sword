@@ -17,7 +17,6 @@ mod middlewares {
 mod application {
     mod config;
     mod di;
-    mod versioning;
 }
 
 #[cfg(test)]
