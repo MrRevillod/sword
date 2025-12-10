@@ -4,7 +4,7 @@ use sword_layers::{
     cors::CorsConfig, req_timeout::RequestTimeoutConfig, servedir::ServeDirConfig,
 };
 
-use crate::core::{ConfigItem, ConfigRegistrar};
+use crate::internal::{ConfigItem, ConfigRegistrar};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(default)]

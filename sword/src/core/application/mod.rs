@@ -1,17 +1,16 @@
 mod builder;
 mod config;
 
-pub use builder::ApplicationBuilder;
-use colored::Colorize;
-pub use config::ApplicationConfig;
+use crate::{core::Config, web::MiddlewaresConfig};
 
 use axum::routing::Router;
 use axum_responses::JsonResponse;
+use colored::Colorize;
 use sword_layers::DisplayConfig;
 use tokio::net::TcpListener;
 
-use crate::core::Config;
-use crate::web::MiddlewaresConfig;
+pub use builder::ApplicationBuilder;
+pub use config::ApplicationConfig;
 
 /// The main application struct that holds the router and configuration.
 ///

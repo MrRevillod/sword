@@ -1,18 +1,18 @@
+use crate::core::__internal::ConfigRegistrar;
 use crate::core::*;
-use crate::web::{
-    Controller, MiddlewaresConfig, middleware_registrar::MiddlewareRegistrar,
+use crate::web::__internal::MiddlewareRegistrar;
+use crate::web::{Controller, MiddlewaresConfig};
+
+use axum::{
+    extract::Request as AxumRequest,
+    response::IntoResponse,
+    routing::{Route, Router},
 };
 
 use std::convert::Infallible;
 use sword_layers::{
     body_limit::BodyLimitLayer, compression::CompressionLayer, cors::CorsLayer,
     req_timeout::RequestTimeoutLayer, servedir::ServeDirLayer,
-};
-
-use axum::{
-    extract::Request as AxumRequest,
-    response::IntoResponse,
-    routing::{Route, Router},
 };
 
 use tower::{Layer, Service};

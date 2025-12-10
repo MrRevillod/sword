@@ -1,15 +1,14 @@
 mod layers;
 mod registrar;
 
-#[doc(hidden)]
-pub mod middleware_registrar {
-    pub use super::registrar::MiddlewareRegistrar;
-}
-
 pub use axum::middleware::Next;
 pub use layers::MiddlewaresConfig;
-pub use sword_layers::helmet;
 pub use sword_macros::{middleware, uses};
+
+#[doc(hidden)]
+pub mod __internal {
+    pub use super::registrar::MiddlewareRegistrar;
+}
 
 use axum::response::Response as AxumResponse;
 use std::future::Future;
@@ -26,22 +25,6 @@ pub type MiddlewareResult = Result<AxumResponse, JsonResponse>;
 /// during initialization.
 ///
 /// Use the `#[middleware]` macro to automatically implement this trait.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// #[middleware]
-/// struct AuthMiddleware {}
-///
-/// impl OnRequest for AuthMiddleware {
-///     async fn on_request(&self, req: Request) -> MiddlewareResult {
-///         // Middleware logic here
-///         req.next().await
-///     }
-/// }
-/// ```
 pub trait Middleware: Build {}
 
 /// Trait for middlewares that handle requests

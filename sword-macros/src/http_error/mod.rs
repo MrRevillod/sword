@@ -64,8 +64,8 @@ pub fn derive(input: DeriveInput) -> syn::Result<TokenStream> {
             }
         }
 
-        impl ::sword::__internal::IntoResponse for #enum_name {
-            fn into_response(self) -> ::sword::__internal::AxumResponse {
+        impl ::sword::internal::IntoResponse for #enum_name {
+            fn into_response(self) -> ::sword::internal::AxumResponse {
                 ::sword::web::JsonResponse::from(self).into_response()
             }
         }
@@ -219,11 +219,11 @@ fn generate_tracing_stmt(
     };
 
     let tracing_macro = match level.as_str() {
-        "trace" => quote! { ::sword::__internal::tracing::trace },
-        "debug" => quote! { ::sword::__internal::tracing::debug },
-        "info" => quote! { ::sword::__internal::tracing::info },
-        "warn" => quote! { ::sword::__internal::tracing::warn },
-        "error" => quote! { ::sword::__internal::tracing::error },
+        "trace" => quote! { ::sword::internal::tracing::trace },
+        "debug" => quote! { ::sword::internal::tracing::debug },
+        "info" => quote! { ::sword::internal::tracing::info },
+        "warn" => quote! { ::sword::internal::tracing::warn },
+        "error" => quote! { ::sword::internal::tracing::error },
         _ => return quote! {},
     };
 
