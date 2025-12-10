@@ -1,15 +1,21 @@
+mod layers;
 mod registrar;
 
-pub use axum::middleware::Next;
-use axum::response::Response as AxumResponse;
-
 #[doc(hidden)]
-pub use registrar::MiddlewareRegistrar;
+pub mod middleware_registrar {
+    pub use super::registrar::MiddlewareRegistrar;
+}
+
+pub use axum::middleware::Next;
+pub use layers::MiddlewaresConfig;
+pub use sword_layers::helmet;
 pub use sword_macros::{middleware, uses};
+
+use axum::response::Response as AxumResponse;
+use std::future::Future;
 
 use crate::core::Build;
 use crate::web::{JsonResponse, Request};
-use std::future::Future;
 
 pub type MiddlewareResult = Result<AxumResponse, JsonResponse>;
 

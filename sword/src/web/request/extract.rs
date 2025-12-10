@@ -1,6 +1,6 @@
 use crate::{
-    core::{Config, State, middlewares::MiddlewaresConfig},
-    web::{JsonResponse, Request, RequestError},
+    core::{Config, State},
+    web::{JsonResponse, MiddlewaresConfig, Request, RequestError},
 };
 
 use axum::{
@@ -42,9 +42,9 @@ where
 
         let body_limit = state
             .get::<Config>()?
-            .get::<MiddlewaresConfig>()
-            .map(|middlewares_config| middlewares_config.body_limit.parsed)
-            .unwrap_or(usize::MAX);
+            .get_or_default::<MiddlewaresConfig>()
+            .body_limit
+            .parsed;
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
             let mut current_error: &dyn std::error::Error = &err;

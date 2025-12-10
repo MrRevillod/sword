@@ -102,7 +102,7 @@ pub struct TasksModule;
 impl Module for TasksModule {
     type Controller = TasksController;
 
-    fn register_components(c: &mut DependencyContainer) {
+    fn register_components(c: &DependencyContainer) {
         c.register_component::<TaskRepository>();
         c.register_component::<TasksService>();
     }

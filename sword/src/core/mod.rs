@@ -4,8 +4,6 @@ mod di;
 mod module;
 mod state;
 
-pub mod middlewares;
-
 pub use di::*;
 pub use module::{Module, NonControllerModule};
 

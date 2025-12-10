@@ -7,9 +7,11 @@ pub use config::ApplicationConfig;
 
 use axum::routing::Router;
 use axum_responses::JsonResponse;
+use sword_layers::DisplayConfig;
 use tokio::net::TcpListener;
 
-use crate::core::{Config, middlewares::MiddlewaresConfig};
+use crate::core::Config;
+use crate::web::MiddlewaresConfig;
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -119,38 +121,7 @@ impl Application {
         app_config.display();
 
         if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
-            if middlewares_config.body_limit.display {
-                println!();
-                println!("{}", console::style("Body Limit Configuration:").bold());
-                middlewares_config.body_limit.display();
-            }
-
-            if middlewares_config.request_timeout.display {
-                println!();
-                println!(
-                    "{}",
-                    console::style("Request Timeout Configuration:").bold()
-                );
-                middlewares_config.request_timeout.display();
-            }
-
-            if let Some(compression_config) = &middlewares_config.compression
-                && compression_config.display
-            {
-                compression_config.display();
-            }
-
-            if let Some(cors_config) = &middlewares_config.cors
-                && cors_config.display
-            {
-                cors_config.display();
-            }
-
-            if let Some(serve_dir_config) = &middlewares_config.serve_dir
-                && serve_dir_config.display
-            {
-                serve_dir_config.display();
-            }
+            middlewares_config.display();
         }
 
         let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();

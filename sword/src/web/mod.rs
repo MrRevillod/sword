@@ -1,17 +1,14 @@
 mod controller;
-mod middleware;
+mod middlewares;
 mod request;
 mod response;
 
 pub use axum::http::{Method, StatusCode, header};
 
 pub use controller::*;
-pub use middleware::*;
+pub use middlewares::*;
 pub use request::{Request, RequestError};
 pub use response::*;
-
-#[cfg(feature = "helmet")]
-pub use crate::core::middlewares::helmet;
 
 #[cfg(feature = "multipart")]
 pub use request::multipart;

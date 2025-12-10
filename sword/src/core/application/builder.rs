@@ -1,23 +1,24 @@
+use crate::core::*;
+use crate::web::{
+    Controller, MiddlewaresConfig, middleware_registrar::MiddlewareRegistrar,
+};
+
 use std::convert::Infallible;
+use sword_layers::{
+    body_limit::BodyLimitLayer, compression::CompressionLayer, cors::CorsLayer,
+    req_timeout::RequestTimeoutLayer, servedir::ServeDirLayer,
+};
 
 use axum::{
     extract::Request as AxumRequest,
-    middleware::from_fn_with_state as mw,
     response::IntoResponse,
     routing::{Route, Router},
 };
-
-use crate::core::middlewares::*;
 
 use tower::{Layer, Service};
 
 #[cfg(feature = "cookies")]
 use tower_cookies::CookieManagerLayer;
-
-use crate::{
-    core::*,
-    web::{Controller, MiddlewareRegistrar},
-};
 
 pub struct ApplicationBuilder {
     pub config: Config,
@@ -112,7 +113,7 @@ impl ApplicationBuilder {
     ///
     /// This method can be used to add providers directly to the container, avoiding the need
     /// to create a full module when only a provider is needed.
-    pub fn with_provider<T>(mut self, provider: T) -> Self
+    pub fn with_provider<T>(self, provider: T) -> Self
     where
         T: Provider,
     {
@@ -133,9 +134,7 @@ impl ApplicationBuilder {
 
         router = self.apply_controllers(router);
         router = self.apply_layers(router);
-        router = self.apply_tower_layers(router);
-
-        router = router.layer(mw(self.state.clone(), ContentTypeCheck::layer));
+        router = self.apply_sword_layers(router);
 
         let app_config = self.config.get::<ApplicationConfig>()
             .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");
@@ -193,7 +192,7 @@ impl ApplicationBuilder {
         router
     }
 
-    fn apply_tower_layers(&self, router: Router) -> Router {
+    fn apply_sword_layers(&self, router: Router) -> Router {
         let mut router = router;
 
         let middlewares_config = self
@@ -201,35 +200,30 @@ impl ApplicationBuilder {
             .get::<MiddlewaresConfig>()
             .expect("Failed to get MiddlewaresConfig. Ensure it is present in the config file.");
 
-        if middlewares_config.body_limit.enabled {
-            router = router
-                .layer(BodyLimitLayer::new(middlewares_config.body_limit.parsed));
-        }
+        router = router.layer(BodyLimitLayer::new(&middlewares_config.body_limit));
 
         if middlewares_config.request_timeout.enabled {
             let (timeout_service, response_mapper) =
-                TimeoutLayer::new(middlewares_config.request_timeout.parsed);
+                RequestTimeoutLayer::new(&middlewares_config.request_timeout);
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);
         }
 
-        if let Some(cors_config) = &middlewares_config.cors {
-            router = router.layer(CorsLayer::new(cors_config))
+        if middlewares_config.cors.enabled {
+            router = router.layer(CorsLayer::new(&middlewares_config.cors));
         };
 
-        if let Some(compression_config) = &middlewares_config.compression
-            && let Some(layer) =
-                CompressionLayer::new(compression_config.compression.clone())
-        {
-            router = router.layer(layer);
+        if middlewares_config.compression.enabled {
+            router =
+                router.layer(CompressionLayer::new(&middlewares_config.compression));
         }
 
-        if let Some(serve_dir_config) = &middlewares_config.serve_dir
-            && serve_dir_config.enabled
-        {
-            let serve_dir = ServeDirMiddleware::new(serve_dir_config.clone());
-            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
+        if middlewares_config.serve_dir.enabled {
+            let serve_dir = ServeDirLayer::new(&middlewares_config.serve_dir);
+
+            router = router
+                .nest_service(&middlewares_config.serve_dir.router_path, serve_dir);
         }
 
         #[cfg(feature = "cookies")]

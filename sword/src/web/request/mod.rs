@@ -215,6 +215,12 @@ impl Request {
             return Err(RequestError::BodyIsEmpty);
         }
 
+        if !self.is_content_type_json() {
+            return Err(RequestError::unsupported_media_type(
+                "Expected Content-Type to be application/json",
+            ));
+        }
+
         serde_json::from_slice(&self.body_bytes).map_err(|_| {
             RequestError::deserialization_error(
                 "Invalid request body",
@@ -296,19 +302,6 @@ impl Request {
             })?;
 
         Ok(Some(parsed))
-    }
-
-    /// Checks if the request has a non-empty body.
-    ///
-    /// This is an internal method used by the framework to determine
-    /// if the request contains body data. It's primarily used for
-    /// internal request processing logic.
-    ///
-    /// ### Returns
-    ///
-    /// Returns `true` if the request has a body with content, `false` if empty.
-    pub(crate) const fn has_body(&self) -> bool {
-        !self.body_bytes.is_empty()
     }
 
     #[doc(hidden)]

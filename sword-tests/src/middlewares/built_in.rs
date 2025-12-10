@@ -205,9 +205,10 @@ async fn content_type_invalid() {
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -226,9 +227,10 @@ async fn content_type_xml_invalid() {
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -247,9 +249,10 @@ async fn content_type_form_urlencoded_invalid() {
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -280,9 +283,10 @@ async fn content_type_missing_header_with_body() {
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -295,7 +299,7 @@ async fn content_type_case_sensitivity() {
         .content_type("Application/JSON")
         .await;
 
-    assert_eq!(response.status_code(), 415);
+    assert_eq!(response.status_code(), 200);
 }
 
 #[tokio::test]
@@ -308,12 +312,7 @@ async fn content_type_json_with_charset() {
         .content_type("application/json; charset=utf-8")
         .await;
 
-    assert_eq!(response.status_code(), 415);
-
-    let json = response.json::<JsonResponseBody>();
-
-    assert_eq!(json.code, 415);
-    assert!(!json.success);
+    assert_eq!(response.status_code(), 200);
 }
 
 #[tokio::test]
