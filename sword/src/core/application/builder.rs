@@ -59,10 +59,10 @@ impl ApplicationBuilder {
         M: Module,
     {
         futures::executor::block_on(async {
-            M::register_providers(&self.config, &mut self.container).await;
+            M::register_providers(&self.config, &self.container).await;
         });
 
-        M::register_components(&mut self.container);
+        M::register_components(&self.container);
 
         if M::is_controller_module() {
             self.controllers.push(M::Controller::router);

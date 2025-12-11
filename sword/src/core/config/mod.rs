@@ -54,13 +54,20 @@ impl Config {
         Ok(T::deserialize(value)?)
     }
 
+    /// Retrieves and deserializes a configuration section, panicking on failure.
+    ///
+    /// This method may be ONLY used in scenarios where the configuration is
+    /// guaranteed to be present and valid. Use with caution.
     pub fn get_or_panic<T: DeserializeOwned + ConfigItem>(&self) -> T {
-        self.get::<T>().expect(&format!(
-            "Failed to load configuration for key '{}'",
-            T::toml_key()
-        ))
+        self.get::<T>().unwrap_or_else(|_| {
+            panic!("Failed to load configuration for key '{}'", T::toml_key())
+        })
     }
 
+    /// Retrieves and deserializes a configuration section, returning a default value on failure.
+    ///
+    /// This method is useful for optional configuration sections where
+    /// a default value is acceptable if the configuration is missing or invalid.
     pub fn get_or_default<T: DeserializeOwned + ConfigItem + Default>(&self) -> T {
         self.get::<T>().unwrap_or_default()
     }
