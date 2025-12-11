@@ -10,15 +10,9 @@ use axum::{
 };
 
 use std::convert::Infallible;
-use sword_layers::{
-    body_limit::BodyLimitLayer, compression::CompressionLayer, cors::CorsLayer,
-    req_timeout::RequestTimeoutLayer, servedir::ServeDirLayer,
-};
+use sword_layers::prelude::*;
 
 use tower::{Layer, Service};
-
-#[cfg(feature = "cookies")]
-use tower_cookies::CookieManagerLayer;
 
 pub struct ApplicationBuilder {
     pub config: Config,
@@ -226,10 +220,7 @@ impl ApplicationBuilder {
                 .nest_service(&middlewares_config.serve_dir.router_path, serve_dir);
         }
 
-        #[cfg(feature = "cookies")]
-        {
-            router = router.layer(CookieManagerLayer::new());
-        }
+        router = router.layer(CookieManagerLayer::new());
 
         router
     }

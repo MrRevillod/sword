@@ -1,16 +1,16 @@
+pub mod cookies;
 mod error;
 pub mod extract;
 
 #[cfg(feature = "multipart")]
 pub mod multipart;
 
-#[cfg(feature = "cookies")]
-pub mod cookies;
-
 #[cfg(feature = "validator")]
 pub mod validator;
 
 mod extras;
+
+use crate::web::MiddlewareResult;
 
 use axum::{
     body::Bytes,
@@ -19,11 +19,10 @@ use axum::{
 };
 
 use axum_responses::JsonResponse;
-pub use error::RequestError;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
 
-use crate::web::MiddlewareResult;
+pub use error::RequestError;
 
 /// Represents the incoming request in the Sword framework.
 ///

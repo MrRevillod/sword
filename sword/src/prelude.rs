@@ -12,12 +12,9 @@ pub use crate::web::{
 pub use crate::web::{
     ContentDisposition, File, HttpError, HttpResult, JsonResponse, JsonResponseBody,
     Method, Middleware, MiddlewareResult, MiddlewaresConfig, Next, OnRequest,
-    OnRequestWithConfig, Redirect, Request, RequestError, StatusCode, headers,
-    middleware, uses,
+    OnRequestWithConfig, Redirect, Request, RequestError, StatusCode, cookies::*,
+    headers, middleware, uses,
 };
-
-#[cfg(feature = "cookies")]
-pub use crate::web::cookies::*;
 
 #[cfg(feature = "multipart")]
 pub use crate::web::multipart;

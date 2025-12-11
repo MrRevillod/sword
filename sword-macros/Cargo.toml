@@ -21,10 +21,11 @@ proc-macro = true
 
 [dependencies]
 axum = { workspace = true }
+regex-lite = { workspace = true }
+
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
-regex-lite = "0.1.7"
 proc-macro-error = "1.0.4"
 
 [features]

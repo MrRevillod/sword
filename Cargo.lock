@@ -861,20 +861,6 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "duration-str"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9add086174f60bcbcfde7175e71dcfd99da24dfd12f611d0faf74f4f26e15a06"
-dependencies = [
- "chrono",
- "rust_decimal",
- "serde",
- "thiserror",
- "time",
- "winnow",
-]
-
-[[package]]
-name = "duration-str"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6eb193f176998d2f9fed5cfea52af8237f86a03fe66b85f96ad75d890a85299"
@@ -2765,12 +2751,10 @@ version = "0.2.0"
 dependencies = [
  "axum",
  "axum_responses",
- "byte-unit",
  "bytes",
  "colored",
  "console 0.15.11",
  "dioxus-devtools",
- "duration-str 0.17.0",
  "form_urlencoded",
  "futures",
  "http-body-util",
@@ -2789,7 +2773,6 @@ dependencies = [
  "tokio",
  "toml",
  "tower",
- "tower-cookies",
  "tracing",
  "validator",
 ]
@@ -2797,14 +2780,15 @@ dependencies = [
 [[package]]
 name = "sword-layers"
 version = "0.1.0"
-source = "git+https://github.com/sword-web/sword-layers.git?branch=main#8c1833eab096b70a5e9d44d354d034f7ddd2d70d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ece9140f94c59aa59313ef136ac7efc255b561dd85539f721f1d9cca4901a88c"
 dependencies = [
  "axum",
  "axum-helmet",
  "axum_responses",
  "byte-unit",
  "console 0.16.1",
- "duration-str 0.18.0",
+ "duration-str",
  "serde",
  "tower",
  "tower-cookies",
@@ -3127,6 +3111,7 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

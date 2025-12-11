@@ -6,13 +6,11 @@ edition = "2024"
 publish = false
 
 [dependencies]
+sword = { path = "../sword", features = ["multipart", "validator"] }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+validator = { workspace = true }
+
 axum-test = "17.3.0"
-
-sword = { path = "../sword", features = ["multipart", "cookies", "validator"] }
-tokio = { version = "1.45.1", features = ["macros", "rt-multi-thread"] }
-serde = { version = "1.0.219", features = ["derive"] }
-
-validator = { version = "0.20.0", features = ["derive"] }
-serde_json = "1.0.140"
-
-tower-http = { workspace = true, features = ["cors", "timeout"] }
+tower-http = { version = "0.6.6", features = ["limit", "cors", "trace"] }

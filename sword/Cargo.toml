@@ -2,15 +2,15 @@
 name = "sword"
 version = "0.2.0"
 edition = "2024"
-authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
-description = "A structured rust web framework built on top of Axum, providing clean routing, configuration, and middleware support"
+authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
+description = "a structured rust web framework built on top of axum, providing clean routing, configuration, and middleware support"
 repository = "https://github.com/sword-web/sword"
 homepage = "https://github.com/sword-web/sword"
 documentation = "https://docs.rs/sword"
 keywords = ["sword", "web", "framework", "axum", "rest"]
 categories = ["web-programming", "web-programming::http-server"]
-readme = "../README.md"
-license-file = "../LICENSE"
+readme = "../readme.md"
+license-file = "../license"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -20,43 +20,40 @@ rustdoc-args = ["--cfg", "docsrs"]
 tokio = { workspace = true }
 axum = { workspace = true }
 axum_responses = { workspace = true }
-http-body-util = "0.1.3"
 
+sword-layers = { workspace = true }
 sword-macros = { workspace = true }
-sword-layers = { git = "https://github.com/sword-web/sword-layers.git", branch = "main" }
 
-toml = "0.9.0"
 serde = { workspace = true }
 serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+toml = "0.9.0"
 serde_urlencoded = "0.7.1"
 form_urlencoded = "^1.1.0"
 serde_path_to_error = "0.1.17"
-byte-unit = "5.2.0"
-
-regex-lite = "0.1.7"
-validator = { workspace = true, optional = true }
-tower = "0.5.2"
-
-tower-cookies = { version = "0.11.0", optional = true }
-thiserror = "2.0.12"
-
+mime = "0.3.17"
 bytes = { version = "1.10.1", optional = true }
+http-body-util = "0.1.3"
+
+regex-lite = { workspace = true }
+validator = { workspace = true, optional = true }
+
+tower = "0.5.2"
+tracing = "0.1.43"
+
 colored = "3.0.0"
+console = "0.15.8"
 inventory = "0.3.21"
 futures = "0.3.31"
-console = "0.15.8"
-
-subsecond = { version = "0.7.0", optional = true }
-dioxus-devtools = { version = "0.7.0", features = ["serve"], optional = true }
-duration-str = "0.17.0"
 parking_lot = "0.12.5"
-tracing = "0.1.43"
-mime = "0.3.17"
+
+subsecond = { version = "0.7.2", optional = true }
+dioxus-devtools = { version = "0.7.2", features = ["serve"], optional = true }
 
 [features]
 default = []
 
 multipart = ["axum/multipart", "dep:bytes"]
-cookies = ["dep:tower-cookies", "tower-cookies/signed", "tower-cookies/private"]
 validator = ["dep:validator"]
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]
