@@ -31,9 +31,9 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
             }
 
             fn apply_middlewares(
-                router: ::sword::__internal::AxumRouter,
+                router: ::sword::internal::AxumRouter,
                 state: ::sword::core::State,
-            ) -> ::sword::__internal::AxumRouter {
+            ) -> ::sword::internal::AxumRouter {
                 let mut result = router;
                 #(
                     result = result.layer(#processed_middlewares);

@@ -37,12 +37,12 @@ impl Request {
 
 impl From<MultipartRejection> for RequestError {
     fn from(err: MultipartRejection) -> Self {
-        Self::ParseError("Failed to parse multipart form data", err.to_string())
+        Self::parse_error("Failed to parse multipart form data", err.to_string())
     }
 }
 
 impl From<MultipartError> for RequestError {
     fn from(err: MultipartError) -> Self {
-        Self::ParseError("Failed to parse multipart form data", err.to_string())
+        Self::parse_error("Failed to parse multipart form data", err.to_string())
     }
 }

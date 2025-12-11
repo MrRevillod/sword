@@ -19,8 +19,8 @@ struct TestController {
 #[routes]
 impl TestController {
     #[get("/hello")]
-    async fn hello(&self) -> HttpResponse {
-        HttpResponse::Ok()
+    async fn hello(&self) -> JsonResponse {
+        JsonResponse::Ok()
             .data(&self.custom_config)
             .message("Test controller response")
     }
@@ -39,7 +39,7 @@ async fn test_application() {
     let test = TestServer::new(app.router()).unwrap();
 
     let response = test.get("/test/hello").await;
-    let json_body = response.json::<ResponseBody>();
+    let json_body = response.json::<JsonResponseBody>();
 
     assert_eq!(response.status_code(), 200);
     assert!(json_body.data.is_some());

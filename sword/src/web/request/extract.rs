@@ -1,6 +1,6 @@
 use crate::{
-    core::{Config, State, middlewares::MiddlewaresConfig},
-    web::{HttpResponse, Request, RequestError},
+    core::{Config, State},
+    web::{JsonResponse, MiddlewaresConfig, Request, RequestError},
 };
 
 use axum::{
@@ -21,7 +21,7 @@ where
     S: Send + Sync + 'static,
     State: FromRef<S>,
 {
-    type Rejection = HttpResponse;
+    type Rejection = JsonResponse;
 
     async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
@@ -42,27 +42,18 @@ where
 
         let body_limit = state
             .get::<Config>()?
-            .get::<MiddlewaresConfig>()
-            .map(|middlewares_config| middlewares_config.body_limit.parsed)
-            .unwrap_or(usize::MAX);
+            .get_or_default::<MiddlewaresConfig>()
+            .body_limit
+            .parsed;
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
-            let mut current_error: &dyn std::error::Error = &err;
-
-            loop {
-                if current_error.is::<LengthLimitError>() {
-                    return RequestError::BodyTooLarge;
-                }
-
-                match std::error::Error::source(current_error) {
-                    Some(source) => current_error = source,
-                    None => break,
-                }
+            if err.into_inner().is::<LengthLimitError>() {
+                return RequestError::BodyTooLarge;
             }
 
-            RequestError::ParseError(
+            RequestError::parse_error(
                 "Failed to read request body",
-                format!("Error reading body: {err}"),
+                "Error reading body".to_string(),
             )
         })?;
 
@@ -107,7 +98,7 @@ impl TryFrom<Request> for AxumReq {
         let body = Body::from(req.body_bytes);
 
         let mut request = builder.body(body).map_err(|_| {
-            RequestError::ParseError(
+            RequestError::parse_error(
                 "Failed to build axum request",
                 "Error building request".to_string(),
             )

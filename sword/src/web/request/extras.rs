@@ -30,4 +30,18 @@ impl Request {
     pub fn content_type(&self) -> Option<&str> {
         self.header("Content-Type")
     }
+
+    pub(crate) fn is_content_type_json(&self) -> bool {
+        let Some(content_type) = self.content_type() else {
+            return false;
+        };
+
+        let Ok(mime) = content_type.parse::<mime::Mime>() else {
+            return false;
+        };
+
+        mime.type_() == "application"
+            && (mime.subtype() == "json"
+                || mime.suffix().is_some_and(|name| name == "json"))
+    }
 }

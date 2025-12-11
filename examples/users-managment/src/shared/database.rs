@@ -20,9 +20,14 @@ pub struct Database {
 impl Database {
     pub async fn new(db_conf: DatabaseConfig) -> AppResult<Self> {
         let pool = PgPool::connect(&db_conf.uri).await?;
-        let migrator = Migrator::new(Path::new(&db_conf.migrations_path)).await?;
+        let migrator = Migrator::new(Path::new(&db_conf.migrations_path))
+            .await
+            .expect("Failed to initialize migrator");
 
-        migrator.run(&pool).await?;
+        migrator
+            .run(&pool)
+            .await
+            .expect("Failed to run database migrations");
 
         Ok(Self {
             pool: Arc::new(pool),

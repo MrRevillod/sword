@@ -1,39 +1,27 @@
-use sword::web::HttpResponse;
-use thiserror::Error;
+use sword::prelude::*;
+use thiserror::Error as ThisError;
 
 pub type AppResult<T> = Result<T, AppError>;
 
-#[derive(Debug, Error)]
+#[derive(Debug, ThisError, HttpError)]
 pub enum AppError {
-    #[error("Database error occurred: {source}")]
-    DatabaseError {
-        #[from]
-        source: sqlx::Error,
-    },
+    #[tracing(error)]
+    #[http(code = 500)]
+    #[error("Database error occurred: {0}")]
+    DatabaseError(#[from] sqlx::Error),
 
-    #[error("Hasher error occurred: {source}")]
-    HasherError {
-        #[from]
-        source: bcrypt::BcryptError,
-    },
+    #[tracing(error)]
+    #[http(code = 500)]
+    #[error("Hasher error occurred: {0}")]
+    HasherError(#[from] bcrypt::BcryptError),
 
-    #[error("Database migration error occurred: {source}")]
-    MigrationError {
-        #[from]
-        source: sqlx::migrate::MigrateError,
-    },
+    #[tracing(warn)]
+    #[http(code = 404)]
+    #[error("Not found error: {message}")]
+    NotFoundError { message: String },
 
-    #[error("Not found error: {0}")]
-    NotFoundError(&'static str),
-}
-
-impl From<AppError> for HttpResponse {
-    fn from(error: AppError) -> Self {
-        match error {
-            AppError::NotFoundError(message) => {
-                HttpResponse::NotFound().message(message)
-            }
-            _ => HttpResponse::InternalServerError().message(error.to_string()),
-        }
-    }
+    #[tracing(error)]
+    #[error("Conflict error")]
+    #[http(code = 409, message = "User with {field} '{value}' already exists")]
+    UserConflictError { field: String, value: String },
 }

@@ -1,15 +1,16 @@
 mod builder;
 mod config;
 
-pub use builder::ApplicationBuilder;
-use colored::Colorize;
-pub use config::ApplicationConfig;
+use crate::{core::Config, web::MiddlewaresConfig};
 
 use axum::routing::Router;
-use axum_responses::http::HttpResponse;
+use axum_responses::JsonResponse;
+use colored::Colorize;
+use sword_layers::DisplayConfig;
 use tokio::net::TcpListener;
 
-use crate::core::{Config, middlewares::MiddlewaresConfig};
+pub use builder::ApplicationBuilder;
+pub use config::ApplicationConfig;
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -63,7 +64,7 @@ impl Application {
         let listener = self.build_listener().await;
 
         let router = self.router.clone().fallback(async || {
-            HttpResponse::NotFound().message("The requested resource was not found")
+            JsonResponse::NotFound().message("The requested resource was not found")
         });
 
         axum::serve(listener, router)
@@ -87,7 +88,7 @@ impl Application {
         let listener = self.build_listener().await;
 
         let router = self.router.clone().fallback(async || {
-            HttpResponse::NotFound().message("The requested resource was not found")
+            JsonResponse::NotFound().message("The requested resource was not found")
         });
 
         axum::serve(listener, router)
@@ -119,38 +120,7 @@ impl Application {
         app_config.display();
 
         if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
-            if middlewares_config.body_limit.display {
-                println!();
-                println!("{}", console::style("Body Limit Configuration:").bold());
-                middlewares_config.body_limit.display();
-            }
-
-            if middlewares_config.request_timeout.display {
-                println!();
-                println!(
-                    "{}",
-                    console::style("Request Timeout Configuration:").bold()
-                );
-                middlewares_config.request_timeout.display();
-            }
-
-            if let Some(compression_config) = &middlewares_config.compression
-                && compression_config.display
-            {
-                compression_config.display();
-            }
-
-            if let Some(cors_config) = &middlewares_config.cors
-                && cors_config.display
-            {
-                cors_config.display();
-            }
-
-            if let Some(serve_dir_config) = &middlewares_config.serve_dir
-                && serve_dir_config.display
-            {
-                serve_dir_config.display();
-            }
+            middlewares_config.display();
         }
 
         let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();

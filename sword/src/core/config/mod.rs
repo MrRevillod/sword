@@ -25,7 +25,7 @@ impl Config {
         let content = Self::load_config_file()?;
 
         let expanded = expand_env_variables(&content)
-            .map_err(ConfigError::InterpolationError)?;
+            .map_err(ConfigError::interpolation_error)?;
 
         Ok(Self {
             inner: Arc::new(Table::from_str(&expanded)?),
@@ -46,7 +46,7 @@ impl Config {
         let key = T::toml_key();
 
         let Some(config_item) = self.inner.get(key).cloned() else {
-            return Err(ConfigError::KeyNotFound(key.to_owned()));
+            return Err(ConfigError::key_not_found(key));
         };
 
         let value = Value::into_deserializer(config_item);
@@ -54,21 +54,15 @@ impl Config {
         Ok(T::deserialize(value)?)
     }
 
-    pub fn get_or_default<T: DeserializeOwned + ConfigItem + Default>(
-        &self,
-    ) -> Result<T, ConfigError> {
-        match self.get::<T>() {
-            Ok(value) => Ok(value),
-            Err(ConfigError::KeyNotFound(_)) => Ok(T::default()),
-            Err(e) => Err(e),
-        }
-    }
-
     pub fn get_or_panic<T: DeserializeOwned + ConfigItem>(&self) -> T {
         self.get::<T>().expect(&format!(
-            "Failed to get configuration for key '{}'",
+            "Failed to load configuration for key '{}'",
             T::toml_key()
         ))
+    }
+
+    pub fn get_or_default<T: DeserializeOwned + ConfigItem + Default>(&self) -> T {
+        self.get::<T>().unwrap_or_default()
     }
 
     fn load_config_file() -> Result<String, ConfigError> {

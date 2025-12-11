@@ -14,7 +14,7 @@ impl Module for SharedModule {
 
     async fn register_providers(config: &Config, container: &DependencyContainer) {
         let db_config = config.get_or_panic::<DatabaseConfig>();
-        let hasher_config = config.get_or_panic::<HasherConfig>();
+        let hasher_config = config.get_or_default::<HasherConfig>();
 
         container.register_provider(
             Database::new(db_config)

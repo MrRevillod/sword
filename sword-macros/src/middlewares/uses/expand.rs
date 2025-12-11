@@ -22,7 +22,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
 
                     let _ = __check_on_request(&**middleware);
 
-                    ::sword::__internal::mw_with_state(
+                    ::sword::internal::mw_with_state(
                         state.clone(),
                         move |mut req: ::sword::web::Request, next: ::sword::web::Next| {
                             req.set_next(next);
@@ -51,7 +51,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
 
                     let _ = __check_on_request_with_config::<#middleware, _>(&**middleware);
 
-                    ::sword::__internal::mw_with_state(
+                    ::sword::internal::mw_with_state(
                         state.clone(),
                         move |mut req: ::sword::web::Request, next: ::sword::web::Next| {
                             req.set_next(next);

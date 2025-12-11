@@ -1,6 +1,6 @@
-use crate::web::{HttpResponse, Request};
+use crate::web::{JsonResponse, Request};
 
-pub use tower_cookies::{
+pub use sword_layers::cookies::{
     Cookies, Key, PrivateCookies, SignedCookies,
     cookie::{
         Cookie, CookieBuilder, Expiration, KeyError as CookieKeyError,
@@ -37,9 +37,9 @@ impl Request {
     ///     Ok(HttpResponse::Ok().body("No session cookie found"))
     /// }
     /// ```
-    pub fn cookies(&self) -> Result<&Cookies, HttpResponse> {
+    pub fn cookies(&self) -> Result<&Cookies, JsonResponse> {
         self.extensions.get::<Cookies>().ok_or_else(|| {
-            HttpResponse::InternalServerError()
+            JsonResponse::InternalServerError()
                 .message("Can't extract cookies. Is `CookieManagerLayer` enabled?")
         })
     }

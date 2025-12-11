@@ -3,6 +3,9 @@ use validator::Validate;
 
 use crate::web::{Request, RequestError};
 
+#[cfg(feature = "validator")]
+use crate::web::format_validator_errors;
+
 pub trait ValidatorRequestValidation {
     fn body_validator<T: DeserializeOwned + Validate>(
         &self,
@@ -78,7 +81,10 @@ impl ValidatorRequestValidation for Request {
         let body = self.body::<T>()?;
 
         body.validate().map_err(|error| {
-            RequestError::ValidatorError("Invalid request body", error)
+            RequestError::validator_error(
+                "Invalid request body",
+                format_validator_errors(error),
+            )
         })?;
 
         Ok(body)
@@ -145,7 +151,10 @@ impl ValidatorRequestValidation for Request {
         match self.query::<T>()? {
             Some(query) => {
                 query.validate().map_err(|error| {
-                    RequestError::ValidatorError("Invalid request query", error)
+                    RequestError::validator_error(
+                        "Invalid request query",
+                        format_validator_errors(error),
+                    )
                 })?;
 
                 Ok(Some(query))
@@ -163,18 +172,21 @@ impl ValidatorRequestValidation for Request {
         &self,
     ) -> Result<T, RequestError> {
         let params = serde_json::to_value(self.params.clone()).map_err(|e| {
-            RequestError::ParseError("Failed to serialize params", e.to_string())
+            RequestError::parse_error("Failed to serialize params", e.to_string())
         })?;
 
         let deserialized: T = serde_json::from_value(params).map_err(|e| {
-            RequestError::ParseError(
+            RequestError::parse_error(
                 "Failed to deserialize params to the target type",
                 e.to_string(),
             )
         })?;
 
         deserialized.validate().map_err(|error| {
-            RequestError::ValidatorError("Invalid request params", error)
+            RequestError::validator_error(
+                "Invalid request params",
+                format_validator_errors(error),
+            )
         })?;
 
         Ok(deserialized)

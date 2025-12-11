@@ -11,15 +11,25 @@ pub enum ConfigError {
         source: std::io::Error,
     },
 
-    #[error("Failed to interpolate environment variables in configuration: {0}")]
-    InterpolationError(String),
+    #[error("Environment variable interpolation error: {message}")]
+    InterpolationError { message: String },
 
-    #[error("Configuration key '{0}' not found")]
-    KeyNotFound(String),
+    #[error("Configuration key '{key}' not found")]
+    KeyNotFound { key: String },
 
     #[error("Deserialization error: {source}")]
     DeserializeError {
         #[from]
         source: toml::de::Error,
     },
+}
+
+impl ConfigError {
+    pub fn interpolation_error(message: String) -> Self {
+        ConfigError::InterpolationError { message }
+    }
+
+    pub fn key_not_found(key: impl Into<String>) -> Self {
+        ConfigError::KeyNotFound { key: key.into() }
+    }
 }

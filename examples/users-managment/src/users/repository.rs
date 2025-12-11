@@ -20,6 +20,16 @@ impl UserRepository {
         Ok(result)
     }
 
+    pub async fn find_by_username(&self, username: &str) -> AppResult<Option<User>> {
+        let result =
+            sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
+                .bind(username)
+                .fetch_optional(self.db.get_pool())
+                .await?;
+
+        Ok(result)
+    }
+
     pub async fn find_all(&self) -> AppResult<Vec<User>> {
         let result = sqlx::query_as::<_, User>("SELECT * FROM users")
             .fetch_all(self.db.get_pool())

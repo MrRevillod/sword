@@ -13,52 +13,52 @@ impl TestController {
     #[get("/timeout")]
     async fn timeout(&self) -> HttpResult {
         sleep(Duration::from_secs(3)).await;
-        Ok(HttpResponse::Ok().message("This should not be reached"))
+        Ok(JsonResponse::Ok().message("This should not be reached"))
     }
 
     #[get("/timeout-boundary")]
     async fn timeout_boundary(&self) -> HttpResult {
         sleep(Duration::from_millis(2000)).await;
-        Ok(HttpResponse::Ok().message("This should timeout"))
+        Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/timeout-just-under")]
     async fn timeout_just_under(&self) -> HttpResult {
         sleep(Duration::from_millis(1900)).await;
-        Ok(HttpResponse::Ok().message("This should complete"))
+        Ok(JsonResponse::Ok().message("This should complete"))
     }
 
     #[get("/timeout-just-over")]
     async fn timeout_just_over(&self) -> HttpResult {
         sleep(Duration::from_millis(2100)).await;
-        Ok(HttpResponse::Ok().message("This should timeout"))
+        Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/no-timeout")]
     async fn no_timeout(&self) -> HttpResult {
-        Ok(HttpResponse::Ok().message("Quick response"))
+        Ok(JsonResponse::Ok().message("Quick response"))
     }
 
     #[post("/content-type-json")]
     async fn content_type_json(&self, req: Request) -> HttpResult {
         let _body: Value = req.body()?;
-        Ok(HttpResponse::Ok().message("JSON received"))
+        Ok(JsonResponse::Ok().message("JSON received"))
     }
 
     #[post("/content-type-form")]
     async fn content_type_form(&self) -> HttpResult {
-        Ok(HttpResponse::Ok().message("Form data received"))
+        Ok(JsonResponse::Ok().message("Form data received"))
     }
 
     #[post("/content-type-any")]
     async fn content_type_any(&self, req: Request) -> HttpResult {
         let _body: String = req.body()?;
-        Ok(HttpResponse::Ok().message("Any content type"))
+        Ok(JsonResponse::Ok().message("Any content type"))
     }
 
     #[get("/no-body")]
     async fn no_body(&self) -> HttpResult {
-        Ok(HttpResponse::Ok().message("No body required"))
+        Ok(JsonResponse::Ok().message("No body required"))
     }
 }
 
@@ -81,9 +81,9 @@ async fn timeout() {
     let test_app = test_server();
 
     let response = test_app.get("/test/timeout").await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
-    let expected = ResponseBody {
+    let expected = JsonResponseBody {
         code: 408,
         success: false,
         message: "Request Timeout".into(),
@@ -106,7 +106,7 @@ async fn timeout_boundary_exact() {
 
     assert_eq!(response.status_code(), 408);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert_eq!(json.code, 408);
     assert!(!json.success);
     assert_eq!(json.message, "Request Timeout".into());
@@ -119,7 +119,7 @@ async fn timeout_just_under_limit() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 200);
     assert!(json.success);
@@ -133,7 +133,7 @@ async fn timeout_just_over_limit() {
 
     assert_eq!(response.status_code(), 408);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 408);
     assert!(!json.success);
@@ -147,7 +147,7 @@ async fn no_timeout_quick_response() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 200);
     assert!(json.success);
@@ -163,7 +163,7 @@ async fn content_type_json_valid() {
         .json(&serde_json::json!({"test": "data"}))
         .await;
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(response.status_code(), 200);
 
@@ -183,7 +183,7 @@ async fn content_type_multipart_valid() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 200);
     assert!(json.success);
@@ -201,13 +201,14 @@ async fn content_type_invalid() {
 
     assert_eq!(response.status_code(), 415);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -222,13 +223,14 @@ async fn content_type_xml_invalid() {
 
     assert_eq!(response.status_code(), 415);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -243,13 +245,14 @@ async fn content_type_form_urlencoded_invalid() {
 
     assert_eq!(response.status_code(), 415);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -259,7 +262,7 @@ async fn content_type_no_body_allowed() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 200);
     assert!(json.success);
@@ -276,13 +279,14 @@ async fn content_type_missing_header_with_body() {
 
     assert_eq!(response.status_code(), 415);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.code, 415);
     assert!(!json.success);
-    assert!(json.message.contains(
-        "Only application/json and multipart/form-data content types are supported"
-    ));
+    assert!(
+        json.message
+            .contains("Expected Content-Type to be application/json")
+    );
 }
 
 #[tokio::test]
@@ -295,7 +299,7 @@ async fn content_type_case_sensitivity() {
         .content_type("Application/JSON")
         .await;
 
-    assert_eq!(response.status_code(), 415);
+    assert_eq!(response.status_code(), 200);
 }
 
 #[tokio::test]
@@ -308,12 +312,7 @@ async fn content_type_json_with_charset() {
         .content_type("application/json; charset=utf-8")
         .await;
 
-    assert_eq!(response.status_code(), 415);
-
-    let json = response.json::<ResponseBody>();
-
-    assert_eq!(json.code, 415);
-    assert!(!json.success);
+    assert_eq!(response.status_code(), 200);
 }
 
 #[tokio::test]

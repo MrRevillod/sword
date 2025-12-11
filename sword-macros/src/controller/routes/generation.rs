@@ -36,12 +36,12 @@ pub fn generate_controller_routes(
 
         let mut handler = if route.needs_context {
             quote! {
-                ::sword::__internal::#routing_function({
+                ::sword::internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
                     move |req: ::sword::web::Request| {
                         async move {
-                            use ::sword::__internal::IntoResponse;
+                            use ::sword::internal::IntoResponse;
                             ctrl.#handler_name(req).await.into_response()
                         }
                     }
@@ -49,12 +49,12 @@ pub fn generate_controller_routes(
             }
         } else {
             quote! {
-                ::sword::__internal::#routing_function({
+                ::sword::internal::#routing_function({
                     let ctrl = std::sync::Arc::clone(&controller);
 
                     move |_: ::sword::web::Request| {
                         async move {
-                            use ::sword::__internal::IntoResponse;
+                            use ::sword::internal::IntoResponse;
                             ctrl.#handler_name().await.into_response()
                         }
                     }
@@ -80,14 +80,14 @@ pub fn generate_controller_routes(
         where
             Self: ::sword::web::ControllerBuilder
         {
-            fn router(state: ::sword::core::State) -> ::sword::__internal::AxumRouter {
+            fn router(state: ::sword::core::State) -> ::sword::internal::AxumRouter {
                 let controller = std::sync::Arc::new(
                     Self::build(&state).unwrap_or_else(|err| {
                         panic!("\n❌ Failed to build controller\n\n{}\n", err)
                     })
                 );
 
-                let base_router = ::sword::__internal::AxumRouter::new()
+                let base_router = ::sword::internal::AxumRouter::new()
                     #(#handlers)*
                     .with_state(state.clone());
 
@@ -97,7 +97,7 @@ pub fn generate_controller_routes(
 
                 match base_path {
                     "/" => router,
-                    _ => ::sword::__internal::AxumRouter::new()
+                    _ => ::sword::internal::AxumRouter::new()
                         .nest(base_path, router),
                 }
             }

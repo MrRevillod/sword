@@ -16,8 +16,8 @@ pub fn generate_middleware_builder(input: &MiddlewareInput) -> TokenStream {
 
         impl ::sword::web::Middleware for #self_name {}
 
-        ::sword::__internal::inventory::submit! {
-            ::sword::web::MiddlewareRegistrar::new::<#self_name>()
+        ::sword::internal::inventory::submit! {
+            ::sword::internal::MiddlewareRegistrar::new::<#self_name>()
         }
     }
 }
