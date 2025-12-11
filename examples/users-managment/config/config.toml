@@ -5,22 +5,21 @@ graceful_shutdown = false
 name = "Authentication Example"
 
 [middlewares]
-body_limit = { enabled = true, max_size = "2MB", display = true }
+body_limit = { max_size = "5MB", display = true }
 request_timeout = { enabled = true, duration = "15s", display = true }
-compression = { enabled = true, algorithms = [
-    "gzip",
-    "deflate",
-    "brotli",
-    "zstd",
-] }
 
-cors = { enabled = true, allow_credentials = false, allow_methods = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-] }
+[middlewares.compression]
+enabled = true
+algorithms = ["gzip", "deflate", "brotli", "zstd"]
+display = true
+
+[middlewares.cors]
+enabled = true
+allow_credentials = true
+display = false
+allow_headers = ["Content-Type", "Authorization"]
+allow_methods = ["GET", "POST", "PUT", "DELETE"]
+allow_origins = ["http://localhost:3000", "https://example.com"]
 
 [middlewares.serve_dir]
 enabled = true

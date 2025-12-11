@@ -11,7 +11,6 @@ use axum::{
 
 use std::convert::Infallible;
 use sword_layers::prelude::*;
-
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
@@ -193,8 +192,6 @@ impl ApplicationBuilder {
             .config
             .get::<MiddlewaresConfig>()
             .expect("Failed to get MiddlewaresConfig. Ensure it is present in the config file.");
-
-        router = router.layer(BodyLimitLayer::new(&middlewares_config.body_limit));
 
         if middlewares_config.request_timeout.enabled {
             let (timeout_service, response_mapper) =

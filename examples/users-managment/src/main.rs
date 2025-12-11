@@ -14,12 +14,12 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info,sword=info")),
+                .unwrap_or_else(|_| EnvFilter::new("info,sword=info,sqlx=off")),
         )
         .with_target(false)
         .init();
 
-    sword::internal::tracing::warn!("Starting Users Management example...");
+    sword::internal::tracing::info!("Starting Users Management example...");
 
     let app = Application::builder()
         .with_module::<SharedModule>()

@@ -4,10 +4,10 @@ members = ["sword-tests", "sword-macros", "sword", "examples/*"]
 exclude = ["sword-tests"]
 
 [workspace.dependencies]
-sword = { path = "sword" }
-sword-macros = { path = "sword-macros" }
 sword-layers = { version = "0.1.0" }
 
+sword = { path = "sword" }
+sword-macros = { path = "sword-macros" }
 tokio = { version = "^1.0", features = ["full"] }
 axum = "0.8.7"
 axum_responses = "0.5.3"

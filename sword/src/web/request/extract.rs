@@ -47,22 +47,13 @@ where
             .parsed;
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
-            let mut current_error: &dyn std::error::Error = &err;
-
-            loop {
-                if current_error.is::<LengthLimitError>() {
-                    return RequestError::BodyTooLarge;
-                }
-
-                match std::error::Error::source(current_error) {
-                    Some(source) => current_error = source,
-                    None => break,
-                }
+            if err.into_inner().is::<LengthLimitError>() {
+                return RequestError::BodyTooLarge;
             }
 
             RequestError::parse_error(
                 "Failed to read request body",
-                format!("Error reading body: {err}"),
+                "Error reading body".to_string(),
             )
         })?;
 
