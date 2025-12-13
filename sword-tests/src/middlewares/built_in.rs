@@ -91,6 +91,7 @@ async fn timeout() {
         error: None,
         errors: None,
         timestamp: json.timestamp,
+        request_id: None,
     };
 
     assert_eq!(json.code, expected.code);

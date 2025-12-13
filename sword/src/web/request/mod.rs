@@ -1,14 +1,13 @@
 pub mod cookies;
 mod error;
 pub mod extract;
+mod extras;
 
 #[cfg(feature = "multipart")]
 pub mod multipart;
 
 #[cfg(feature = "validator")]
 pub mod validator;
-
-mod extras;
 
 use crate::web::MiddlewareResult;
 

@@ -217,6 +217,7 @@ impl ApplicationBuilder {
                 .nest_service(&middlewares_config.serve_dir.router_path, serve_dir);
         }
 
+        router = router.layer(RequestIdLayer::new());
         router = router.layer(CookieManagerLayer::new());
 
         router
