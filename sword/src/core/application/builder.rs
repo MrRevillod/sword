@@ -16,10 +16,10 @@ use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
     state: State,
-    config: Config,
     container: DependencyContainer,
     gateway_registry: GatewayRegistry,
     layer_stack: LayerStack,
+    pub config: Config,
 }
 
 impl ApplicationBuilder {
