@@ -28,6 +28,25 @@ impl ApplicationBuilder {
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
     /// modules, add middleware layers, and set up dependency injection.
+    ///
+    /// The builder follows this configuration pattern:
+    /// 1. Create with `Application::builder()`
+    /// 2. Register modules with `with_module::<M>()`
+    /// 3. Optionally add custom layers with `with_layer()`
+    /// 4. Optionally register providers directly with `with_provider()`
+    /// 5. Build the application with `build()`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let app = Application::builder()
+    ///     .with_module::<UsersModule>()
+    ///     .with_module::<ProductsModule>()
+    ///     .with_layer(custom_middleware)
+    ///     .build();
+    ///
+    /// app.run().await;
+    /// ```
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -70,8 +89,11 @@ impl ApplicationBuilder {
     }
 
     /// Adds a `tower::Layer` to the application builder.
+    ///
     /// This method is equivalent to Axum's `Router::layer` method, allowing you to
-    /// apply middleware layers to the application's router.
+    /// apply middleware layers to the application's router. Layers are applied in the
+    /// order they are added, after gateways are registered but before Sword's built-in
+    /// middleware layers (CORS, compression, request timeout, etc.).
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
@@ -128,8 +150,13 @@ impl ApplicationBuilder {
     }
 
     /// Build the `Application` instance with the configured options.
+    ///
     /// This method ends the builder pattern and constructs the final `Application`
-    /// instance ready to run.
+    /// instance ready to run. The router is built by:
+    /// 1. Applying gateways (REST, WebSocket, etc.) to register routes
+    /// 2. Applying custom layers added via `with_layer()`
+    /// 3. Applying built-in Sword middleware layers (CORS, compression, etc.)
+    /// 4. Nesting under a global prefix if configured
     pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)

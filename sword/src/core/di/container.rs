@@ -15,13 +15,13 @@ use std::{
 ///
 /// It support two types of registrations:
 ///
-/// 1. Providers:
+/// **Providers**:
 ///
 /// Providers are pre-created objects that you want to register directly into the container.
 /// For example, you might have a database connection or external service client that you
 /// need to build beforehand and inject into other Dependencies.
 ///
-/// 2. Components:
+/// **Components**
 ///
 /// Are types that has no need to be pre-created. Instead, you register the type itself,
 /// and the container will use the `Component` trait to build them when needed, resolving
