@@ -17,6 +17,8 @@
 
 - Added `Compression` middleware based on `tower_http::compression::CompressionLayer`. The configuration can be set in the config file under the `compression` key.
 
+- Added `GatewayRegistry` system for managing multiple gateway instances in the application and modules.
+
 ### Changed
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
@@ -30,6 +32,8 @@
 - The global router prefix was moved from `Application` struct to `Config` struct. Now, you can set the global prefix in the configuration file under the `application` key with `global_prefix` field.
 
 - The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
+
+- The associated type in `Module` trait is not required anymore. Use the `register_gateways` method to register rest controllers and other gateway types.
 
 ## [0.2.0]
 
