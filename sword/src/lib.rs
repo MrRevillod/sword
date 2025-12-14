@@ -2,6 +2,9 @@ pub mod core;
 pub mod prelude;
 pub mod web;
 
+use parking_lot::RwLock;
+use std::collections::HashMap;
+
 pub use sword_macros::main;
 
 #[doc(hidden)]
@@ -30,3 +33,5 @@ pub mod internal {
     #[cfg(feature = "hot-reload")]
     pub use subsecond;
 }
+
+pub(crate) type RwMap<K, V> = RwLock<HashMap<K, V>>;

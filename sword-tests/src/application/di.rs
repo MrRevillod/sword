@@ -100,11 +100,13 @@ impl TasksController {
 pub struct TasksModule;
 
 impl Module for TasksModule {
-    type Controller = TasksController;
+    fn register_components(dependencies: &DependencyContainer) {
+        dependencies.register_component::<TaskRepository>();
+        dependencies.register_component::<TasksService>();
+    }
 
-    fn register_components(c: &DependencyContainer) {
-        c.register_component::<TaskRepository>();
-        c.register_component::<TasksService>();
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<TasksController>();
     }
 }
 

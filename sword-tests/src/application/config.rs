@@ -29,7 +29,9 @@ impl TestController {
 struct ConfigModule;
 
 impl Module for ConfigModule {
-    type Controller = TestController;
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<TestController>();
+    }
 }
 
 #[tokio::test]

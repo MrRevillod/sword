@@ -1,14 +1,14 @@
+use crate::RwMap;
+use crate::core::{
+    Component, Provider, State,
+    di::{Dependency, DependencyBuilderFn, DependencyInjectionError},
+};
+
+use parking_lot::RwLock;
 use std::{
     any::{TypeId, type_name},
     collections::{HashMap, HashSet},
     sync::Arc,
-};
-
-use parking_lot::RwLock;
-
-use crate::core::{
-    Component, Provider, State,
-    di::{Dependency, DependencyBuilderFn, DependencyInjectionError},
 };
 
 /// A container for managing dependencies and their builders.
@@ -27,9 +27,9 @@ use crate::core::{
 /// and the container will use the `Component` trait to build them when needed, resolving
 /// their dependencies automatically.
 pub struct DependencyContainer {
-    pub(crate) instances: RwLock<HashMap<TypeId, Dependency>>,
-    pub(crate) dependency_builders: RwLock<HashMap<TypeId, DependencyBuilderFn>>,
-    pub(crate) dependency_graph: RwLock<HashMap<TypeId, Vec<TypeId>>>,
+    pub(crate) instances: RwMap<TypeId, Dependency>,
+    pub(crate) dependency_builders: RwMap<TypeId, DependencyBuilderFn>,
+    pub(crate) dependency_graph: RwMap<TypeId, Vec<TypeId>>,
 }
 
 impl DependencyContainer {

@@ -10,8 +10,6 @@ use sword::prelude::*;
 pub struct SharedModule;
 
 impl Module for SharedModule {
-    type Controller = NonControllerModule;
-
     async fn register_providers(config: &Config, container: &DependencyContainer) {
         let db_config = config.get_or_panic::<DatabaseConfig>();
         let hasher_config = config.get_or_default::<HasherConfig>();

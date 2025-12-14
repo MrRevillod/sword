@@ -1,7 +1,8 @@
+use super::layer_stack::LayerStack;
 use crate::core::__internal::ConfigRegistrar;
 use crate::core::*;
 use crate::web::__internal::MiddlewareRegistrar;
-use crate::web::{Controller, MiddlewaresConfig};
+use crate::web::MiddlewaresConfig;
 
 use axum::{
     extract::Request as AxumRequest,
@@ -14,12 +15,11 @@ use sword_layers::prelude::*;
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
-    pub config: Config,
-    router: Router,
     state: State,
-    controllers: Vec<fn(State) -> Router>,
+    config: Config,
     container: DependencyContainer,
-    layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
+    gateway_registry: GatewayRegistry,
+    layer_stack: LayerStack,
 }
 
 impl ApplicationBuilder {
@@ -38,23 +38,18 @@ impl ApplicationBuilder {
             register(&config, &state).expect("Failed to register config type");
         }
 
-        let router = Router::new().with_state(state.clone());
-
         Self {
-            router,
             state,
             config,
-            controllers: Vec::new(),
             container: DependencyContainer::new(),
-            layers: Vec::new(),
+            gateway_registry: GatewayRegistry::new(),
+            layer_stack: LayerStack::new(),
         }
     }
 
     /// Register a module with the application builder.
-    ///
-    /// Can be used with any type that implements the `Module` trait. No matter if the module
-    /// has controllers or not, this method will handle both cases.
-    pub fn with_module<M>(mut self) -> Self
+    /// Can be used with any type that implements the `Module` trait.
+    pub fn with_module<M>(self) -> Self
     where
         M: Module,
     {
@@ -63,18 +58,14 @@ impl ApplicationBuilder {
         });
 
         M::register_components(&self.container);
-
-        if M::is_controller_module() {
-            self.controllers.push(M::Controller::router);
-        }
+        M::register_gateways(&self.gateway_registry);
 
         Self {
-            router: self.router,
             state: self.state,
             config: self.config,
-            controllers: self.controllers,
             container: self.container,
-            layers: self.layers,
+            gateway_registry: self.gateway_registry,
+            layer_stack: self.layer_stack,
         }
     }
 
@@ -89,16 +80,14 @@ impl ApplicationBuilder {
         <L::Service as Service<AxumRequest>>::Error: Into<Infallible> + 'static,
         <L::Service as Service<AxumRequest>>::Future: Send + 'static,
     {
-        self.layers
-            .push(Box::new(move |router| router.layer(layer.clone())));
+        self.layer_stack.push(layer);
 
         Self {
-            router: self.router,
             state: self.state,
             config: self.config,
             container: self.container,
-            controllers: self.controllers,
-            layers: self.layers,
+            gateway_registry: self.gateway_registry,
+            layer_stack: self.layer_stack,
         }
     }
 
@@ -113,19 +102,18 @@ impl ApplicationBuilder {
         self.container.register_provider(provider);
 
         Self {
-            router: self.router,
             state: self.state,
             config: self.config,
             container: self.container,
-            controllers: self.controllers,
-            layers: self.layers,
+            gateway_registry: self.gateway_registry,
+            layer_stack: self.layer_stack,
         }
     }
 
     fn build_router(&self) -> Router {
-        let mut router = self.router.clone();
+        let mut router = Router::new().with_state(self.state.clone());
 
-        router = self.apply_controllers(router);
+        router = self.apply_gateways(router);
         router = self.apply_layers(router);
         router = self.apply_sword_layers(router);
 
@@ -155,31 +143,30 @@ impl ApplicationBuilder {
 
         let router = self.build_router();
 
-        self.layers.clear();
-        self.controllers.clear();
         self.container.clear();
 
         Application::new(router, self.config)
     }
 
     fn apply_layers(&self, router: Router) -> Router {
-        let mut router = router;
-
-        for layer_fn_applier in &self.layers {
-            router = layer_fn_applier(router);
-        }
-
-        router
+        self.layer_stack.apply(router)
     }
 
     // Merge all the "controllers" routers into the main router
     // In fact, controllers are just functions that return a Router
-    fn apply_controllers(&self, router: Router) -> Router {
-        let mut router = router;
-
-        for controller in &self.controllers {
-            let controller = controller(self.state.clone());
-            router = router.merge(controller);
+    fn apply_gateways(&self, mut router: Router) -> Router {
+        for gateway_kind in self.gateway_registry.gateways.read().iter() {
+            match gateway_kind {
+                GatewayKind::Rest(builder) => {
+                    let gw_router = builder(self.state.clone());
+                    router = router.merge(gw_router);
+                }
+                GatewayKind::WebSocket(builder) => {
+                    let gw_router = builder(self.state.clone());
+                    router = router.merge(gw_router);
+                }
+                GatewayKind::Grpc => {}
+            }
         }
 
         router

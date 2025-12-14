@@ -139,7 +139,9 @@ impl UserController {
 struct UserModule;
 
 impl Module for UserModule {
-    type Controller = UserController;
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<UserController>();
+    }
 }
 
 #[tokio::test]

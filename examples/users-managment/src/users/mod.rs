@@ -13,9 +13,9 @@ use sword::prelude::*;
 pub struct UsersModule;
 
 impl Module for UsersModule {
-    type Controller = UsersController;
-
     fn register_components(container: &DependencyContainer) {
         container.register_component::<UserRepository>();
     }
+
+    fn register_gateways(_: &GatewayRegistry) {}
 }
