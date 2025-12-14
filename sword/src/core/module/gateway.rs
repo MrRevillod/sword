@@ -29,3 +29,9 @@ impl GatewayRegistry {
         self.gateways.write().push(G::kind());
     }
 }
+
+impl Default for GatewayRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
