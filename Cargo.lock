@@ -3296,6 +3296,7 @@ dependencies = [
  "sqlx",
  "sword",
  "thiserror",
+ "tokio",
  "tracing-subscriber",
  "uuid",
  "validator",

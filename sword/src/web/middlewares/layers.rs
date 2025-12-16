@@ -9,10 +9,16 @@ use crate::internal::{ConfigItem, ConfigRegistrar};
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(default)]
 pub struct MiddlewaresConfig {
+    #[serde(rename = "body-limit")]
     pub body_limit: BodyLimitConfig,
+
+    #[serde(rename = "request-timeout")]
     pub request_timeout: RequestTimeoutConfig,
+
     pub compression: CompressionConfig,
     pub cors: CorsConfig,
+
+    #[serde(rename = "serve-dir")]
     pub serve_dir: ServeDirConfig,
 }
 
