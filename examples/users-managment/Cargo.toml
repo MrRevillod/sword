@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio = { workspace = true, features = ["full"] }
 sword = { workspace = true, features = ["validator", "multipart"] }
 serde = { workspace = true }
 validator = { workspace = true }

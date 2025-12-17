@@ -34,9 +34,7 @@ fn is_std_arc_path(path: &syn::Path) -> bool {
 
     match segments.len() {
         1 => true,
-
         2 => segments[0].ident == "sync",
-
         3 => {
             let root = &segments[0].ident;
             let mid = &segments[1].ident;
@@ -48,27 +46,16 @@ fn is_std_arc_path(path: &syn::Path) -> bool {
 
 pub fn generate_field_extractions(fields: &[(Ident, Type)]) -> TokenStream {
     let extractions = fields.iter().map(|(field_name, field_type)| {
-        if let Some(inner_type) = extract_arc_inner_type(field_type) {
-            let type_str = quote!(#inner_type).to_string();
-
-            quote! {
-                let #field_name = <#field_type as ::sword::core::FromStateArc>::from_state_arc(state)
-                    .map_err(|_| {
-                        ::sword::core::DependencyInjectionError::DependencyNotFound {
-                            type_name: #type_str.to_string(),
-                        }
-                    })?;
-            }
-        } else {
-            let type_str = quote!(#field_type).to_string();
-
-            quote! {
-                let #field_name = <#field_type as ::sword::core::FromState>::from_state(state)
-                    .map_err(|_| {
-                        ::sword::core::DependencyInjectionError::DependencyNotFound {
-                            type_name: #type_str.to_string(),
-                        }
-                    })?;
+        match extract_arc_inner_type(field_type) {
+            Some(_inner_type) => {
+                quote! {
+                    let #field_name = <#field_type as ::sword::core::FromStateArc>::from_state_arc(state)?;
+                }
+            },
+            None => {
+                quote! {
+                    let #field_name = <#field_type as ::sword::core::FromState>::from_state(state)?;
+                }
             }
         }
     });
@@ -90,11 +77,14 @@ pub fn generate_field_assignments(fields: &[(Ident, Type)]) -> TokenStream {
 
 /// Generates the implementation of the Build trait for a component.
 ///
-/// This generator is used by all macros (#[middleware], #[injectable], etc.)
+/// This generator is used by (#[middleware], #[injectable], etc.) macros
 /// to create the `build()` method that constructs an instance from the State.
 ///
-/// The generated code extracts dependencies from the State and uses them to
-/// construct the component instance.
+/// The generated code extracts each field dependency from the State using
+/// FromState/FromStateArc and assembles them into a new component instance.
+///
+/// This differs from FromState's blanket impl which only retrieves pre-existing
+/// instances - Build actually constructs new instances from their dependencies.
 pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let extracts = generate_field_extractions(fields);
     let assigns = generate_field_assignments(fields);

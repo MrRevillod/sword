@@ -4,14 +4,13 @@ port = 8080
 graceful_shutdown = false
 
 [middlewares]
-body_limit = { enabled = true, max_size = "1MB", display = true }
-request_timeout = { enabled = true, duration = "2s", display = true }
-compression = { enabled = true, display = true, algorithms = [
-    "gzip",
-    "deflate",
-    "brotli",
-    "zstd",
-] }
+body-limit = { enabled = true, max_size = "1MB", display = true }
+request-timeout = { enabled = true, duration = "2s", display = true }
+
+[middlewares.compression]
+enabled = true
+display = true
+algorithms = ["gzip", "deflate", "brotli", "zstd"]
 
 [middlewares.cors]
 enabled = true

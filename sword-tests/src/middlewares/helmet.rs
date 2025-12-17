@@ -16,7 +16,9 @@ impl HelmetTestController {
 struct HelmetTestModule;
 
 impl Module for HelmetTestModule {
-    type Controller = HelmetTestController;
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<HelmetTestController>();
+    }
 }
 
 #[tokio::test]

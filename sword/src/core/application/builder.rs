@@ -1,7 +1,8 @@
+use super::layer_stack::LayerStack;
 use crate::core::__internal::ConfigRegistrar;
 use crate::core::*;
 use crate::web::__internal::MiddlewareRegistrar;
-use crate::web::{Controller, MiddlewaresConfig};
+use crate::web::MiddlewaresConfig;
 
 use axum::{
     extract::Request as AxumRequest,
@@ -14,12 +15,11 @@ use sword_layers::prelude::*;
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
-    pub config: Config,
-    router: Router,
     state: State,
-    controllers: Vec<fn(State) -> Router>,
     container: DependencyContainer,
-    layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
+    gateway_registry: GatewayRegistry,
+    layer_stack: LayerStack,
+    pub config: Config,
 }
 
 impl ApplicationBuilder {
@@ -28,6 +28,25 @@ impl ApplicationBuilder {
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
     /// modules, add middleware layers, and set up dependency injection.
+    ///
+    /// The builder follows this configuration pattern:
+    /// 1. Create with `Application::builder()`
+    /// 2. Register modules with `with_module::<M>()`
+    /// 3. Optionally add custom layers with `with_layer()`
+    /// 4. Optionally register providers directly with `with_provider()`
+    /// 5. Build the application with `build()`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let app = Application::builder()
+    ///     .with_module::<UsersModule>()
+    ///     .with_module::<ProductsModule>()
+    ///     .with_layer(custom_middleware)
+    ///     .build();
+    ///
+    /// app.run().await;
+    /// ```
     pub fn new() -> Self {
         let state = State::new();
         let config = Config::new().expect("Configuration loading error");
@@ -38,49 +57,38 @@ impl ApplicationBuilder {
             register(&config, &state).expect("Failed to register config type");
         }
 
-        let router = Router::new().with_state(state.clone());
-
         Self {
-            router,
             state,
             config,
-            controllers: Vec::new(),
             container: DependencyContainer::new(),
-            layers: Vec::new(),
+            gateway_registry: GatewayRegistry::new(),
+            layer_stack: LayerStack::new(),
         }
     }
 
     /// Register a module with the application builder.
-    ///
-    /// Can be used with any type that implements the `Module` trait. No matter if the module
-    /// has controllers or not, this method will handle both cases.
-    pub fn with_module<M>(mut self) -> Self
+    /// Can be used with any type that implements the `Module` trait.
+    pub fn with_module<M>(self) -> Self
     where
         M: Module,
     {
         futures::executor::block_on(async {
-            M::register_providers(&self.config, &mut self.container).await;
+            M::register_providers(&self.config, self.container.provider_registry())
+                .await;
         });
 
-        M::register_components(&mut self.container);
+        M::register_components(self.container.component_registry());
+        M::register_gateways(&self.gateway_registry);
 
-        if M::is_controller_module() {
-            self.controllers.push(M::Controller::router);
-        }
-
-        Self {
-            router: self.router,
-            state: self.state,
-            config: self.config,
-            controllers: self.controllers,
-            container: self.container,
-            layers: self.layers,
-        }
+        self
     }
 
     /// Adds a `tower::Layer` to the application builder.
+    ///
     /// This method is equivalent to Axum's `Router::layer` method, allowing you to
-    /// apply middleware layers to the application's router.
+    /// apply middleware layers to the application's router. Layers are applied in the
+    /// order they are added, after gateways are registered but before Sword's built-in
+    /// middleware layers (CORS, compression, request timeout, etc.).
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
@@ -89,17 +97,8 @@ impl ApplicationBuilder {
         <L::Service as Service<AxumRequest>>::Error: Into<Infallible> + 'static,
         <L::Service as Service<AxumRequest>>::Future: Send + 'static,
     {
-        self.layers
-            .push(Box::new(move |router| router.layer(layer.clone())));
-
-        Self {
-            router: self.router,
-            state: self.state,
-            config: self.config,
-            container: self.container,
-            controllers: self.controllers,
-            layers: self.layers,
-        }
+        self.layer_stack.push(layer);
+        self
     }
 
     /// Register a provider with the application's dependency injection container.
@@ -108,24 +107,16 @@ impl ApplicationBuilder {
     /// to create a full module when only a provider is needed.
     pub fn with_provider<T>(self, provider: T) -> Self
     where
-        T: Provider,
+        T: Provider + 'static,
     {
-        self.container.register_provider(provider);
-
-        Self {
-            router: self.router,
-            state: self.state,
-            config: self.config,
-            container: self.container,
-            controllers: self.controllers,
-            layers: self.layers,
-        }
+        self.container.provider_registry().register(provider);
+        self
     }
 
     fn build_router(&self) -> Router {
-        let mut router = self.router.clone();
+        let mut router = Router::new().with_state(self.state.clone());
 
-        router = self.apply_controllers(router);
+        router = self.apply_gateways(router);
         router = self.apply_layers(router);
         router = self.apply_sword_layers(router);
 
@@ -140,8 +131,13 @@ impl ApplicationBuilder {
     }
 
     /// Build the `Application` instance with the configured options.
+    ///
     /// This method ends the builder pattern and constructs the final `Application`
-    /// instance ready to run.
+    /// instance ready to run. The router is built by:
+    /// 1. Applying gateways (REST, WebSocket, etc.) to register routes
+    /// 2. Applying custom layers added via `with_layer()`
+    /// 3. Applying built-in Sword middleware layers (CORS, compression, etc.)
+    /// 4. Nesting under a global prefix if configured
     pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)
@@ -155,31 +151,30 @@ impl ApplicationBuilder {
 
         let router = self.build_router();
 
-        self.layers.clear();
-        self.controllers.clear();
         self.container.clear();
 
         Application::new(router, self.config)
     }
 
     fn apply_layers(&self, router: Router) -> Router {
-        let mut router = router;
-
-        for layer_fn_applier in &self.layers {
-            router = layer_fn_applier(router);
-        }
-
-        router
+        self.layer_stack.apply(router)
     }
 
     // Merge all the "controllers" routers into the main router
     // In fact, controllers are just functions that return a Router
-    fn apply_controllers(&self, router: Router) -> Router {
-        let mut router = router;
-
-        for controller in &self.controllers {
-            let controller = controller(self.state.clone());
-            router = router.merge(controller);
+    fn apply_gateways(&self, mut router: Router) -> Router {
+        for gateway_kind in self.gateway_registry.gateways.read().iter() {
+            match gateway_kind {
+                GatewayKind::Rest(builder) => {
+                    let gw_router = builder(self.state.clone());
+                    router = router.merge(gw_router);
+                }
+                GatewayKind::WebSocket(builder) => {
+                    let gw_router = builder(self.state.clone());
+                    router = router.merge(gw_router);
+                }
+                GatewayKind::Grpc => {}
+            }
         }
 
         router
@@ -217,6 +212,7 @@ impl ApplicationBuilder {
                 .nest_service(&middlewares_config.serve_dir.router_path, serve_dir);
         }
 
+        router = router.layer(RequestIdLayer::new());
         router = router.layer(CookieManagerLayer::new());
 
         router

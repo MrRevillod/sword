@@ -255,9 +255,9 @@ dependencies = [
 
 [[package]]
 name = "axum_responses"
-version = "0.5.3"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3202127e23a1fea9a7b8f709f237d600a8f564d0264ae605530d397ed4c4e53"
+checksum = "50a9a817cf5c2f11cbf917feb58ca50e26fbb44ec459b6676409e46b07dcf00b"
 dependencies = [
  "axum",
  "axum_responses_macros",
@@ -2779,9 +2779,9 @@ dependencies = [
 
 [[package]]
 name = "sword-layers"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ece9140f94c59aa59313ef136ac7efc255b561dd85539f721f1d9cca4901a88c"
+checksum = "3ece20cec982a56510b54ab1ec1ae80d3a264c3367ed5da681a2576539fc232c"
 dependencies = [
  "axum",
  "axum-helmet",
@@ -2794,6 +2794,7 @@ dependencies = [
  "tower-cookies",
  "tower-http",
  "tower-layer",
+ "uuid",
 ]
 
 [[package]]
@@ -3295,6 +3296,7 @@ dependencies = [
  "sqlx",
  "sword",
  "thiserror",
+ "tokio",
  "tracing-subscriber",
  "uuid",
  "validator",

@@ -1,12 +1,12 @@
 pub use crate::core::{
-    Application, ApplicationBuilder, ApplicationConfig, Build, Component, Config,
-    ConfigError, DependencyContainer, DependencyInjectionError, FromState,
-    FromStateArc, HasDeps, Module, NonControllerModule, Provider, State, config,
-    injectable,
+    Application, ApplicationBuilder, ApplicationConfig, Build, Component,
+    ComponentRegistry, Config, ConfigError, DependencyInjectionError, FromState,
+    FromStateArc, Gateway, GatewayRegistry, HasDeps, Module, Provider,
+    ProviderRegistry, State, config, injectable,
 };
 
 pub use crate::web::{
-    Controller, ControllerBuilder, controller, delete, get, patch, post, put, routes,
+    Controller, controller, delete, get, patch, post, put, routes,
 };
 
 pub use crate::web::{

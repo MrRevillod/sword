@@ -65,7 +65,9 @@ impl TestController {
 struct V1UsersModule;
 
 impl Module for V1UsersModule {
-    type Controller = TestController;
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<TestController>();
+    }
 }
 
 fn test_server() -> TestServer {
@@ -91,6 +93,7 @@ async fn timeout() {
         error: None,
         errors: None,
         timestamp: json.timestamp,
+        request_id: None,
     };
 
     assert_eq!(json.code, expected.code);

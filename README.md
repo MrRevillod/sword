@@ -24,7 +24,7 @@ It takes advantage of the tokio and axum ecosystem to bring you performance with
 
 ```toml
 [dependencies]
-sword = "0.2.1"
+sword = "0.2.0"
 ```
 
 ### Basic web server
@@ -36,6 +36,7 @@ use serde_json::Value;
 #[controller("/")]
 struct AppController;
 
+#[routes]
 impl AppController {
     #[get("/hello")]
     async fn hello(&self) -> JsonResponse {

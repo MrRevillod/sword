@@ -17,10 +17,10 @@ pub struct UsersController {
 #[routes]
 impl UsersController {
     #[get("/")]
-    async fn get_users(&self) -> HttpResult {
+    async fn get_users(&self, req: Request) -> HttpResult {
         let data = self.users.find_all().await?;
 
-        Ok(JsonResponse::Ok().data(data))
+        Ok(JsonResponse::Ok().data(data).request_id(req.id()))
     }
 
     #[post("/")]

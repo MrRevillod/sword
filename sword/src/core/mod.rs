@@ -5,7 +5,7 @@ mod module;
 mod state;
 
 pub use di::*;
-pub use module::{Module, NonControllerModule};
+pub use module::*;
 
 pub use application::*;
 pub use config::{Config, ConfigError, config};

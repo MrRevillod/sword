@@ -6,15 +6,15 @@ use serde_json::Value;
 #[derive(Debug, Error)]
 pub enum RequestError {
     #[error("Failed to parse request: {message}")]
-    ParseError {
-        message: &'static str,
-        details: String,
-    },
+    ParseError { message: String, details: String },
 
     #[error("Deserialization error: {error}")]
     DeserializationError {
         message: &'static str,
         error: String,
+
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 
     #[cfg(feature = "validator")]
@@ -35,8 +35,14 @@ pub enum RequestError {
 }
 
 impl RequestError {
-    pub fn parse_error(message: &'static str, details: String) -> Self {
-        RequestError::ParseError { message, details }
+    pub fn parse_error(
+        message: impl Into<String>,
+        details: impl Into<String>,
+    ) -> Self {
+        RequestError::ParseError {
+            message: message.into(),
+            details: details.into(),
+        }
     }
 
     #[cfg(feature = "validator")]
@@ -48,7 +54,15 @@ impl RequestError {
         RequestError::UnsupportedMediaType { message }
     }
 
-    pub fn deserialization_error(message: &'static str, error: String) -> Self {
-        RequestError::DeserializationError { message, error }
+    pub fn deserialization_error(
+        message: &'static str,
+        error: String,
+        source: Box<dyn std::error::Error + Send + Sync>,
+    ) -> Self {
+        RequestError::DeserializationError {
+            message,
+            error,
+            source,
+        }
     }
 }

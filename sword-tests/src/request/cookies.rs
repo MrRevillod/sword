@@ -57,7 +57,9 @@ impl CookieController {
 struct CookieModule;
 
 impl Module for CookieModule {
-    type Controller = CookieController;
+    fn register_gateways(gateways: &GatewayRegistry) {
+        gateways.register::<CookieController>();
+    }
 }
 
 #[tokio::test]

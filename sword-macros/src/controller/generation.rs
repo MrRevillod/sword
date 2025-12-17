@@ -25,7 +25,7 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
         #deps_impl
         #clone_impl
 
-        impl ::sword::web::ControllerBuilder for #self_name {
+        impl ::sword::web::Controller for #self_name {
             fn base_path() -> &'static str {
                 #base_path
             }
