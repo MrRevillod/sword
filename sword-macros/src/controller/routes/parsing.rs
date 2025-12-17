@@ -55,14 +55,16 @@ pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
                 continue;
             };
 
-            if !VALID_ROUTE_MACROS.contains(&ident.to_string().as_str()) {
+            let ident_str = ident.to_string();
+
+            if !VALID_ROUTE_MACROS.contains(&ident_str.as_str()) {
                 continue;
             }
 
             if ident == "uses" {
                 let args = attr.parse_args::<MiddlewareArgs>()?;
                 middlewares.push(args);
-            } else if HTTP_METHODS.contains(&ident.to_string().as_str()) {
+            } else if HTTP_METHODS.contains(&ident_str.as_str()) {
                 route_method = ident.to_string();
                 route_path = parse_route_path(attr)?.value();
             }

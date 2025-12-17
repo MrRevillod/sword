@@ -38,8 +38,12 @@ impl From<RequestError> for JsonResponse {
                 JsonResponse::UnsupportedMediaType().message(message)
             }
 
-            RequestError::DeserializationError { message, error } => {
-                tracing::error!(error = %error, "Request deserialization error: {message}");
+            RequestError::DeserializationError {
+                message,
+                error,
+                source,
+            } => {
+                tracing::error!(source = %source, "Request deserialization error: {message}");
                 JsonResponse::BadRequest().message(message).error(error)
             }
         }

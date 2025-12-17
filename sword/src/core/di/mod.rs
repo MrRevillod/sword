@@ -3,12 +3,12 @@ mod container;
 mod error;
 mod providers;
 
+use crate::core::State;
+
 use std::{
     any::{Any, TypeId},
     sync::Arc,
 };
-
-use crate::core::State;
 
 pub use components::{Component, ComponentRegistry};
 pub use container::DependencyContainer;

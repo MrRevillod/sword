@@ -80,13 +80,7 @@ impl ApplicationBuilder {
         M::register_components(self.container.component_registry());
         M::register_gateways(&self.gateway_registry);
 
-        Self {
-            state: self.state,
-            config: self.config,
-            container: self.container,
-            gateway_registry: self.gateway_registry,
-            layer_stack: self.layer_stack,
-        }
+        self
     }
 
     /// Adds a `tower::Layer` to the application builder.
@@ -104,14 +98,7 @@ impl ApplicationBuilder {
         <L::Service as Service<AxumRequest>>::Future: Send + 'static,
     {
         self.layer_stack.push(layer);
-
-        Self {
-            state: self.state,
-            config: self.config,
-            container: self.container,
-            gateway_registry: self.gateway_registry,
-            layer_stack: self.layer_stack,
-        }
+        self
     }
 
     /// Register a provider with the application's dependency injection container.
@@ -120,17 +107,10 @@ impl ApplicationBuilder {
     /// to create a full module when only a provider is needed.
     pub fn with_provider<T>(self, provider: T) -> Self
     where
-        T: Provider,
+        T: Provider + 'static,
     {
         self.container.provider_registry().register(provider);
-
-        Self {
-            state: self.state,
-            config: self.config,
-            container: self.container,
-            gateway_registry: self.gateway_registry,
-            layer_stack: self.layer_stack,
-        }
+        self
     }
 
     fn build_router(&self) -> Router {

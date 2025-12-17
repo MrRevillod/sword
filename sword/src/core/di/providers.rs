@@ -1,16 +1,20 @@
 use crate::{
     RwMap,
-    core::{Build, Injectable},
+    core::{FromState, Injectable},
 };
 
 use std::{any::TypeId, collections::HashMap, sync::Arc};
 
 /// Marker trait for pre-instantiated dependencies (providers).
 ///
-/// Providers are dependencies that cannot be auto-constructed from the State
-/// (e.g., database connections, external API clients) but need to be available
-/// for injection into other components.
-pub trait Provider: Build {}
+/// Providers are dependencies that have been pre-constructed and registered
+/// into the State. Unlike Components which are built from their dependencies,
+/// Providers are already complete instances that only need to be retrieved
+/// from the State via the FromState trait.
+///
+/// Common use cases: database connections, external API clients, or any
+/// resource that requires async initialization or complex setup.
+pub trait Provider: FromState + Send + Sync {}
 
 pub struct ProviderRegistry {
     providers: RwMap<TypeId, Injectable>,
@@ -31,7 +35,7 @@ impl ProviderRegistry {
     /// be auto-constructed from the State.
     pub fn register<T>(&self, provider: T)
     where
-        T: Provider,
+        T: Provider + 'static,
     {
         self.providers
             .write()

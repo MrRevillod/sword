@@ -143,10 +143,10 @@ impl Request {
     pub fn param<T: FromStr>(&self, key: &str) -> Result<T, RequestError> {
         if let Some(value) = self.params.get(key) {
             let Ok(param) = value.parse::<T>() else {
-                let message = "Invalid parameter type";
+                let message = format!("Invalid parameter format for '{key}'");
                 let details = "Failed to deserialize parameter to the required type";
 
-                return Err(RequestError::parse_error(message, details.into()));
+                return Err(RequestError::parse_error(message, details));
             };
 
             return Ok(param);
@@ -219,10 +219,11 @@ impl Request {
             ));
         }
 
-        serde_json::from_slice(&self.body_bytes).map_err(|_| {
+        serde_json::from_slice(&self.body_bytes).map_err(|e| {
             RequestError::deserialization_error(
                 "Invalid request body",
                 "Failed to deserialize request body to the required type.".into(),
+                e.into(),
             )
         })
     }
@@ -290,12 +291,13 @@ impl Request {
         );
 
         let parsed: T =
-            serde_path_to_error::deserialize(deserializer).map_err(|_| {
+            serde_path_to_error::deserialize(deserializer).map_err(|e| {
                 // TODO: Implement tracing for loging the errors
                 RequestError::deserialization_error(
                     "Invalid query parameters",
                     "Failed to deserialize query parameters to the required type."
                         .into(),
+                    e.into(),
                 )
             })?;
 
