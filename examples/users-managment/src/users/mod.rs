@@ -13,8 +13,8 @@ use sword::prelude::*;
 pub struct UsersModule;
 
 impl Module for UsersModule {
-    fn register_components(container: &DependencyContainer) {
-        container.register_component::<UserRepository>();
+    fn register_components(components: &ComponentRegistry) {
+        components.register::<UserRepository>();
     }
 
     fn register_gateways(_: &GatewayRegistry) {}

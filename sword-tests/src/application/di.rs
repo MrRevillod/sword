@@ -5,7 +5,7 @@ use std::{
 
 use axum_test::TestServer;
 use serde_json::{Value, json};
-use sword::prelude::*;
+use sword::{core::ComponentRegistry, prelude::*};
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 
@@ -100,9 +100,9 @@ impl TasksController {
 pub struct TasksModule;
 
 impl Module for TasksModule {
-    fn register_components(dependencies: &DependencyContainer) {
-        dependencies.register_component::<TaskRepository>();
-        dependencies.register_component::<TasksService>();
+    fn register_components(components: &ComponentRegistry) {
+        components.register::<TaskRepository>();
+        components.register::<TasksService>();
     }
 
     fn register_gateways(gateways: &GatewayRegistry) {

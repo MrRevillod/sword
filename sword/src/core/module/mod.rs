@@ -1,6 +1,6 @@
 mod gateway;
 
-use crate::core::{Config, DependencyContainer};
+use crate::core::{ComponentRegistry, Config, ProviderRegistry};
 
 pub use gateway::*;
 
@@ -46,8 +46,8 @@ pub trait Module {
     fn register_gateways(_: &GatewayRegistry) {}
 
     /// Register component structs marked with `#[injectable]`
-    fn register_components(_: &DependencyContainer) {}
+    fn register_components(_: &ComponentRegistry) {}
 
     /// Register provider structs marked with `#[injectable(provider)]`
-    async fn register_providers(_: &Config, _: &DependencyContainer) {}
+    async fn register_providers(_: &Config, _: &ProviderRegistry) {}
 }

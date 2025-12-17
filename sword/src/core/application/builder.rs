@@ -73,10 +73,11 @@ impl ApplicationBuilder {
         M: Module,
     {
         futures::executor::block_on(async {
-            M::register_providers(&self.config, &self.container).await;
+            M::register_providers(&self.config, self.container.provider_registry())
+                .await;
         });
 
-        M::register_components(&self.container);
+        M::register_components(self.container.component_registry());
         M::register_gateways(&self.gateway_registry);
 
         Self {
@@ -121,7 +122,7 @@ impl ApplicationBuilder {
     where
         T: Provider,
     {
-        self.container.register_provider(provider);
+        self.container.provider_registry().register(provider);
 
         Self {
             state: self.state,
