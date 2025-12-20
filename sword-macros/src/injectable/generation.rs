@@ -19,20 +19,7 @@ pub fn generate_component_trait(input: &InjectableInput) -> TokenStream {
 pub fn generate_provider_trait(parsed: &InjectableInput) -> TokenStream {
     let struct_name = &parsed.struct_name;
 
-    let build_impl = quote! {
-        impl ::sword::core::Build for #struct_name {
-            fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError> {
-                state.get::<Self>()
-                    .map_err(|_| ::sword::core::DependencyInjectionError::DependencyNotFound {
-                        type_name: stringify!(#struct_name).to_string(),
-                    })
-            }
-        }
-    };
-
     quote! {
-        #build_impl
-
         impl ::sword::core::Provider for #struct_name {}
     }
 }

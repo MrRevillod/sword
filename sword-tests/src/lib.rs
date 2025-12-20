@@ -17,11 +17,7 @@ mod middlewares {
 mod application {
     mod config;
     mod di;
-    mod versioning;
 }
 
 #[cfg(test)]
 pub mod utils;
-
-#[cfg(test)]
-pub mod cors;

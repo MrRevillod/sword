@@ -5,7 +5,7 @@ use std::{
 
 use axum_test::TestServer;
 use serde_json::{Value, json};
-use sword::prelude::*;
+use sword::{core::ComponentRegistry, prelude::*};
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 
@@ -76,14 +76,14 @@ pub struct TasksController {
 #[routes]
 impl TasksController {
     #[get("/")]
-    async fn get_tasks(&self) -> HttpResponse {
+    async fn get_tasks(&self) -> JsonResponse {
         let data = self.tasks.find_all().await;
 
-        HttpResponse::Ok().data(data)
+        JsonResponse::Ok().data(data)
     }
 
     #[post("/")]
-    async fn create_task(&self) -> HttpResponse {
+    async fn create_task(&self) -> JsonResponse {
         let total_task = self.tasks.find_all().await.len();
 
         let task = json!({
@@ -93,18 +93,20 @@ impl TasksController {
 
         self.tasks.create(task.clone()).await;
 
-        HttpResponse::Created().message("Task created").data(task)
+        JsonResponse::Created().message("Task created").data(task)
     }
 }
 
 pub struct TasksModule;
 
 impl Module for TasksModule {
-    type Controller = TasksController;
+    fn register_components(components: &ComponentRegistry) {
+        components.register::<TaskRepository>();
+        components.register::<TasksService>();
+    }
 
-    fn register_components(c: &mut DependencyContainer) {
-        c.register_component::<TaskRepository>();
-        c.register_component::<TasksService>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TasksController>();
     }
 }
 
@@ -122,7 +124,7 @@ async fn test_get_tasks_empty() {
 
     assert_eq!(response.status_code(), StatusCode::OK);
 
-    let body: ResponseBody = response.json();
+    let body: JsonResponseBody = response.json();
 
     assert!(body.success);
     assert_eq!(body.code, 200);
@@ -143,7 +145,7 @@ async fn test_create_task() {
 
     assert_eq!(response.status_code(), 201);
 
-    let body: ResponseBody = response.json();
+    let body: JsonResponseBody = response.json();
 
     assert!(body.success);
     assert_eq!(body.code, 201);

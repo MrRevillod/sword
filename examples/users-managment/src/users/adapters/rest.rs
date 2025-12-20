@@ -17,10 +17,10 @@ pub struct UsersController {
 #[routes]
 impl UsersController {
     #[get("/")]
-    async fn get_users(&self) -> HttpResult {
+    async fn get_users(&self, req: Request) -> HttpResult {
         let data = self.users.find_all().await?;
 
-        Ok(HttpResponse::Ok().data(data))
+        Ok(JsonResponse::Ok().data(data).request_id(req.id()))
     }
 
     #[post("/")]
@@ -33,9 +33,13 @@ impl UsersController {
             password: self.hasher.hash(&body.password)?,
         };
 
+        if self.users.find_by_username(&user.username).await?.is_some() {
+            return Err(AppError::UserConflictError("username", &user.username))?;
+        }
+
         self.users.save(&user).await?;
 
-        Ok(HttpResponse::Created().message("User created").data(user))
+        Ok(JsonResponse::Created().message("User created").data(user))
     }
 
     #[put("/{id}")]
@@ -62,7 +66,7 @@ impl UsersController {
 
         self.users.save(&updated_user).await?;
 
-        Ok(HttpResponse::Ok().message("User updated"))
+        Ok(JsonResponse::Ok().message("User updated"))
     }
 
     #[delete("/{id}")]
@@ -75,7 +79,7 @@ impl UsersController {
 
         self.users.delete(&id).await?;
 
-        Ok(HttpResponse::Ok().message("User deleted"))
+        Ok(JsonResponse::Ok().message("User deleted"))
     }
 
     #[get("/test-compression")]
@@ -86,7 +90,7 @@ impl UsersController {
             "data": repeated_data,
         });
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(large_json)
             .message("Test compression data"))
     }

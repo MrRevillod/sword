@@ -325,10 +325,10 @@ struct TestController {}
 impl TestController {
     #[get("/extensions-test")]
     #[uses(ExtensionsTestMiddleware)]
-    async fn extensions_test(&self, req: Request) -> HttpResponse {
+    async fn extensions_test(&self, req: Request) -> JsonResponse {
         let extension_value = req.extensions.get::<String>();
 
-        HttpResponse::Ok()
+        JsonResponse::Ok()
             .message("Test controller response with extensions")
             .data(json!({
                 "extension_value": extension_value.cloned().unwrap_or_default()
@@ -347,57 +347,57 @@ impl TestController {
             "message": message
         });
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .message("Test controller response with middleware state")
             .data(json))
     }
 
     #[get("/role-test")]
     #[uses(RoleMiddleware, config = vec!["admin", "user"])]
-    async fn role_test(&self, req: Request) -> HttpResponse {
+    async fn role_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
             .get::<Vec<String>>()
             .cloned()
             .unwrap_or_default();
 
-        HttpResponse::Ok().data(json!({
+        JsonResponse::Ok().data(json!({
             "roles": config
         }))
     }
 
     #[get("/error-test")]
     #[uses(FileValidationMiddleware, config = ("jpg", "png"))]
-    async fn error_test(&self, req: Request) -> HttpResponse {
+    async fn error_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
             .get::<(String, String)>()
             .cloned()
             .unwrap_or(("".to_string(), "".to_string()));
 
-        HttpResponse::Ok().data(json!({
+        JsonResponse::Ok().data(json!({
             "allowed_formats": [config.0, config.1]
         }))
     }
 
     #[get("/tower-middleware-test")]
     #[uses(CorsLayer::permissive())]
-    async fn tower_middleware_test(&self) -> HttpResponse {
-        HttpResponse::Ok()
+    async fn tower_middleware_test(&self) -> JsonResponse {
+        JsonResponse::Ok()
             .message("Test with tower middleware")
             .data(json!({"middleware": "cors"}))
     }
 
     #[get("/tuple-config-test")]
     #[uses(TupleConfigMiddleware, config = ("jpg", "png"))]
-    async fn tuple_config_test(&self, req: Request) -> HttpResponse {
+    async fn tuple_config_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
             .get::<(String, String)>()
             .cloned()
             .unwrap_or(("".to_string(), "".to_string()));
 
-        HttpResponse::Ok().message("Tuple config test").data(json!({
+        JsonResponse::Ok().message("Tuple config test").data(json!({
             "config_type": "tuple",
             "config": [config.0, config.1]
         }))
@@ -405,14 +405,14 @@ impl TestController {
 
     #[get("/array-config-test")]
     #[uses(ArrayConfigMiddleware, config = [1, 2, 3])]
-    async fn array_config_test(&self, req: Request) -> HttpResponse {
+    async fn array_config_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
             .get::<[i32; 3]>()
             .cloned()
             .unwrap_or([0, 0, 0]);
 
-        HttpResponse::Ok().message("Array config test").data(json!({
+        JsonResponse::Ok().message("Array config test").data(json!({
             "config_type": "array",
             "config": config
         }))
@@ -420,10 +420,10 @@ impl TestController {
 
     #[get("/string-config-test")]
     #[uses(StringConfigMiddleware, config = "test string".to_string())]
-    async fn string_config_test(&self, req: Request) -> HttpResponse {
+    async fn string_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<String>().cloned().unwrap_or_default();
 
-        HttpResponse::Ok()
+        JsonResponse::Ok()
             .message("String config test")
             .data(json!({
                 "config_type": "string",
@@ -433,10 +433,10 @@ impl TestController {
 
     #[get("/str-config-test")]
     #[uses(StrConfigMiddleware, config = "test str")]
-    async fn str_config_test(&self, req: Request) -> HttpResponse {
+    async fn str_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<String>().cloned().unwrap_or_default();
 
-        HttpResponse::Ok().message("Str config test").data(json!({
+        JsonResponse::Ok().message("Str config test").data(json!({
             "config_type": "str",
             "config": config
         }))
@@ -444,10 +444,10 @@ impl TestController {
 
     #[get("/number-config-test")]
     #[uses(NumberConfigMiddleware, config = 42)]
-    async fn number_config_test(&self, req: Request) -> HttpResponse {
+    async fn number_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<i32>().cloned().unwrap_or(0);
 
-        HttpResponse::Ok()
+        JsonResponse::Ok()
             .message("Number config test")
             .data(json!({
                 "config_type": "number",
@@ -457,10 +457,10 @@ impl TestController {
 
     #[get("/bool-config-test")]
     #[uses(BoolConfigMiddleware, config = true)]
-    async fn bool_config_test(&self, req: Request) -> HttpResponse {
+    async fn bool_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<bool>().cloned().unwrap_or(false);
 
-        HttpResponse::Ok().message("Bool config test").data(json!({
+        JsonResponse::Ok().message("Bool config test").data(json!({
             "config_type": "bool",
             "config": config
         }))
@@ -470,7 +470,9 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    type Controller = TestController;
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TestController>();
+    }
 }
 
 fn test_server() -> TestServer {
@@ -485,7 +487,7 @@ async fn extensions_mw_test() {
     let response = test.get("/test/extensions-test").await;
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert!(json.data.is_some());
 
     let data = json.data.unwrap();
@@ -499,7 +501,7 @@ async fn middleware_state() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert!(json.data.is_some());
 
     let data = json.data.unwrap();
@@ -514,7 +516,7 @@ async fn role_middleware_test() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert!(json.data.is_some());
 
     let data = json.data.unwrap();
@@ -528,7 +530,7 @@ async fn error_middleware_test() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert!(json.data.is_some());
 
     let data = json.data.unwrap();
@@ -542,7 +544,7 @@ async fn tower_middleware_test() {
 
     assert_eq!(response.status_code(), 200);
 
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert!(json.data.is_some());
 
     let data = json.data.unwrap();
@@ -555,7 +557,7 @@ async fn tuple_config_middleware_test() {
     let response = test.get("/test/tuple-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "tuple");
     assert_eq!(data["config"], json!(["jpg", "png"]));
@@ -567,7 +569,7 @@ async fn array_config_middleware_test() {
     let response = test.get("/test/array-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "array");
     assert_eq!(data["config"], json!([1, 2, 3]));
@@ -579,7 +581,7 @@ async fn string_config_middleware_test() {
     let response = test.get("/test/string-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "string");
     assert_eq!(data["config"], "test string");
@@ -591,7 +593,7 @@ async fn str_config_middleware_test() {
     let response = test.get("/test/str-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "str");
     assert_eq!(data["config"], "test str");
@@ -603,7 +605,7 @@ async fn number_config_middleware_test() {
     let response = test.get("/test/number-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "number");
     assert_eq!(data["config"], 42);
@@ -615,7 +617,7 @@ async fn bool_config_middleware_test() {
     let response = test.get("/test/bool-config-test").await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     let data = json.data.unwrap();
     assert_eq!(data["config_type"], "bool");
     assert_eq!(data["config"], true);

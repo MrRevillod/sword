@@ -37,7 +37,7 @@ impl CookieController {
 
         cookies.add(cookie);
 
-        Ok(HttpResponse::Ok())
+        Ok(JsonResponse::Ok())
     }
 
     #[get("/with_middleware")]
@@ -46,10 +46,10 @@ impl CookieController {
         let cookies = req.cookies()?;
 
         let session_cookie = cookies.get("session_id").ok_or(
-            HttpResponse::Unauthorized().message("Session cookie not found"),
+            JsonResponse::Unauthorized().message("Session cookie not found"),
         )?;
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .message(format!("Session ID: {}", session_cookie.value())))
     }
 }
@@ -57,7 +57,9 @@ impl CookieController {
 struct CookieModule;
 
 impl Module for CookieModule {
-    type Controller = CookieController;
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<CookieController>();
+    }
 }
 
 #[tokio::test]

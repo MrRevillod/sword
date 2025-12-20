@@ -1,84 +1,47 @@
+use crate::core::di::components::ComponentRegistry;
+use crate::core::di::providers::ProviderRegistry;
+use crate::core::{State, di::DependencyInjectionError as DIError};
+
 use std::{
     any::{TypeId, type_name},
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     sync::Arc,
-};
-
-use crate::core::{
-    Component, Provider, State,
-    di::{Dependency, DependencyBuilderFn, DependencyInjectionError},
 };
 
 /// A container for managing dependencies and their builders.
 ///
 /// It support two types of registrations:
 ///
-/// 1. Providers:
+/// **Providers**:
 ///
 /// Providers are pre-created objects that you want to register directly into the container.
 /// For example, you might have a database connection or external service client that you
 /// need to build beforehand and inject into other Dependencies.
 ///
-/// 2. Components:
+/// **Components**
 ///
 /// Are types that has no need to be pre-created. Instead, you register the type itself,
 /// and the container will use the `Component` trait to build them when needed, resolving
 /// their dependencies automatically.
 pub struct DependencyContainer {
-    pub(crate) instances: HashMap<TypeId, Dependency>,
-    pub(crate) dependency_builders: HashMap<TypeId, DependencyBuilderFn>,
-    pub(crate) dependency_graph: HashMap<TypeId, Vec<TypeId>>,
+    providers: ProviderRegistry,
+    components: ComponentRegistry,
 }
 
 impl DependencyContainer {
     pub fn new() -> Self {
         Self {
-            instances: HashMap::new(),
-            dependency_builders: HashMap::new(),
-            dependency_graph: HashMap::new(),
+            providers: ProviderRegistry::new(),
+            components: ComponentRegistry::new(),
         }
     }
 
-    /// Registers an injectable component.
-    ///
-    /// The component must implement the `Component` trait. The container will store
-    /// a builder function and the component's dependency list for later construction
-    /// during the `build_all` phase.
-    ///
-    /// Dependencies are resolved automatically using topological sorting based on
-    /// the dependency graph.
-    pub fn register_component<T: Component>(&mut self) {
-        let type_id = TypeId::of::<T>();
-        let type_name = type_name::<T>();
-
-        let dependency_builder = Box::new(move |state: &State| {
-            T::build(state)
-                .map(|instance| Arc::new(instance) as Dependency)
-                .map_err(|e| DependencyInjectionError::BuildFailed {
-                    type_name: type_name.to_string(),
-                    reason: e.to_string(),
-                })
-        });
-
-        self.dependency_graph.insert(type_id, T::deps());
-        self.dependency_builders.insert(type_id, dependency_builder);
+    pub fn provider_registry(&self) -> &ProviderRegistry {
+        &self.providers
     }
 
-    /// Registers a pre-built dependency provider.
-    ///
-    /// Providers are instances that have already been constructed and are ready
-    /// to be injected into other components. Typical use cases include database
-    /// connections, HTTP clients, or external service configurations that cannot
-    /// be auto-constructed from the State.
-    pub fn register_provider<T>(&mut self, provider: T)
-    where
-        T: Provider,
-    {
-        self.instances.insert(TypeId::of::<T>(), Arc::new(provider));
-    }
-
-    pub fn build(self) -> Self {
-        self
+    pub fn component_registry(&self) -> &ComponentRegistry {
+        &self.components
     }
 
     /// Builds all registered components in dependency order.
@@ -90,26 +53,23 @@ impl DependencyContainer {
     /// 4. Detects circular dependencies and returns an error if found
     ///
     /// This method is called internally during application initialization.
-    pub(crate) fn build_all(
-        &self,
-        state: &State,
-    ) -> Result<(), DependencyInjectionError> {
+    pub(crate) fn build_all(&self, state: &State) -> Result<(), DIError> {
         let mut built = HashSet::new();
         let mut visiting = HashSet::new();
 
         // First. register all the provided instances
 
-        for (type_id, instance) in &self.instances {
+        let providers = &self.providers.get_providers();
+
+        for (type_id, instance) in providers.read().iter() {
             state.insert_dependency(*type_id, Arc::clone(instance));
             built.insert(*type_id);
         }
 
-        // Then, build the rest based on dependencies in
-        // topological order.
-
+        // Then, build the rest based on dependencies in topological order.
         // If a type_id is already built, skip it (Dep already built).
 
-        for type_id in self.dependency_graph.keys() {
+        for type_id in self.components.get_dependency_graph().read().keys() {
             self.build_recursive(type_id, state, &mut built, &mut visiting)?;
         }
 
@@ -129,13 +89,13 @@ impl DependencyContainer {
         state: &State,
         built: &mut HashSet<TypeId>,
         visiting: &mut HashSet<TypeId>,
-    ) -> Result<(), DependencyInjectionError> {
+    ) -> Result<(), DIError> {
         if built.contains(type_id) {
             return Ok(());
         }
 
         if visiting.contains(type_id) {
-            return Err(DependencyInjectionError::CircularDependency {
+            return Err(DIError::CircularDependency {
                 type_name: type_name::<()>().to_string(),
             });
         }
@@ -146,7 +106,9 @@ impl DependencyContainer {
         // and for each dependency, invoke build_recursive
         // to ensure they are built before building the current type.
 
-        if let Some(deps) = self.dependency_graph.get(type_id) {
+        let dependency_graph = &self.components.get_dependency_graph();
+
+        if let Some(deps) = dependency_graph.read().get(type_id) {
             for dep_id in deps {
                 self.build_recursive(dep_id, state, built, visiting)?;
             }
@@ -154,7 +116,7 @@ impl DependencyContainer {
 
         visiting.remove(type_id);
 
-        if let Some(builder) = self.dependency_builders.get(type_id) {
+        if let Some(builder) = &self.components.get_builders().read().get(type_id) {
             state.insert_dependency(*type_id, builder(state)?);
             built.insert(*type_id);
         }
@@ -163,9 +125,8 @@ impl DependencyContainer {
     }
 
     pub(crate) fn clear(&mut self) {
-        self.instances.clear();
-        self.dependency_builders.clear();
-        self.dependency_graph.clear();
+        self.providers.clear();
+        self.components.clear();
     }
 }
 

@@ -8,15 +8,17 @@ struct HelmetTestController;
 #[routes]
 impl HelmetTestController {
     #[get("/")]
-    async fn index(&self) -> HttpResponse {
-        HttpResponse::Ok().message("Hello from helmet test")
+    async fn index(&self) -> JsonResponse {
+        JsonResponse::Ok().message("Hello from helmet test")
     }
 }
 
 struct HelmetTestModule;
 
 impl Module for HelmetTestModule {
-    type Controller = HelmetTestController;
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<HelmetTestController>();
+    }
 }
 
 #[tokio::test]

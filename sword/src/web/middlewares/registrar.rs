@@ -24,9 +24,10 @@ impl MiddlewareRegistrar {
     /// `inventory::submit!`. The returned registrar contains a type-erased
     /// function that knows how to build and register the middleware.
     pub const fn new<M: Middleware>() -> Self {
-        fn register_fn<M: Middleware>(
-            state: &State,
-        ) -> Result<(), DependencyInjectionError> {
+        fn register_fn<M>(state: &State) -> Result<(), DependencyInjectionError>
+        where
+            M: Middleware,
+        {
             state.insert(Arc::new(M::build(state)?));
 
             Ok(())

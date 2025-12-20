@@ -1,49 +1,15 @@
-use dotenv::dotenv;
+use sword::{web_socket, web_socket_gateway};
+
+use crate::shared::Database;
 use std::sync::Arc;
-use sword::prelude::*;
-use sword_macros::{
-    on_connection, on_disconnect, on_fallback, subscribe_message, web_socket,
-    web_socket_gateway,
-};
-
-use crate::database::{Database, DatabaseConfig};
-mod database;
-
-#[controller("/ohno")]
-struct AppController {}
-
-#[routes]
-impl AppController {
-    #[get("/test")]
-    async fn get_data(&self, _req: Request) -> HttpResponse {
-        let data = vec![
-            "This is a basic web server",
-            "It serves static data",
-            "You can extend it with more routes",
-        ];
-
-        HttpResponse::Ok().data(data)
-    }
-}
 
 #[web_socket_gateway]
-struct SocketController {
+pub struct UserMessagesAdapter {
     db: Arc<Database>,
 }
 
-#[web_socket_gateway]
-struct OtherSocketController {}
-
-#[web_socket("/other_socket")]
-impl OtherSocketController {
-    #[on_connection]
-    async fn on_connect(&self, _socket: SocketRef) {
-        println!("New client connected to OtherSocketController");
-    }
-}
-
 #[web_socket("/socket")]
-impl SocketController {
+impl UserMessagesAdapter {
     #[on_connection]
     async fn on_connect(&self, _socket: SocketRef) {
         println!("New client connected");
@@ -111,24 +77,4 @@ impl SocketController {
             event, data
         );
     }
-}
-
-#[sword::main]
-async fn main() {
-    dotenv().ok();
-
-    let app = Application::builder();
-    let db_config = app.config::<DatabaseConfig>().unwrap();
-    let db = Database::new(db_config).await;
-
-    let container = DependencyContainer::builder().register_provider(db).build();
-
-    let app = Application::builder()
-        .with_dependency_container(container)
-        .with_socket::<OtherSocketController>()
-        .with_socket::<SocketController>()
-        .with_controller::<AppController>()
-        .build();
-
-    app.run().await;
 }

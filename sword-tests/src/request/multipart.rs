@@ -20,7 +20,7 @@ impl TestController {
 
         while let Some(field) = multipart.next_field().await.map_err(|e| {
             eprintln!("Error reading multipart field: {}", e);
-            HttpResponse::BadRequest().message("Failed to read multipart field")
+            JsonResponse::BadRequest().message("Failed to read multipart field")
         })? {
             let name = field.name().unwrap_or("Unnamed").to_string();
             let file_name = field.file_name().unwrap_or("No file name").to_string();
@@ -40,14 +40,16 @@ impl TestController {
             }));
         }
 
-        Ok(HttpResponse::Ok().data(fields).message("Hello, Multipart!"))
+        Ok(JsonResponse::Ok().data(fields).message("Hello, Multipart!"))
     }
 }
 
 struct TestModule;
 
 impl Module for TestModule {
-    type Controller = TestController;
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TestController>();
+    }
 }
 
 #[tokio::test]
@@ -68,7 +70,7 @@ async fn exceed_limit() -> Result<(), Box<dyn std::error::Error>> {
         .add_part("file", part);
 
     let response = test.post("/multipart").multipart(form).await;
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(response.status_code(), 413);
 
@@ -102,7 +104,7 @@ async fn body_limit_exactly_at_limit() -> Result<(), Box<dyn std::error::Error>>
     let response = test.post("/multipart").multipart(form).await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert_eq!(json.message, "Hello, Multipart!".into());
 
     Ok(())
@@ -128,7 +130,7 @@ async fn body_limit_just_under_limit() -> Result<(), Box<dyn std::error::Error>>
     let response = test.post("/multipart").multipart(form).await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
     assert_eq!(json.message, "Hello, Multipart!".into());
 
     Ok(())
@@ -154,7 +156,7 @@ async fn body_limit_just_over_limit() -> Result<(), Box<dyn std::error::Error>> 
     let response = test.post("/multipart").multipart(form).await;
 
     assert_eq!(response.status_code(), 413);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(
         json.message,
@@ -195,7 +197,7 @@ async fn body_limit_multiple_fields_exceed_limit()
     let response = test.post("/multipart").multipart(form).await;
 
     assert_eq!(response.status_code(), 413);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(
         json.message,
@@ -237,7 +239,7 @@ async fn body_limit_small_fields_within_limit()
     let response = test.post("/multipart").multipart(form).await;
 
     assert_eq!(response.status_code(), 200);
-    let json = response.json::<ResponseBody>();
+    let json = response.json::<JsonResponseBody>();
 
     assert_eq!(json.message, "Hello, Multipart!".into());
 

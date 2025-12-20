@@ -1,9 +1,15 @@
-mod controller;
+mod adapters {
+    pub mod rest;
+    pub mod socketio;
+}
+
 mod dtos;
 mod entity;
 mod repository;
 
-pub use controller::UsersController;
+use adapters::rest::UsersController;
+use adapters::socketio::UserMessagesAdapter;
+
 pub use dtos::{CreateUserDto, UpdateUserDto};
 pub use entity::User;
 pub use repository::UserRepository;
@@ -13,9 +19,12 @@ use sword::prelude::*;
 pub struct UsersModule;
 
 impl Module for UsersModule {
-    type Controller = UsersController;
+    fn register_components(components: &ComponentRegistry) {
+        components.register::<UserRepository>();
+    }
 
-    fn register_components(container: &mut DependencyContainer) {
-        container.register_component::<UserRepository>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<UsersController>();
+        adapters.register::<UserMessagesAdapter>();
     }
 }

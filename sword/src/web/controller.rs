@@ -1,16 +1,15 @@
-use crate::core::{HasDeps, State};
+use crate::core::{Adapter, HasDeps, State};
 use axum::Router as AxumRouter;
 
 pub use sword_macros::{controller, delete, get, patch, post, put, routes};
-
-pub trait Controller: ControllerBuilder {
-    fn router(state: State) -> AxumRouter;
-}
 
 /// Trait for controllers with automatic dependency injection and middleware support.
 ///
 /// Controllers in Sword group related route handlers together and can declare
 /// dependencies that will be automatically resolved and injected.
+///
+/// Controllers automatically implement the `Gateway` trait, making them registrable
+/// as REST gateways within modules via `GatewayRegistry::register::<YourController>()`.
 ///
 /// Use the `#[controller]` macro to automatically implement this trait.
 ///
@@ -32,7 +31,7 @@ pub trait Controller: ControllerBuilder {
 ///     }
 /// }
 /// ```
-pub trait ControllerBuilder: HasDeps {
+pub trait Controller: HasDeps + Adapter {
     fn base_path() -> &'static str;
     fn apply_middlewares(router: AxumRouter, state: State) -> AxumRouter;
 }

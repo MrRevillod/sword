@@ -24,3 +24,9 @@ impl Hasher {
         Ok(hash(password, self.cost)?)
     }
 }
+
+impl Default for HasherConfig {
+    fn default() -> Self {
+        Self { cost: 12 }
+    }
+}

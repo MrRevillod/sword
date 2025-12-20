@@ -1,16 +1,15 @@
+pub mod cookies;
 mod error;
 pub mod extract;
+mod extras;
 
 #[cfg(feature = "multipart")]
 pub mod multipart;
 
-#[cfg(feature = "cookies")]
-pub mod cookies;
-
 #[cfg(feature = "validator")]
 pub mod validator;
 
-mod extras;
+use crate::web::MiddlewareResult;
 
 use axum::{
     body::Bytes,
@@ -18,12 +17,11 @@ use axum::{
     middleware::Next,
 };
 
-use axum_responses::http::HttpResponse;
-pub use error::RequestError;
+use axum_responses::JsonResponse;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
 
-use crate::web::MiddlewareResult;
+pub use error::RequestError;
 
 /// Represents the incoming request in the Sword framework.
 ///
@@ -36,9 +34,9 @@ pub struct Request {
     method: Method,
     headers: HashMap<String, String>,
     uri: Uri,
+    next: Option<Next>,
     /// Axum extensions for additional request metadata.
     pub extensions: Extensions,
-    next: Option<Next>,
 }
 
 impl Request {
@@ -145,10 +143,10 @@ impl Request {
     pub fn param<T: FromStr>(&self, key: &str) -> Result<T, RequestError> {
         if let Some(value) = self.params.get(key) {
             let Ok(param) = value.parse::<T>() else {
-                let message = "Invalid parameter type";
+                let message = format!("Invalid parameter format for '{key}'");
                 let details = "Failed to deserialize parameter to the required type";
 
-                return Err(RequestError::ParseError(message, details.into()));
+                return Err(RequestError::parse_error(message, details));
             };
 
             return Ok(param);
@@ -157,7 +155,7 @@ impl Request {
         let message = "Parameter not found";
         let details = format!("Parameter '{key}' not found in request parameters");
 
-        Err(RequestError::ParseError(message, details))
+        Err(RequestError::parse_error(message, details))
     }
 
     pub const fn params(&self) -> &HashMap<String, String> {
@@ -212,14 +210,21 @@ impl Request {
     /// ```
     pub fn body<T: DeserializeOwned>(&self) -> Result<T, RequestError> {
         if self.body_bytes.is_empty() {
-            return Err(RequestError::BodyIsEmpty("Request body is empty"));
+            return Err(RequestError::BodyIsEmpty);
         }
 
-        serde_json::from_slice(&self.body_bytes).map_err(|_| {
-            let message = "Invalid request body";
-            let details = "Failed to deserialize request body to the required type.";
+        if !self.is_content_type_json() {
+            return Err(RequestError::unsupported_media_type(
+                "Expected Content-Type to be application/json",
+            ));
+        }
 
-            RequestError::ParseError(message, details.into())
+        serde_json::from_slice(&self.body_bytes).map_err(|e| {
+            RequestError::deserialization_error(
+                "Invalid request body",
+                "Failed to deserialize request body to the required type.".into(),
+                e.into(),
+            )
         })
     }
 
@@ -286,28 +291,17 @@ impl Request {
         );
 
         let parsed: T =
-            serde_path_to_error::deserialize(deserializer).map_err(|_| {
+            serde_path_to_error::deserialize(deserializer).map_err(|e| {
                 // TODO: Implement tracing for loging the errors
-                let message = "Invalid query parameters";
-                let details =
-                    "Failed to deserialize query parameters to the required type.";
-                RequestError::ParseError(message, details.into())
+                RequestError::deserialization_error(
+                    "Invalid query parameters",
+                    "Failed to deserialize query parameters to the required type."
+                        .into(),
+                    e.into(),
+                )
             })?;
 
         Ok(Some(parsed))
-    }
-
-    /// Checks if the request has a non-empty body.
-    ///
-    /// This is an internal method used by the framework to determine
-    /// if the request contains body data. It's primarily used for
-    /// internal request processing logic.
-    ///
-    /// ### Returns
-    ///
-    /// Returns `true` if the request has a body with content, `false` if empty.
-    pub(crate) const fn has_body(&self) -> bool {
-        !self.body_bytes.is_empty()
     }
 
     #[doc(hidden)]
@@ -326,7 +320,7 @@ impl Request {
     /// pass control to the next middleware or the final request handler.
     pub async fn next(mut self) -> MiddlewareResult {
         let Some(next) = self.next.take() else {
-            return Err(HttpResponse::InternalServerError());
+            return Err(JsonResponse::InternalServerError());
         };
 
         Ok(next.run(self.try_into()?).await)

@@ -2,7 +2,7 @@ use colored::Colorize;
 use console::style;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{ConfigItem, ConfigRegistrar};
+use crate::internal::{ConfigItem, ConfigRegistrar};
 
 /// Configuration structure for the Sword application.
 ///

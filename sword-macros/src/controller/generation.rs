@@ -25,15 +25,15 @@ pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
         #deps_impl
         #clone_impl
 
-        impl ::sword::web::ControllerBuilder for #self_name {
+        impl ::sword::web::Controller for #self_name {
             fn base_path() -> &'static str {
                 #base_path
             }
 
             fn apply_middlewares(
-                router: ::sword::__internal::AxumRouter,
+                router: ::sword::internal::AxumRouter,
                 state: ::sword::core::State,
-            ) -> ::sword::__internal::AxumRouter {
+            ) -> ::sword::internal::AxumRouter {
                 let mut result = router;
                 #(
                     result = result.layer(#processed_middlewares);

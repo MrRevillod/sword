@@ -1,6 +1,5 @@
-use serde::de::DeserializeOwned;
-
 use crate::core::{Config, ConfigError, State};
+use serde::de::DeserializeOwned;
 
 type RegisterConfigFn = fn(&Config, &State) -> Result<(), ConfigError>;
 

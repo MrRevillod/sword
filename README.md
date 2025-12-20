@@ -4,7 +4,7 @@
 
 Structured web framework for rust built on top of axum.  
 Designed to build server application with less boilerplate and more simplicity.  
-It takes advantage of the tokio ecosystem to bring you performance with nice DX.
+It takes advantage of the tokio and axum ecosystem to bring you performance with nice DX.
 
 > Sword is in active development, expect breaking changes.
 
@@ -14,7 +14,7 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` crate and extensible validation system
 - **HTTP responses standarization** - Using `axum_responses` crate
-- **Dependency Injection** - Built-in DI support
+- **Dependency Injection** - Built-in DI support with declarative macros
 - **Asynchronous by default** - Built on top of `axum` and `tokio`
 - **Interactive CLI** - Built to improve the developer experience
 
@@ -39,15 +39,15 @@ struct AppController;
 #[routes]
 impl AppController {
     #[get("/hello")]
-    async fn hello(&self) -> HttpResponse {
-        HttpResponse::Ok().message("Hello, World!")
+    async fn hello(&self) -> JsonResponse {
+        JsonResponse::Ok().message("Hello, World!")
     }
 
     #[post("/submit")]
     async fn submit_data(&self, req: Request) -> HttpResult {
         let body = req.body::<Value>()?;
 
-        Ok(HttpResponse::Ok()
+        Ok(JsonResponse::Ok()
             .data(body)
             .message("Data submitted successfully"))
     }
@@ -56,7 +56,7 @@ impl AppController {
 #[sword::main]
 async fn main() {
     let app = Application::builder()
-        .with_controller::<AppController>()
+        .with_module::<AppController>()
         .build();
 
     app.run().await;

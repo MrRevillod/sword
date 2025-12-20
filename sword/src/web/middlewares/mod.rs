@@ -1,17 +1,22 @@
+mod layers;
 mod registrar;
 
 pub use axum::middleware::Next;
-use axum::response::Response as AxumResponse;
-
-#[doc(hidden)]
-pub use registrar::MiddlewareRegistrar;
+pub use layers::MiddlewaresConfig;
 pub use sword_macros::{middleware, uses};
 
-use crate::core::Build;
-use crate::web::{HttpResponse, Request};
+#[doc(hidden)]
+pub mod __internal {
+    pub use super::registrar::MiddlewareRegistrar;
+}
+
+use axum::response::Response as AxumResponse;
 use std::future::Future;
 
-pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
+use crate::core::Build;
+use crate::web::{JsonResponse, Request};
+
+pub type MiddlewareResult = Result<AxumResponse, JsonResponse>;
 
 /// Trait for middleware components that can intercept and modify requests/responses.
 ///
@@ -20,22 +25,6 @@ pub type MiddlewareResult = Result<AxumResponse, HttpResponse>;
 /// during initialization.
 ///
 /// Use the `#[middleware]` macro to automatically implement this trait.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use sword::prelude::*;
-///
-/// #[middleware]
-/// struct AuthMiddleware {}
-///
-/// impl OnRequest for AuthMiddleware {
-///     async fn on_request(&self, req: Request) -> MiddlewareResult {
-///         // Middleware logic here
-///         req.next().await
-///     }
-/// }
-/// ```
 pub trait Middleware: Build {}
 
 /// Trait for middlewares that handle requests
