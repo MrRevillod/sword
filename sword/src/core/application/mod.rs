@@ -4,7 +4,11 @@ mod layer_stack;
 
 use crate::{core::Config, web::MiddlewaresConfig};
 
-use axum::routing::Router;
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::Router,
+};
 use axum_responses::JsonResponse;
 use colored::Colorize;
 use sword_layers::DisplayConfig;
@@ -12,6 +16,7 @@ use tokio::net::TcpListener;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
+use tower::ServiceBuilder;
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -64,9 +69,17 @@ impl Application {
 
         let listener = self.build_listener().await;
 
-        let router = self.router.clone().fallback(async || {
-            JsonResponse::NotFound().message("The requested resource was not found")
-        });
+        let mut router = self.router.clone();
+
+        router = router.layer(ServiceBuilder::new().map_response(|r: Response| {
+            if r.status() != StatusCode::NOT_FOUND {
+                return r;
+            }
+
+            JsonResponse::NotFound()
+                .message("The requested resource was not found")
+                .into_response()
+        }));
 
         axum::serve(listener, router)
             .await

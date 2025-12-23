@@ -1,13 +1,11 @@
+use crate::{middlewares::MiddlewareArgs, shared::PATH_KIND_REGEX};
+
 use proc_macro2::Ident;
 use quote::ToTokens;
-use regex_lite::Regex;
-use std::sync::LazyLock;
 use syn::{
     Attribute, Error, ImplItem, ImplItemFn, ItemImpl, LitStr, parse as syn_parse,
     spanned::Spanned,
 };
-
-use crate::middlewares::MiddlewareArgs;
 
 const VALID_ROUTE_MACROS: &[&str; 7] = &[
     "get",
@@ -21,10 +19,6 @@ const VALID_ROUTE_MACROS: &[&str; 7] = &[
 
 pub const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "delete", "patch"];
 
-static PATH_KIND_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\})*(?:\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\}))*$").unwrap()
-});
-
 pub struct RouteInfo {
     pub method: String,
     pub path: String,
@@ -33,7 +27,7 @@ pub struct RouteInfo {
     pub needs_context: bool,
 }
 
-pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
+pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
     let mut routes: Vec<RouteInfo> = vec![];
 
     for item in &input.items {
@@ -88,7 +82,7 @@ pub fn parse_routes(input: &ItemImpl) -> Result<Vec<RouteInfo>, syn::Error> {
     Ok(routes)
 }
 
-pub fn parse_route_path(attr: &Attribute) -> Result<LitStr, syn::Error> {
+pub fn parse_route_path(attr: &Attribute) -> syn::Result<LitStr> {
     let Ok(path) = attr.parse_args::<LitStr>() else {
         return Err(Error::new(
             attr.span(),

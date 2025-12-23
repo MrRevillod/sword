@@ -1,38 +1,29 @@
-use sword::{web_socket, web_socket_gateway};
-
 use crate::shared::Database;
-use std::sync::Arc;
 
-#[web_socket_gateway]
+use std::sync::Arc;
+use sword::prelude::*;
+
+#[socketio_adapter("/socket")]
 pub struct UserMessagesAdapter {
     db: Arc<Database>,
 }
 
-#[web_socket("/socket")]
+#[handlers]
 impl UserMessagesAdapter {
     #[on_connection]
-    async fn on_connect(&self, _socket: SocketRef) {
+    async fn on_connect(&self) {
         println!("New client connected");
     }
 
-    #[subscribe_message("message")]
-    async fn on_message(&self, _socket: SocketRef, Data(_data): Data<Value>) {
-        println!("New message received");
-
-        let now = sqlx::query("SELECT NOW() as now")
-            .fetch_one(self.db.get_pool())
-            .await
-            .expect("Oh no");
-
-        println!("Database time: {:?}", now);
+    #[on_message("message-try-data")]
+    async fn message_with_try_data(&self, TryData(data): TryData<Value>) {
+        match data {
+            Ok(value) => println!("Successfully parsed data: {:?}", value),
+            Err(e) => println!("Failed to parse data: {:?}", e),
+        }
     }
 
-    #[subscribe_message("message2")]
-    async fn other_message(&self, _socket: SocketRef, Data(_data): Data<Value>) {
-        println!("Other message received");
-    }
-
-    #[subscribe_message("message-with-ack")]
+    #[on_message("message-with-ack")]
     async fn message_with_ack(
         &self,
         Event(_event): Event,
@@ -44,7 +35,7 @@ impl UserMessagesAdapter {
         ack.send(&response).ok();
     }
 
-    #[subscribe_message("message-with-event")]
+    #[on_message("message-with-event")]
     async fn message_with_event(
         &self,
         Event(event): Event,
@@ -53,19 +44,19 @@ impl UserMessagesAdapter {
         println!("Message with event '{}' and data: {:?}", event, data);
     }
 
-    #[subscribe_message("another-message")]
+    #[on_message("another-message")]
     async fn and_another_one_message(&self, _socket: SocketRef, ack: AckSender) {
         println!("Another message received");
 
         ack.send("response for another-message").ok();
     }
 
-    #[subscribe_message("just-another-message")]
+    #[on_message("just-another-message")]
     async fn just_another_message(&self) {
         println!("Message with just-another-message received");
     }
 
-    #[on_disconnect]
+    #[on_disconnection]
     async fn on_disconnect(&self, _socket: SocketRef) {
         println!("Socket disconnected");
     }

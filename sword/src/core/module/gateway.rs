@@ -2,7 +2,7 @@ use crate::core::State;
 use axum::Router;
 use parking_lot::RwLock;
 
-pub(crate) type WithStateRouterBuilder = Box<dyn Fn(State) -> Router>;
+pub(crate) type RouterBuilder = Box<dyn Fn(State) -> Router>;
 
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
@@ -11,8 +11,8 @@ pub(crate) type WithStateRouterBuilder = Box<dyn Fn(State) -> Router>;
 /// - WebSocket: A socketio layer based adapter, Axum Router with state.
 /// - Grpc: Not implemented yet.
 pub enum AdapterKind {
-    Rest(WithStateRouterBuilder),
-    WebSocket(WithStateRouterBuilder),
+    Rest(RouterBuilder),
+    WebSocket(Box<dyn Fn(&State)>),
     Grpc,
 }
 

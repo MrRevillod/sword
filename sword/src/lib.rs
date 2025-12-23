@@ -5,9 +5,12 @@ pub mod web;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 
+pub use sword_macros::main;
+
+#[cfg(feature = "socketio")]
 pub use sword_macros::{
-    main, on_connection, on_disconnect, subscribe_message, web_socket,
-    web_socket_gateway,
+    handlers, on_connection, on_disconnection, on_fallback, on_message,
+    socketio_adapter, subscribe_message,
 };
 
 #[doc(hidden)]

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
-sword = { workspace = true, features = ["validator", "multipart"] }
+sword = { workspace = true, features = ["validator", "multipart", "socketio"] }
 serde = { workspace = true }
 validator = { workspace = true }
 serde_json = { workspace = true }

@@ -1,4 +1,4 @@
-use crate::shared::collect_struct_fields;
+use crate::shared::StructFields;
 use proc_macro::TokenStream;
 use syn::parse::{ParseStream, Result as ParseResult};
 use syn::{Ident, ItemStruct, Token, Type, parse::Parse};
@@ -62,7 +62,7 @@ pub fn parse_injectable_input(
 
     Ok(InjectableInput {
         struct_name: input.clone().ident,
-        fields: collect_struct_fields(&input),
+        fields: StructFields::parse(&input)?,
         derive_clone: args.derive_clone,
         kind: args.kind,
     })

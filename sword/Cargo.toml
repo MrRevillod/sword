@@ -62,5 +62,5 @@ default = []
 
 multipart = ["axum/multipart", "dep:bytes"]
 validator = ["dep:validator"]
-websocket = ["dep:socketioxide", "dep:rmpv"]
+socketio = ["dep:socketioxide", "dep:rmpv"]
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]

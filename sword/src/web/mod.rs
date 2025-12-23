@@ -3,8 +3,8 @@ mod middlewares;
 mod request;
 mod response;
 
-#[cfg(feature = "websocket")]
-pub mod websocket;
+#[cfg(feature = "socketio")]
+pub mod socketio;
 
 pub use axum::http::{Method, StatusCode, header as headers};
 
@@ -19,7 +19,9 @@ pub use sword_layers::helmet;
 pub use request::cookies;
 pub use request::{Request, RequestError};
 pub use response::*;
-pub use websocket::*;
+
+#[cfg(feature = "socketio")]
+pub use socketio::*;
 
 #[cfg(feature = "multipart")]
 pub use request::multipart;

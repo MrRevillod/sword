@@ -1,11 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::controller::parsing::ControllerInput;
 use crate::middlewares::expand_middleware_args;
-use crate::shared::{gen_build, gen_clone, gen_deps};
+use crate::shared::{CommonHttpAdapterInput, gen_build, gen_clone, gen_deps};
 
-pub fn generate_controller_builder(input: &ControllerInput) -> TokenStream {
+pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStream {
     let base_path = &input.base_path;
     let self_name = &input.struct_name;
     let self_fields = &input.fields;

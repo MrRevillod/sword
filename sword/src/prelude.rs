@@ -19,8 +19,14 @@ pub use crate::web::{
 #[cfg(feature = "multipart")]
 pub use crate::web::multipart;
 
-#[cfg(feature = "websocket")]
-pub use crate::web::websocket::*;
+#[cfg(feature = "socketio")]
+pub use crate::web::socketio::*;
+
+#[cfg(feature = "socketio")]
+pub use sword_macros::{
+    handlers, on_connection, on_disconnection, on_fallback, on_message,
+    socketio_adapter,
+};
 
 #[cfg(feature = "validator")]
 pub use crate::web::request_validator::*;

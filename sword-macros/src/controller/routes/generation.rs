@@ -31,7 +31,6 @@ pub fn generate_controller_routes(
     }
 
     Ok(quote! {
-
         impl #struct_ty {
             fn router_builder(state: ::sword::core::State) -> ::sword::internal::AxumRouter {
                 let controller = std::sync::Arc::new(

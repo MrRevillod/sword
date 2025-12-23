@@ -1,157 +1,24 @@
+mod config;
+
+#[macro_use]
+mod controller;
+
+mod http_error;
+mod injectable;
+mod middlewares;
+mod shared;
+mod socketio;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
-mod config;
-mod http_error;
-mod shared;
-
-mod controller {
-    pub mod expand;
-    pub mod generation;
-    pub mod parsing;
-
-    pub mod routes {
-        mod expand;
-        mod generation;
-        mod parsing;
-
-        pub use expand::*;
-        pub use generation::*;
-        pub use parsing::*;
-    }
-
-    pub use expand::expand_controller;
-    pub use routes::expand_controller_routes;
-}
-
-mod injectable;
-mod middlewares;
-mod socketio;
-
-/// Defines a handler for HTTP GET requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the GET request, e.g., `"/items"`
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/items")]
-///     async fn get_items(&self) -> HttpResponse {
-///         HttpResponse::Ok().message("List of items")
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP POST requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the POST request, e.g., `"/api"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[post("/items")]
-///     async fn create_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item created"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP PUT requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the PUT request, e.g., `"/items"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[put("/item/{id}")]
-///     async fn update_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item updated"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP DELETE requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the DELETE request, e.g., `"/item/{id}"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[delete("/item/{id}")]
-///     async fn delete_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item deleted"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for PATCH DELETE requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the PATCH request, e.g., `"/item/{id}"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[patch("/item/{id}")]
-///     async fn patch_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item patched"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
+http_method! {
+    get,
+    post,
+    put,
+    delete,
+    patch,
 }
 
 /// Defines a controller with a base path.
@@ -265,6 +132,7 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - `key`: The key in the configuration file where the struct is located.
 ///
 /// ### Usage
+///
 /// ```rust,ignore
 /// #[derive(Deserialize)]
 /// #[config(key = "my-section")]
@@ -272,24 +140,6 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     my_key: String,
 /// }
 /// ```
-///
-/// This allows you to access the configuration in your handlers or middlewares
-///
-/// ```rust,ignore
-/// #[controller("/some_path")]
-/// struct SomeController {
-///     my_config: MyConfig,
-/// }
-///
-/// #[routes]
-/// impl SomeController {
-///     #[get("/config")]
-///     async fn get_config(&self) -> HttpResponse {
-///         let message = format!("Config key: {}", &self.config.my_key);
-///
-///         HttpResponse::Ok().message(message)
-///     }
-/// }
 #[proc_macro_attribute]
 pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
     config::expand_config_struct(attr, item)
@@ -725,15 +575,16 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-/// Marks a struct as a WebSocket gateway controller.
-/// This macro should be used in combination with the `#[web_socket]` macro for handler implementation.
+/// Marks a struct as a Socket.IO adapter.
+/// This macro should be used in combination with the `#[handlers]`
+/// macro for handler implementation.
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[web_socket_gateway]
+/// #[socketio_adapter("/chat")]
 /// struct ChatSocket;
 ///
-/// #[web_socket("/chat")]
+/// #[handlers]
 /// impl ChatSocket {
 ///     #[on_connection]
 ///     async fn on_connect(&self, socket: SocketRef) {
@@ -742,42 +593,44 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn web_socket_gateway(attr: TokenStream, item: TokenStream) -> TokenStream {
-    socketio::expand_websocket_gateway(attr, item)
+pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
+    socketio::expand_socketio_adapter(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Defines WebSocket handlers for a struct.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[web_socket_gateway]` macro.
+/// Defines Socket.IO handlers for its associated adapter.
+/// This macro should be used inside an `impl` block of a struct annotated with the `#[socketio_adapter]` macro.
 ///
 /// ### Parameters
-/// - `path`: The path for the WebSocket endpoint, e.g., `"/socket"`
+/// - `path`: The path for the Socket.IO endpoint, e.g., `"/socket"`
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[web_socket_gateway]
+/// #[socketio_adapter("/socket")]
 /// struct SocketController;
 ///
-/// #[web_socket("/socket")]
+/// #[handlers]
 /// impl SocketController {
 ///     #[on_connection]
 ///     async fn on_connect(&self, socket: SocketRef) {
 ///         println!("Client connected");
 ///     }
 ///
-///     #[subscribe_message("message")]
+///     #[on_message("message")]
 ///     async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
 ///         println!("Received: {}", msg);
 ///     }
 ///
 ///     #[on_disconnect]
-///     async fn on_disconnect(&self, socket: WebSocket) {
+///     async fn on_disconnect(&self, socket: SocketRef) {
 ///         println!("Client disconnected");
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn web_socket(attr: TokenStream, item: TokenStream) -> TokenStream {
-    socketio::expand_websocket(attr, item)
+pub fn handlers(attr: TokenStream, item: TokenStream) -> TokenStream {
+    socketio::expand_socketio_handlers(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
 /// Marks a method as a WebSocket connection handler.
@@ -803,22 +656,52 @@ pub fn on_connection(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// This method will be called when a client disconnects from the WebSocket.
 ///
 /// ### Parameters
-/// The handler receives a `WebSocket` parameter with the disconnected client's information.
+/// The handler receives a `SocketRef` parameter with the disconnected client's information.
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[on_disconnect]
-/// async fn on_disconnect(&self, socket: WebSocket) {
-///     println!("Client disconnected: {}", socket.id());
+/// #[on_disconnection]
+/// async fn on_disconnect(&self, socket: SocketRef) {
+///     println!("Client disconnected: {}", socket.id);
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn on_disconnect(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn on_disconnection(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }
 
 /// Marks a method as a WebSocket message handler.
+/// This method will be called when the client emits an event with the specified message type.
+///
+/// ### Parameters
+/// - `event_name`: The name of the event to handle, e.g., `"message"`, `"chat"`, etc.
+///
+/// ### Parameters in handler
+/// - `socket: SocketRef` (optional) - The connected client's socket
+/// - `Event(name): Event` (optional) - The event name
+/// - `Data(data): Data<T>` (optional) - The message payload deserialized to type T
+/// - `ack: AckSender` (optional) - For sending acknowledgments back to the client
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_message("message")]
+/// async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
+///     println!("Received: {}", msg);
+/// }
+///
+/// #[on_message("request")]
+/// async fn on_request(&self, Data(req): Data<Request>, ack: AckSender) {
+///     ack.send("response").ok();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_message(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+/// Marks a method as a WebSocket message handler (deprecated, use `on_message` instead).
 /// This method will be called when the client emits an event with the specified message type.
 ///
 /// ### Parameters
@@ -841,6 +724,7 @@ pub fn on_disconnect(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     ack.send("response").ok();
 /// }
 /// ```
+#[deprecated(since = "0.1.0", note = "Use `on_message` instead")]
 #[proc_macro_attribute]
 pub fn subscribe_message(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;

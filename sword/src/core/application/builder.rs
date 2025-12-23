@@ -113,12 +113,42 @@ impl ApplicationBuilder {
         self
     }
 
-    fn build_router(&self) -> Router {
+    fn build_router(&mut self) -> Router {
         let mut router = Router::new().with_state(self.state.clone());
 
-        router = self.apply_gateways(router);
-        router = self.apply_layers(router);
         router = self.apply_sword_layers(router);
+        router = self.apply_layers(router);
+
+        #[cfg(feature = "socketio")]
+        let layer = {
+            use socketioxide::SocketIo;
+            use socketioxide::extract::SocketRef;
+            use std::any::TypeId;
+            use std::sync::Arc;
+
+            let (layer, io) = socketioxide::SocketIo::new_layer();
+
+            io.ns("/test", async |socket: SocketRef| {
+                println!("New connection established");
+
+                socket.on("ping", async |socket: SocketRef| {
+                    println!("Received 'ping' event");
+                    socket.emit("pong", &String::from("pong response")).ok();
+                });
+            });
+
+            self.state
+                .insert_dependency(TypeId::of::<SocketIo>(), Arc::new(io));
+
+            layer
+        };
+
+        router = self.apply_gateways(router);
+
+        #[cfg(feature = "socketio")]
+        {
+            router = router.layer(layer);
+        }
 
         let app_config = self.config.get::<ApplicationConfig>()
             .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");
@@ -169,9 +199,8 @@ impl ApplicationBuilder {
                     let gw_router = builder(self.state.clone());
                     router = router.merge(gw_router);
                 }
-                AdapterKind::WebSocket(builder) => {
-                    let gw_router = builder(self.state.clone());
-                    router = router.merge(gw_router);
+                AdapterKind::WebSocket(setup_fn) => {
+                    setup_fn(&self.state);
                 }
                 AdapterKind::Grpc => {}
             }

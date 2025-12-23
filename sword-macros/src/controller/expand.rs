@@ -2,16 +2,17 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemStruct;
 
-use crate::controller::{
-    generation::generate_controller_builder, parsing::parse_controller_input,
+use crate::{
+    controller::generation::generate_controller_builder,
+    shared::CommonHttpAdapterInput,
 };
 
 pub fn expand_controller(
     attr: TokenStream,
     item: TokenStream,
-) -> Result<TokenStream, syn::Error> {
+) -> syn::Result<TokenStream> {
     let input = syn::parse::<ItemStruct>(item.clone())?;
-    let parsed_input = parse_controller_input(attr, item)?;
+    let parsed_input = CommonHttpAdapterInput::parse(attr, item)?;
     let builder = generate_controller_builder(&parsed_input);
 
     let expanded = quote! {

@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "npx tsx main.ts"
+  },
+  "dependencies": {
+    "@types/node": "^25.0.3",
+    "@types/socket.io-client": "^1.4.36",
+    "socket.io-client": "^4.8.2"
+  }
+}
