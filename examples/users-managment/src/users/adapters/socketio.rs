@@ -26,9 +26,9 @@ impl UserMessagesAdapter {
     #[on_message("message-with-ack")]
     async fn message_with_ack(
         &self,
-        Event(_event): Event,
-        Data(_data): Data<Value>,
         ack: AckSender,
+        Data(_data): Data<Value>,
+        Event(_event): Event,
     ) {
         println!("Message with ack received");
         let response = Value::from("Acknowledged!");

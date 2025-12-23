@@ -68,7 +68,7 @@ impl TaskRepository {
     }
 }
 
-#[controller("/tasks", version = "v1")]
+#[controller("/tasks")]
 pub struct TasksController {
     tasks: TasksService,
 }

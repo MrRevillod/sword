@@ -10,7 +10,7 @@ pub static PATH_KIND_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\})*(?:\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\}))*$").unwrap()
 });
 
-pub struct StructFields(pub Vec<(Ident, Type)>);
+pub struct StructFields;
 
 impl StructFields {
     pub fn parse(input: &ItemStruct) -> syn::Result<Vec<(Ident, Type)>> {
@@ -32,9 +32,5 @@ impl StructFields {
         }
 
         Ok(fields_vec)
-    }
-
-    pub fn into_inner(self) -> Vec<(Ident, Type)> {
-        self.0
     }
 }

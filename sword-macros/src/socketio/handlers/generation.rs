@@ -142,7 +142,7 @@ fn build_fallback_closure_params(params: &HandlerParams) -> Vec<TokenStream> {
     let data_type = params.data_type();
     let has_data = params.has_any_data();
 
-    let event_param = if params.has_event {
+    let event_param = if params.has_event() {
         quote! { event: ::sword::web::Event }
     } else {
         quote! { _event: ::sword::web::Event }
@@ -157,53 +157,69 @@ fn build_fallback_closure_params(params: &HandlerParams) -> Vec<TokenStream> {
     vec![event_param, data_param]
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ParamKind {
+    Socket,
+    Data,
+    TryData,
+    Event,
+    Ack,
+}
+
 #[derive(Debug)]
 struct HandlerParams {
-    has_socket: bool,
-    has_data: bool,
-    has_try_data: bool,
-    has_event: bool,
-    has_ack: bool,
+    params: Vec<(Ident, ParamKind)>,
 }
 
 impl HandlerParams {
     fn analyze(args: &[(Ident, Type)]) -> Self {
-        let mut params = Self {
-            has_socket: false,
-            has_data: false,
-            has_try_data: false,
-            has_event: false,
-            has_ack: false,
-        };
+        let mut params = Vec::new();
 
-        for (_, ty) in args {
+        for (ident, ty) in args {
             let ty_str = quote::quote!(#ty).to_string();
 
-            if ty_str.contains("SocketRef") {
-                params.has_socket = true;
-            }
-            if ty_str.contains("TryData") {
-                params.has_try_data = true;
+            let kind = if ty_str.contains("SocketRef") {
+                ParamKind::Socket
+            } else if ty_str.contains("TryData") {
+                ParamKind::TryData
             } else if ty_str.contains("Data") {
-                params.has_data = true;
-            }
-            if ty_str.contains("Event") {
-                params.has_event = true;
-            }
-            if ty_str.contains("AckSender") {
-                params.has_ack = true;
-            }
+                ParamKind::Data
+            } else if ty_str.contains("Event") {
+                ParamKind::Event
+            } else if ty_str.contains("AckSender") {
+                ParamKind::Ack
+            } else {
+                continue;
+            };
+
+            params.push((ident.clone(), kind));
         }
 
-        params
+        Self { params }
+    }
+
+    fn has(&self, kind: ParamKind) -> bool {
+        self.params.iter().any(|(_, k)| *k == kind)
+    }
+
+    fn has_socket(&self) -> bool {
+        self.has(ParamKind::Socket)
+    }
+
+    fn has_event(&self) -> bool {
+        self.has(ParamKind::Event)
+    }
+
+    fn has_ack(&self) -> bool {
+        self.has(ParamKind::Ack)
     }
 
     fn has_any_data(&self) -> bool {
-        self.has_data || self.has_try_data
+        self.has(ParamKind::Data) || self.has(ParamKind::TryData)
     }
 
     fn data_type(&self) -> TokenStream {
-        if self.has_try_data {
+        if self.has(ParamKind::TryData) {
             quote! { ::sword::web::TryData<::sword::web::Value> }
         } else {
             quote! { ::sword::web::Data<::sword::web::Value> }
@@ -218,13 +234,13 @@ impl HandlerParams {
 
         params.push(self.param_or_ignored(
             "socket",
-            self.has_socket,
+            self.has_socket(),
             quote! { ::sword::web::SocketRef },
         ));
 
         params.push(self.param_or_ignored("data", has_data, data_type));
 
-        if self.has_ack {
+        if self.has_ack() {
             params.push(self.param_or_ignored(
                 "ack",
                 true,
@@ -240,45 +256,50 @@ impl HandlerParams {
         event_name: Option<&str>,
         use_cloned_socket: bool,
     ) -> Vec<TokenStream> {
-        let mut params = Vec::new();
+        let mut call_params = Vec::new();
 
-        if self.has_socket {
-            if use_cloned_socket {
-                params.push(quote! { socket });
-            } else {
-                params.push(quote! { socket.clone() });
-            }
+        for (_, kind) in &self.params {
+            let param = match kind {
+                ParamKind::Socket => {
+                    if use_cloned_socket {
+                        quote! { socket }
+                    } else {
+                        quote! { socket.clone() }
+                    }
+                }
+                ParamKind::Event => {
+                    if let Some(name) = event_name {
+                        quote! { ::sword::web::Event(#name.to_string()) }
+                    } else {
+                        continue;
+                    }
+                }
+                ParamKind::Data | ParamKind::TryData => {
+                    quote! { data }
+                }
+                ParamKind::Ack => {
+                    quote! { ack }
+                }
+            };
+            call_params.push(param);
         }
 
-        if self.has_event {
-            if let Some(name) = event_name {
-                params.push(quote! { ::sword::web::Event(#name.to_string()) });
-            }
-        }
-
-        if self.has_any_data() {
-            params.push(quote! { data });
-        }
-
-        if self.has_ack {
-            params.push(quote! { ack });
-        }
-
-        params
+        call_params
     }
 
     fn build_fallback_call_params(&self) -> Vec<TokenStream> {
-        let mut params = Vec::new();
+        let mut call_params = Vec::new();
 
-        if self.has_event {
-            params.push(quote! { event });
+        for (_, kind) in &self.params {
+            let param = match kind {
+                ParamKind::Event => quote! { event },
+                ParamKind::Data | ParamKind::TryData => quote! { data },
+                _ => continue,
+            };
+            call_params.push(param);
         }
 
-        if self.has_any_data() {
-            params.push(quote! { data });
-        }
-
-        params
+        call_params
     }
 
     fn param_or_ignored(
