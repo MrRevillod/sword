@@ -116,9 +116,6 @@ impl ApplicationBuilder {
     fn build_router(&mut self) -> Router {
         let mut router = Router::new().with_state(self.state.clone());
 
-        router = self.apply_sword_layers(router);
-        router = self.apply_layers(router);
-
         #[cfg(feature = "socketio")]
         let layer = {
             use socketioxide::SocketIo;
@@ -144,6 +141,9 @@ impl ApplicationBuilder {
         };
 
         router = self.apply_gateways(router);
+
+        router = self.apply_sword_layers(router);
+        router = self.apply_layers(router);
 
         #[cfg(feature = "socketio")]
         {

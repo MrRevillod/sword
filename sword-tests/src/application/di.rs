@@ -120,7 +120,7 @@ async fn test_get_tasks_empty() {
 
     let server = TestServer::new(app.build().router()).unwrap();
 
-    let response = server.get("/v1/tasks").await;
+    let response = server.get("/tasks").await;
 
     assert_eq!(response.status_code(), StatusCode::OK);
 
@@ -141,7 +141,7 @@ async fn test_create_task() {
 
     let server = TestServer::new(app.build().router()).unwrap();
 
-    let response = server.post("/v1/tasks").await;
+    let response = server.post("/tasks").await;
 
     assert_eq!(response.status_code(), 201);
 
