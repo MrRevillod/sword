@@ -1,11 +1,17 @@
 use crate::shared::Database;
 
+use serde::Deserialize;
 use std::sync::Arc;
 use sword::prelude::*;
 
 #[socketio_adapter("/socket")]
 pub struct UserMessagesAdapter {
     db: Arc<Database>,
+}
+
+#[derive(Deserialize, Debug)]
+struct MessagePayload {
+    content: String,
 }
 
 #[handlers]
@@ -16,9 +22,11 @@ impl UserMessagesAdapter {
     }
 
     #[on_message("message-try-data")]
-    async fn message_with_try_data(&self, TryData(data): TryData<Value>) {
+    async fn message_with_try_data(&self, TryData(data): TryData<MessagePayload>) {
         match data {
-            Ok(value) => println!("Successfully parsed data: {:?}", value),
+            Ok(value) => {
+                println!("Successfully parsed data - content: {}", value.content)
+            }
             Err(e) => println!("Failed to parse data: {:?}", e),
         }
     }
@@ -27,45 +35,31 @@ impl UserMessagesAdapter {
     async fn message_with_ack(
         &self,
         ack: AckSender,
-        Data(_data): Data<Value>,
-        Event(_event): Event,
-    ) {
-        println!("Message with ack received");
-        let response = Value::from("Acknowledged!");
-        ack.send(&response).ok();
-    }
-
-    #[on_message("message-with-event")]
-    async fn message_with_event(
-        &self,
-        Event(event): Event,
         Data(data): Data<Value>,
+        Event(event): Event,
     ) {
-        println!("Message with event '{}' and data: {:?}", event, data);
+        println!(
+            "Event: {event} - Message with ack received - title: {}, count: {}",
+            data["title"], data["count"]
+        );
+
+        ack.send("acknowledged").ok();
     }
 
     #[on_message("another-message")]
-    async fn and_another_one_message(&self, _socket: SocketRef, ack: AckSender) {
+    async fn and_another_one_message(&self, ack: AckSender) {
         println!("Another message received");
 
         ack.send("response for another-message").ok();
     }
 
-    #[on_message("just-another-message")]
-    async fn just_another_message(&self) {
-        println!("Message with just-another-message received");
-    }
-
     #[on_disconnection]
-    async fn on_disconnect(&self, _socket: SocketRef) {
+    async fn on_disconnect(&self) {
         println!("Socket disconnected");
     }
 
     #[on_fallback]
     async fn on_fallback(&self, Event(event): Event, Data(data): Data<Value>) {
-        println!(
-            "Fallback handler invoked for event: {} with data: {:?}",
-            event, data
-        );
+        println!("Fallback handler invoked for event: {event} with data: {data:?}",);
     }
 }

@@ -1,14 +1,11 @@
-mod controller;
+mod adapters;
 mod middlewares;
 mod request;
 mod response;
 
-#[cfg(feature = "socketio")]
-pub mod socketio;
-
 pub use axum::http::{Method, StatusCode, header as headers};
 
-pub use controller::*;
+pub use adapters::controller::*;
 pub use middlewares::{
     Middleware, MiddlewareResult, MiddlewaresConfig, Next, OnRequest,
     OnRequestWithConfig, middleware, uses,
@@ -21,7 +18,7 @@ pub use request::{Request, RequestError};
 pub use response::*;
 
 #[cfg(feature = "socketio")]
-pub use socketio::*;
+pub use adapters::socketio;
 
 #[cfg(feature = "multipart")]
 pub use request::multipart;

@@ -14,7 +14,6 @@ pub enum EventKind {
     Fallback,
 }
 
-#[derive(PartialEq)]
 pub struct HandlerInfo {
     pub name: Ident,
     pub event_kind: EventKind,

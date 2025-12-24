@@ -1,8 +1,8 @@
-mod gateway;
+mod adapter;
 
 use crate::core::{ComponentRegistry, Config, ProviderRegistry};
 
-pub use gateway::*;
+pub use adapter::*;
 
 /// A trait for defining modules in the application.
 ///

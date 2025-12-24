@@ -12,7 +12,7 @@ pub(crate) type RouterBuilder = Box<dyn Fn(State) -> Router>;
 /// - Grpc: Not implemented yet.
 pub enum AdapterKind {
     Rest(RouterBuilder),
-    WebSocket(Box<dyn Fn(&State)>),
+    SocketIo(Box<dyn Fn(&State)>),
     Grpc,
 }
 

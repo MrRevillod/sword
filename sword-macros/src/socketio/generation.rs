@@ -19,8 +19,8 @@ pub fn generate_socketio_adapter_builder(
         #deps_impl
         #clone_impl
 
-        impl ::sword::web::SocketIoAdapter for #self_name {
-            fn path() -> &'static str {
+        impl ::sword::web::socketio::SocketIoAdapter for #self_name {
+            fn namespace() -> &'static str {
                 #path
             }
         }

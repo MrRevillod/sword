@@ -119,20 +119,10 @@ impl ApplicationBuilder {
         #[cfg(feature = "socketio")]
         let layer = {
             use socketioxide::SocketIo;
-            use socketioxide::extract::SocketRef;
             use std::any::TypeId;
             use std::sync::Arc;
 
             let (layer, io) = socketioxide::SocketIo::new_layer();
-
-            io.ns("/test", async |socket: SocketRef| {
-                println!("New connection established");
-
-                socket.on("ping", async |socket: SocketRef| {
-                    println!("Received 'ping' event");
-                    socket.emit("pong", &String::from("pong response")).ok();
-                });
-            });
 
             self.state
                 .insert_dependency(TypeId::of::<SocketIo>(), Arc::new(io));
@@ -199,7 +189,7 @@ impl ApplicationBuilder {
                     let gw_router = builder(self.state.clone());
                     router = router.merge(gw_router);
                 }
-                AdapterKind::WebSocket(setup_fn) => {
+                AdapterKind::SocketIo(setup_fn) => {
                     setup_fn(&self.state);
                 }
                 AdapterKind::Grpc => {}
