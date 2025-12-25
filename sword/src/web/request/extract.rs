@@ -44,6 +44,7 @@ where
             .get::<Config>()?
             .get_or_default::<MiddlewaresConfig>()
             .body_limit
+            .max_size
             .parsed;
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {

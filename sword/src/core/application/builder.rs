@@ -119,10 +119,13 @@ impl ApplicationBuilder {
         #[cfg(feature = "socketio")]
         let layer = {
             use socketioxide::SocketIo;
-            use std::any::TypeId;
-            use std::sync::Arc;
+            use std::{any::TypeId, sync::Arc};
+            use sword_layers::socketio::*;
 
-            let (layer, io) = socketioxide::SocketIo::new_layer();
+            let socketio_config =
+                self.config.get_or_default::<SocketIoServerConfig>();
+
+            let (layer, io) = SocketIoServerLayer::new(socketio_config);
 
             self.state
                 .insert_dependency(TypeId::of::<SocketIo>(), Arc::new(io));
@@ -202,10 +205,7 @@ impl ApplicationBuilder {
     fn apply_sword_layers(&self, router: Router) -> Router {
         let mut router = router;
 
-        let middlewares_config = self
-            .config
-            .get::<MiddlewaresConfig>()
-            .expect("Failed to get MiddlewaresConfig. Ensure it is present in the config file.");
+        let middlewares_config = self.config.get_or_default::<MiddlewaresConfig>();
 
         if middlewares_config.request_timeout.enabled {
             let (timeout_service, response_mapper) =
@@ -224,11 +224,11 @@ impl ApplicationBuilder {
                 router.layer(CompressionLayer::new(&middlewares_config.compression));
         }
 
-        if middlewares_config.serve_dir.enabled {
-            let serve_dir = ServeDirLayer::new(&middlewares_config.serve_dir);
+        let serve_dir_config = self.config.get_or_default::<ServeDirConfig>();
 
-            router = router
-                .nest_service(&middlewares_config.serve_dir.router_path, serve_dir);
+        if serve_dir_config.enabled {
+            let serve_dir = ServeDirLayer::new(&serve_dir_config);
+            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
         }
 
         router = router.layer(RequestIdLayer::new());

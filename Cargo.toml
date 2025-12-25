@@ -4,10 +4,11 @@ members = ["sword-tests", "sword-macros", "sword", "examples/*"]
 exclude = ["sword-tests"]
 
 [workspace.dependencies]
-sword-layers = { version = "0.1.1" }
 
 sword = { path = "sword" }
 sword-macros = { path = "sword-macros" }
+sword-layers = { version = "0.1.1", git = "https://github.com/sword-web/sword-layers.git", branch = "main" }
+
 tokio = { version = "^1.0", features = ["full"] }
 axum = "0.8.7"
 axum_responses = "0.5.4"

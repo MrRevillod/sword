@@ -2,22 +2,24 @@ use colored::Colorize;
 use console::style;
 use serde::{Deserialize, Serialize};
 
-use crate::internal::{ConfigItem, ConfigRegistrar};
+use crate::{
+    core::{Config, ConfigError, State},
+    internal::{ConfigItem, ConfigRegistrar},
+};
 
 /// Configuration structure for the Sword application.
 ///
 /// This struct contains all the configuration options that can be specified
 /// in the `config/config.toml` file under the `[application]` section.
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct ApplicationConfig {
     /// The hostname or IP address to bind the server to.
     /// Defaults to "0.0.0.0" if not specified.
-    #[serde(default)]
     pub host: String,
 
     /// The port number to bind the server to.
     /// Defaults to 8000 if not specified.
-    #[serde(default)]
     pub port: u16,
 
     /// Whether to enable graceful shutdown of the server.
@@ -26,7 +28,6 @@ pub struct ApplicationConfig {
     ///
     /// If you want to use a custom signal handler, you can disable this
     /// and implement your own signal with the `run_with_graceful_shutdown` method.
-    #[serde(default)]
     pub graceful_shutdown: bool,
 
     /// Optional name of the application.
@@ -80,6 +81,11 @@ impl ConfigItem for ApplicationConfig {
     /// configuration should be under the `[application]` section in the TOML file.
     fn toml_key() -> &'static str {
         "application"
+    }
+
+    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
+        state.insert(config.get_or_default::<Self>());
+        Ok(())
     }
 }
 
