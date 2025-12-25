@@ -10,8 +10,7 @@ pub(crate) type LayerFn = Box<dyn Fn(Router) -> Router + Send + Sync>;
 ///
 /// `LayerStack` provides a way to accumulate layers and apply them to a router in the
 /// order they were added. Layers are applied via the `push()` method during configuration,
-/// and then applied to the router via `apply()` during the build phase. Layers are applied
-/// after gateways are registered but before Sword's built-in middleware layers.
+/// and then applied to the router via `apply()` during the build phase.
 pub struct LayerStack {
     layers: Vec<LayerFn>,
 }
@@ -24,7 +23,7 @@ impl LayerStack {
     /// Add a layer to the stack.
     ///
     /// Layers are applied in FIFO order when `apply()` is called. Each layer will
-    /// wrap the router after all gateways have been registered.
+    /// wrap the router after all adapters have been registered.
     pub fn push<L>(&mut self, layer: L)
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,

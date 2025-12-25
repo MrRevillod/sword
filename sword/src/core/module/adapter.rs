@@ -76,7 +76,6 @@ pub struct AdapterRegistry {
 }
 
 impl AdapterRegistry {
-    /// Creates a new empty adapter registry.
     pub fn new() -> Self {
         Self {
             adapters: RwLock::new(Vec::new()),
@@ -93,6 +92,10 @@ impl AdapterRegistry {
     /// ```
     pub fn register<A: Adapter>(&self) {
         self.adapters.write().push(A::kind());
+    }
+
+    pub fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
+        &self.adapters
     }
 }
 

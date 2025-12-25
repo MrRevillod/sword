@@ -1,8 +1,8 @@
 use super::layer_stack::LayerStack;
+use super::router::InternalRouter;
 use crate::core::__internal::ConfigRegistrar;
 use crate::core::*;
 use crate::web::__internal::MiddlewareRegistrar;
-use crate::web::MiddlewaresConfig;
 
 use axum::{
     extract::Request as AxumRequest,
@@ -11,7 +11,6 @@ use axum::{
 };
 
 use std::convert::Infallible;
-use sword_layers::prelude::*;
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
@@ -86,9 +85,11 @@ impl ApplicationBuilder {
     /// Adds a `tower::Layer` to the application builder.
     ///
     /// This method is equivalent to Axum's `Router::layer` method, allowing you to
-    /// apply middleware layers to the application's router. Layers are applied in the
-    /// order they are added, after gateways are registered but before Sword's built-in
-    /// middleware layers (CORS, compression, request timeout, etc.).
+    /// apply middleware layers to the application's router.
+    ///
+    /// Custom layers are applied **after** all built-in Sword middlewares,
+    /// making them the outermost layer in the middleware stack.
+    /// This means custom layers execute first on incoming requests and last on outgoing responses.
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,
@@ -113,35 +114,20 @@ impl ApplicationBuilder {
         self
     }
 
+    /// Builds the application router using InternalRouter.
+    ///
+    /// The router construction is delegated to InternalRouter which organizes
+    /// middlewares into three categories:
+    ///
+    /// 1. **REST-only middlewares**
+    /// 2. **Shared middlewares**
+    /// 3. **Custom middlewares**: User-provided via `with_layer()`
     fn build_router(&mut self) -> Router {
-        let mut router = Router::new().with_state(self.state.clone());
+        let internal_router =
+            InternalRouter::new(self.state.clone(), self.config.clone());
 
-        #[cfg(feature = "socketio")]
-        let layer = {
-            use socketioxide::SocketIo;
-            use std::{any::TypeId, sync::Arc};
-            use sword_layers::socketio::*;
-
-            let socketio_config =
-                self.config.get_or_default::<SocketIoServerConfig>();
-
-            let (layer, io) = SocketIoServerLayer::new(socketio_config);
-
-            self.state
-                .insert_dependency(TypeId::of::<SocketIo>(), Arc::new(io));
-
-            layer
-        };
-
-        router = self.apply_gateways(router);
-
-        router = self.apply_sword_layers(router);
-        router = self.apply_layers(router);
-
-        #[cfg(feature = "socketio")]
-        {
-            router = router.layer(layer);
-        }
+        let layer_stack = std::mem::take(&mut self.layer_stack);
+        let mut router = internal_router.build(&self.adapter_registry, layer_stack);
 
         let app_config = self.config.get::<ApplicationConfig>()
             .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");
@@ -156,11 +142,7 @@ impl ApplicationBuilder {
     /// Build the `Application` instance with the configured options.
     ///
     /// This method ends the builder pattern and constructs the final `Application`
-    /// instance ready to run. The router is built by:
-    /// 1. Applying gateways (REST, WebSocket, etc.) to register routes
-    /// 2. Applying custom layers added via `with_layer()`
-    /// 3. Applying built-in Sword middleware layers (CORS, compression, etc.)
-    /// 4. Nesting under a global prefix if configured
+    /// instance ready to run.
     pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)
@@ -177,64 +159,6 @@ impl ApplicationBuilder {
         self.container.clear();
 
         Application::new(router, self.config)
-    }
-
-    fn apply_layers(&self, router: Router) -> Router {
-        self.layer_stack.apply(router)
-    }
-
-    // Merge all the "controllers" routers into the main router
-    // In fact, controllers are just functions that return a Router
-    fn apply_gateways(&self, mut router: Router) -> Router {
-        for adapter_kind in self.adapter_registry.adapters.read().iter() {
-            match adapter_kind {
-                AdapterKind::Rest(builder) => {
-                    let gw_router = builder(self.state.clone());
-                    router = router.merge(gw_router);
-                }
-                AdapterKind::SocketIo(setup_fn) => {
-                    setup_fn(&self.state);
-                }
-                AdapterKind::Grpc => {}
-            }
-        }
-
-        router
-    }
-
-    fn apply_sword_layers(&self, router: Router) -> Router {
-        let mut router = router;
-
-        let middlewares_config = self.config.get_or_default::<MiddlewaresConfig>();
-
-        if middlewares_config.request_timeout.enabled {
-            let (timeout_service, response_mapper) =
-                RequestTimeoutLayer::new(&middlewares_config.request_timeout);
-
-            router = router.layer(timeout_service);
-            router = router.layer(response_mapper);
-        }
-
-        if middlewares_config.cors.enabled {
-            router = router.layer(CorsLayer::new(&middlewares_config.cors));
-        };
-
-        if middlewares_config.compression.enabled {
-            router =
-                router.layer(CompressionLayer::new(&middlewares_config.compression));
-        }
-
-        let serve_dir_config = self.config.get_or_default::<ServeDirConfig>();
-
-        if serve_dir_config.enabled {
-            let serve_dir = ServeDirLayer::new(&serve_dir_config);
-            router = router.nest_service(&serve_dir_config.router_path, serve_dir);
-        }
-
-        router = router.layer(RequestIdLayer::new());
-        router = router.layer(CookieManagerLayer::new());
-
-        router
     }
 }
 

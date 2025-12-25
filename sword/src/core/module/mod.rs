@@ -7,7 +7,7 @@ pub use adapter::*;
 /// A trait for defining modules in the application.
 ///
 /// `Module` represents a cohesive unit of functionality that can be
-/// plugged into the application. Modules can register gateways,
+/// plugged into the application. Modules can register adapters,
 /// components, and providers to extend the application's capabilities.
 ///
 /// # Methods
@@ -40,7 +40,7 @@ pub use adapter::*;
 /// ```
 #[allow(async_fn_in_trait)]
 pub trait Module {
-    /// Register gateways provided by the module.
+    /// Register adapters provided by the module.
     /// A `Adapter` is a way to represent entry points into the application,
     /// such as REST APIs, WebSocket connections, or gRPC services.
     fn register_adapters(_: &AdapterRegistry) {}

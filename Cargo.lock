@@ -2591,30 +2591,6 @@ dependencies = [
 
 [[package]]
 name = "socketioxide"
-version = "0.17.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "476190583b592f1e3d55584269600f2d3c4f18af36adad03c41c27e82dcb6bd5"
-dependencies = [
- "bytes",
- "engineioxide",
- "futures-core",
- "futures-util",
- "http",
- "http-body",
- "hyper",
- "matchit",
- "pin-project-lite",
- "serde",
- "socketioxide-core",
- "socketioxide-parser-common",
- "thiserror",
- "tokio",
- "tower-layer",
- "tower-service",
-]
-
-[[package]]
-name = "socketioxide"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d6207b15b3cccde29110df8b2a9cd01db60dbe1850fb72d8f8134774394b9e7"
@@ -2969,7 +2945,7 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "serde_urlencoded",
- "socketioxide 0.17.2",
+ "socketioxide",
  "subsecond",
  "sword-layers",
  "sword-macros",
@@ -2983,8 +2959,9 @@ dependencies = [
 
 [[package]]
 name = "sword-layers"
-version = "0.1.1"
-source = "git+https://github.com/sword-web/sword-layers.git?branch=main#6b67bd9313a91497ecdb6cd04d47d4565edb4044"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d8286358f730d8e04c6a59e076c50d1db741e0ebdedb54c86f4f8d5ee00471f"
 dependencies = [
  "axum",
  "axum-helmet",
@@ -2993,7 +2970,7 @@ dependencies = [
  "console 0.16.2",
  "duration-str",
  "serde",
- "socketioxide 0.18.0",
+ "socketioxide",
  "tower",
  "tower-cookies",
  "tower-http",

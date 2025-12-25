@@ -8,8 +8,8 @@ pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 /// Controllers in Sword group related route handlers together and can declare
 /// dependencies that will be automatically resolved and injected.
 ///
-/// Controllers automatically implement the `Gateway` trait, making them registrable
-/// as REST gateways within modules via `GatewayRegistry::register::<YourController>()`.
+/// Controllers automatically implement the `Adapter` trait, making them registrable
+/// as REST adapters within modules via `AdapterRegistry::register::<YourController>()`.
 ///
 /// Use the `#[controller]` macro to automatically implement this trait.
 ///

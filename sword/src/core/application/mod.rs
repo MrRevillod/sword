@@ -1,6 +1,7 @@
 mod builder;
 mod config;
 mod layer_stack;
+mod router;
 
 use crate::{core::Config, web::MiddlewaresConfig};
 

@@ -9,6 +9,7 @@ mod request {
 mod middlewares {
     mod built_in;
     mod controller_level;
+    mod cors_socketio;
     mod handler_level;
     mod helmet;
 }
