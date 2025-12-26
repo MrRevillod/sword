@@ -14,6 +14,12 @@ struct MessagePayload {
     content: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct MessageWithAck {
+    title: String,
+    count: u32,
+}
+
 #[handlers]
 impl UserMessagesAdapter {
     #[on_connection]
@@ -22,26 +28,32 @@ impl UserMessagesAdapter {
     }
 
     #[on_message("message-try-data")]
-    async fn message_with_try_data(&self, TryData(data): TryData<MessagePayload>) {
+    async fn message_with_try_data(
+        &self,
+        socket: SocketRef,
+        TryData(data): TryData<MessagePayload>,
+    ) {
         match data {
             Ok(value) => {
                 println!("Successfully parsed data - content: {}", value.content)
             }
             Err(e) => println!("Failed to parse data: {:?}", e),
         }
+
+        socket.emit("response", "Message received").ok();
     }
 
     #[on_message("message-with-ack")]
     async fn message_with_ack(
         &self,
         ack: AckSender,
-        Data(data): Data<Value>,
+        Data(data): Data<MessageWithAck>,
         Event(event): Event,
     ) {
-        println!(
-            "Event: {event} - Message with ack received - title: {}, count: {}",
-            data["title"], data["count"]
-        );
+        let MessageWithAck { title, count } = data;
+
+        println!("Event: {event}");
+        println!("Message with ack received - title: {title}, count: {count}");
 
         ack.send("acknowledged").ok();
     }
@@ -59,7 +71,7 @@ impl UserMessagesAdapter {
     }
 
     #[on_fallback]
-    async fn on_fallback(&self, Event(event): Event, Data(data): Data<Value>) {
-        println!("Fallback handler invoked for event: {event} with data: {data:?}",);
+    async fn on_fallback(&self, Event(event): Event) {
+        println!("Fallback handler invoked for event: {event}");
     }
 }

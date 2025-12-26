@@ -1,10 +1,11 @@
-use socketioxide;
-
-pub use rmpv::{Value, ValueRef};
-pub use socketioxide::SocketIo;
-pub use socketioxide::extract::{AckSender, Data, Event, TryData};
-
-pub use socketioxide::extract::SocketRef;
+pub use socketioxide::{
+    ProtocolVersion, SocketIo, TransportType,
+    extract::{
+        AckSender, Data, Event, Extension, HttpExtension, MaybeExtension,
+        MaybeHttpExtension, SocketRef, TryData,
+    },
+    socket::DisconnectReason,
+};
 
 #[cfg(feature = "socketio")]
 use crate::core::{Adapter, HasDeps};

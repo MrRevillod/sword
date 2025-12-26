@@ -64,7 +64,6 @@ impl ConfigItem for SocketIoServerConfig {
         config: &crate::core::Config,
         state: &crate::core::State,
     ) -> Result<(), crate::core::ConfigError> {
-        println!("Registering SocketIoServerConfig");
         state.insert(config.get_or_default::<Self>());
         Ok(())
     }

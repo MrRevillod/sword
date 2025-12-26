@@ -3,6 +3,8 @@ use crate::core::{AdapterKind, AdapterRegistry, Config, State};
 use crate::web::MiddlewaresConfig;
 
 use axum::Router;
+#[cfg(feature = "socketio")]
+use socketioxide::layer::SocketIoLayer;
 use sword_layers::prelude::*;
 
 pub(super) struct InternalRouter {
@@ -16,20 +18,19 @@ impl InternalRouter {
     }
 
     pub fn build(self, adapters: &AdapterRegistry, layers: LayerStack) -> Router {
-        // Create and register SocketIO in state FIRST (if enabled)
-        // This must happen BEFORE creating the router because SocketIO handlers need it
         #[cfg(feature = "socketio")]
-        let socketio_layer = {
+        let socketio_layer: Option<SocketIoLayer> = {
             use sword_layers::socketio::*;
 
             let socketio_config =
                 self.config.get_or_default::<SocketIoServerConfig>();
 
-            let (layer, io) = SocketIoServerLayer::new(socketio_config);
+            socketio_config.enabled.then(|| {
+                let (layer, io) = SocketIoServerLayer::new(socketio_config);
+                self.state.insert(io);
 
-            self.state.insert(io);
-
-            layer
+                layer
+            })
         };
 
         // Create router with state (now containing SocketIo if enabled)
@@ -46,7 +47,9 @@ impl InternalRouter {
         // This wraps the router but SocketIO requests bypass inner middlewares
         #[cfg(feature = "socketio")]
         {
-            router = router.layer(socketio_layer);
+            if let Some(socketio_layer) = socketio_layer {
+                router = router.layer(socketio_layer);
+            }
         }
 
         // Apply shared middlewares (external to SocketIO layer - affects both)
