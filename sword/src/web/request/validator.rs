@@ -71,7 +71,7 @@ impl ValidatorRequestValidation for Request {
     ///     
     ///     // now data is guaranteed to be valid
     ///
-    ///     Ok(HttpResponse::Ok().data(user_data))
+    ///     Ok(JsonResponse::Ok().data(user_data))
     /// }
     /// ```
     fn body_validator<T>(&self) -> Result<T, RequestError>
@@ -141,7 +141,7 @@ impl ValidatorRequestValidation for Request {
     /// async fn search(&self, req: Request) -> HttpResult {
     ///     let query: SearchQuery = req.query_validator()?.unwrap_or_default();
     ///     
-    ///     Ok(HttpResponse::Ok().data(query))
+    ///     Ok(JsonResponse::Ok().data(query))
     /// }
     /// ```
     fn query_validator<T>(&self) -> Result<Option<T>, RequestError>

@@ -46,6 +46,10 @@ impl LayerStack {
 
         router
     }
+
+    pub fn clear(&mut self) {
+        self.layers.clear();
+    }
 }
 
 impl Default for LayerStack {

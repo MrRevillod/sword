@@ -26,7 +26,7 @@ pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 /// #[routes]
 /// impl UserController {
 ///     #[get("/")]
-///     async fn list(&self) -> HttpResponse {
+///     async fn list(&self) -> JsonResponse {
 ///         // Handler logic
 ///     }
 /// }

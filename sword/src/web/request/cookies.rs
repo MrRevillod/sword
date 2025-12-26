@@ -31,10 +31,10 @@ impl Request {
     ///     let session_cookie = cookies.get("session_id");
     ///
     ///     if let Some(cookie) = session_cookie {
-    ///         Ok(HttpResponse::Ok().body(format!("Session ID: {}", cookie.value())))
+    ///         Ok(JsonResponse::Ok().body(format!("Session ID: {}", cookie.value())))
     ///     }
     ///
-    ///     Ok(HttpResponse::Ok().body("No session cookie found"))
+    ///     Ok(JsonResponse::Ok().body("No session cookie found"))
     /// }
     /// ```
     pub fn cookies(&self) -> Result<&Cookies, JsonResponse> {

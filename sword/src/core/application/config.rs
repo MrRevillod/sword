@@ -28,6 +28,7 @@ pub struct ApplicationConfig {
     ///
     /// If you want to use a custom signal handler, you can disable this
     /// and implement your own signal with the `run_with_graceful_shutdown` method.
+    #[serde(rename = "graceful-shutdown")]
     pub graceful_shutdown: bool,
 
     /// Optional name of the application.
@@ -39,6 +40,7 @@ pub struct ApplicationConfig {
     pub environment: Option<String>,
 
     /// Optional global prefix for all routes.
+    #[serde(rename = "axum-router-prefix")]
     pub global_prefix: Option<String>,
 }
 

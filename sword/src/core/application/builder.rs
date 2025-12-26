@@ -157,6 +157,8 @@ impl ApplicationBuilder {
         let router = self.build_router();
 
         self.container.clear();
+        self.layer_stack.clear();
+        self.adapter_registry.clear();
 
         Application::new(router, self.config)
     }

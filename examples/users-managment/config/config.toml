@@ -1,32 +1,31 @@
 [application]
 host = "0.0.0.0"
 port = 8081
-graceful_shutdown = false
-name = "Authentication Example"
+graceful-shutdown = false
+name = "Users Management Example"
+
+[socketio-server]
+enabled = true
+parser = "common"
+transport = ["websocket", "polling"]
 
 [middlewares]
-body-limit = { max_size = "5MB", display = true }
-request-timeout = { enabled = true, duration = "15s", display = true }
-
-[middlewares.compression]
-enabled = false
-algorithms = ["gzip", "deflate", "brotli", "zstd"]
-display = false
+body-limit = { max-size = "5MB", display = true }
+request-timeout = { enabled = true, timeout = "15s", display = true }
 
 [middlewares.cors]
 enabled = true
-allow_credentials = true
+allow-credentials = true
 display = false
-allow_headers = ["Content-Type", "Authorization"]
-allow_methods = ["GET", "POST", "PUT", "DELETE"]
-allow_origins = ["http://localhost:3000", "https://example.com"]
+allow-headers = ["Content-Type", "Authorization"]
+allow-methods = ["GET", "POST", "PUT", "DELETE"]
+allow-origins = ["http://localhost:3000", "https://example.com"]
 
-[middlewares.serve-dir]
-enabled = false
-static_dir = "static"
-router_path = "/static"
-compression_algorithm = "gzip"
-chunk_size = "1MB"
+[serve-dir]
+enabled = true
+static-dir = "static"
+router-path = "/static"
+compression-algorithm = "gzip"
 
 [database]
 uri = "${POSTGRES_DATABASE_URL}"

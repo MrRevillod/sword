@@ -27,7 +27,7 @@ impl Request {
     ///         field_names.push(field.name().unwrap_or("Uknown").to_string());
     ///     }
     ///
-    ///     Ok(HttpResponse::Ok().data(field_names))
+    ///     Ok(JsonResponse::Ok().data(field_names))
     /// }
     /// ```
     pub async fn multipart(&self) -> Result<Multipart, RequestError> {

@@ -2959,9 +2959,9 @@ dependencies = [
 
 [[package]]
 name = "sword-layers"
-version = "0.1.2"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d8286358f730d8e04c6a59e076c50d1db741e0ebdedb54c86f4f8d5ee00471f"
+checksum = "a3523cb2ebbdb5517fb1b4ea72a84da0224c99621fc11d6cf6c5bc9e2979ee44"
 dependencies = [
  "axum",
  "axum-helmet",

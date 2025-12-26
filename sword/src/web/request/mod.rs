@@ -137,7 +137,7 @@ impl Request {
     ///
     ///     let message = format!("User ID: {}, Post ID: {}", user_id, post_id);
     ///     
-    ///     Ok(HttpResponse::Ok().message(message))
+    ///     Ok(JsonResponse::Ok().message(message))
     /// }
     /// ```
     pub fn param<T: FromStr>(&self, key: &str) -> Result<T, RequestError> {
@@ -205,7 +205,7 @@ impl Request {
     ///     
     ///     // Process user creation...
     ///     
-    ///     Ok(HttpResponse::Created().message("User created"))
+    ///     Ok(JsonResponse::Created().message("User created"))
     /// }
     /// ```
     pub fn body<T: DeserializeOwned>(&self) -> Result<T, RequestError> {
@@ -267,14 +267,14 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/search")]
-    /// async fn search(&self, req: Request) -> HttpResult<HttpResponse> {
+    /// async fn search(&self, req: Request) -> HttpResult {
     ///     let query: SearchQuery = req.query()?.unwrap_or_default();
     ///     
     ///     let search_term = query.q.unwrap_or("".into());
     ///     let page = query.page.unwrap_or(1);
     ///     let limit = query.limit.unwrap_or(20);
     ///     
-    ///     Ok(HttpResponse::Ok().data(format!(
+    ///     Ok(JsonResponse::Ok().data(format!(
     ///         "Search results for '{search_term}', page {page}, limit {limit}"
     ///     )))
     /// }

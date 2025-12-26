@@ -97,6 +97,10 @@ impl AdapterRegistry {
     pub fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
         &self.adapters
     }
+
+    pub fn clear(&self) {
+        self.adapters.write().clear();
+    }
 }
 
 impl Default for AdapterRegistry {

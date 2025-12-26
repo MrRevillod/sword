@@ -5,19 +5,16 @@ mod router;
 
 use crate::{core::Config, web::MiddlewaresConfig};
 
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::Router,
-};
-use axum_responses::JsonResponse;
+use axum::routing::Router;
 use colored::Colorize;
-use sword_layers::DisplayConfig;
+use sword_layers::{
+    not_found::NotFoundLayer,
+    prelude::{DisplayConfig, ServeDirConfig, SocketIoServerConfig},
+};
 use tokio::net::TcpListener;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
-use tower::ServiceBuilder;
 
 /// The main application struct that holds the router and configuration.
 ///
@@ -72,15 +69,7 @@ impl Application {
 
         let mut router = self.router.clone();
 
-        router = router.layer(ServiceBuilder::new().map_response(|r: Response| {
-            if r.status() != StatusCode::NOT_FOUND {
-                return r;
-            }
-
-            JsonResponse::NotFound()
-                .message("The requested resource was not found")
-                .into_response()
-        }));
+        router = router.layer(NotFoundLayer::new());
 
         axum::serve(listener, router)
             .await
@@ -101,10 +90,7 @@ impl Application {
         F: Future<Output = ()> + Send + 'static,
     {
         let listener = self.build_listener().await;
-
-        let router = self.router.clone().fallback(async || {
-            JsonResponse::NotFound().message("The requested resource was not found")
-        });
+        let router = self.router.clone().layer(NotFoundLayer::new());
 
         axum::serve(listener, router)
             .with_graceful_shutdown(signal)
@@ -132,15 +118,7 @@ impl Application {
             .get::<ApplicationConfig>()
             .expect("Failed to get application config");
 
-        app_config.display();
-
-        if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
-            middlewares_config.display();
-        }
-
-        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
-
-        println!("\n{banner_bot}");
+        self.display();
 
         let ApplicationConfig { host, port, .. } = app_config;
 
@@ -175,5 +153,32 @@ impl Application {
                 println!(" Shutdown signal received, starting graceful shutdown...");
             },
         }
+    }
+}
+
+impl DisplayConfig for Application {
+    fn display(&self) {
+        let app_config = self
+            .config
+            .get::<ApplicationConfig>()
+            .expect("Failed to get application config");
+
+        app_config.display();
+
+        if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
+            middlewares_config.display();
+        }
+
+        if let Ok(socketio_config) = self.config.get::<SocketIoServerConfig>() {
+            socketio_config.display();
+        }
+
+        if let Ok(servedir_config) = self.config.get::<ServeDirConfig>() {
+            servedir_config.display();
+        }
+
+        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
+
+        println!("\n{banner_bot}");
     }
 }

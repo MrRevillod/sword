@@ -35,8 +35,8 @@ http_method! {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResponse {
-///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
 ///     }
 /// }
 /// ```
@@ -56,8 +56,8 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResponse {
-///        HttpResponse::Ok().message("Hello from MyController")
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
 /// ```
@@ -85,7 +85,7 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - `config`: (Optional) Configuration parameters for the middleware (only if the middleware implements `OnRequestWithConfig`).
 ///
 /// ### Handle errors
-/// To throw an error from a middleware, simply return an `Err` with an `HttpResponse`
+/// To throw an error from a middleware, simply return an `Err` with an `JsonResponse`
 /// struct in the same way as a controller handler.
 ///
 /// ### Usage
@@ -111,8 +111,8 @@ pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// impl MyController {
 ///     #[get("/items")]
 ///     #[uses(RoleMiddleware, config = vec!["admin", "user"])]
-///     async fn get_items(&self) -> HttpResponse {
-///         HttpResponse::Ok().message("List of items")
+///     async fn get_items(&self) -> HttpResult {
+///         Ok(JsonResponse::Ok().message("List of items"))
 ///     }
 /// }
 /// ```
