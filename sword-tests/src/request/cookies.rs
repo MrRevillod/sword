@@ -5,7 +5,7 @@ use sword::prelude::*;
 struct SetCookieMw {}
 
 impl OnRequest for SetCookieMw {
-    async fn on_request(&self, req: Request) -> MiddlewareResult {
+    async fn on_request(&self, req: Request) -> HttpInterceptorResult {
         let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("session_id", "abc123")

@@ -35,7 +35,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
 
@@ -47,7 +47,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
@@ -59,7 +59,7 @@ impl OnRequest for ExtensionsTestMiddleware {
 struct MwWithState;
 
 impl OnRequest for MwWithState {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions.insert::<u16>(8080);
         req.next().await
     }
@@ -73,7 +73,7 @@ impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
         &self,
         roles: Vec<&'static str>,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         let roles_owned: Vec<String> = roles.iter().map(|s| s.to_string()).collect();
         req.extensions.insert(roles_owned);
 
@@ -89,7 +89,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions
             .insert((config.0.to_string(), config.1.to_string()));
         req.next().await
@@ -104,7 +104,7 @@ impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
         &self,
         config: [i32; 3],
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -119,7 +119,7 @@ impl OnRequestWithConfig<String> for StringConfigMiddleware {
         &self,
         config: String,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -134,7 +134,7 @@ impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
         &self,
         config: &'static str,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config.to_string());
 
         req.next().await
@@ -149,7 +149,7 @@ impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
         &self,
         config: i32,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -164,7 +164,7 @@ impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
         &self,
         config: bool,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -181,7 +181,7 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
         &self,
         config: (Vec<&'static str>, i32, bool),
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         let owned_config = (
             config
                 .0
@@ -206,7 +206,7 @@ impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
         &self,
         config: Vec<String>,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -221,7 +221,7 @@ impl OnRequestWithConfig<i32> for MathConfigMiddleware {
         &self,
         config: i32,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -236,7 +236,7 @@ impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
         &self,
         config: &'static str,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config.to_string());
 
         req.next().await
@@ -251,7 +251,7 @@ impl OnRequestWithConfig<LogLevel> for LogMiddleware {
         &self,
         config: LogLevel,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -266,7 +266,7 @@ impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
         &self,
         config: DatabaseConfig,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -281,7 +281,7 @@ impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
         &self,
         config: AuthMethod,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -296,7 +296,7 @@ impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
         &self,
         config: Option<LogLevel>,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await
@@ -311,7 +311,7 @@ impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
         &self,
         config: Vec<LogLevel>,
         mut req: Request,
-    ) -> MiddlewareResult {
+    ) -> HttpInterceptorResult {
         req.extensions.insert(config);
 
         req.next().await

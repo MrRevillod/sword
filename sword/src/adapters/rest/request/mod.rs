@@ -2,7 +2,7 @@ mod error;
 pub mod extract;
 mod validator;
 
-use super::interceptor::MiddlewareResult;
+use super::interceptor::HttpInterceptorResult;
 use axum::{
     body::Bytes as BodyBytes,
     http::{Extensions, Method, Uri},
@@ -454,7 +454,7 @@ impl Request {
     ///
     /// This method must be used only in middleware implementations to
     /// pass control to the next middleware or the final request handler.
-    pub async fn next(mut self) -> MiddlewareResult {
+    pub async fn next(mut self) -> HttpInterceptorResult {
         let Some(next) = self.next.take() else {
             return Err(JsonResponse::InternalServerError());
         };

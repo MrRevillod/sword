@@ -7,13 +7,6 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 /// plugged into the application. Modules can register adapters,
 /// components, and providers to extend the application's capabilities.
 ///
-/// # Methods
-///
-/// - `register_adapters()`: Register entry points into the application (REST APIs, WebSockets, etc.).
-///   Use `AdapterRegistry::register::<YourController>()` to register controllers as REST adapters.
-/// - `register_components()`: Register component structs marked with `#[injectable]` for dependency injection.
-/// - `register_providers()`: Register provider structs marked with `#[injectable(provider)]` asynchronously.
-///
 /// # Example
 ///
 /// ```rust,ignore

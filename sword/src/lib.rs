@@ -2,7 +2,7 @@ mod application;
 mod module;
 
 pub mod adapters;
-pub mod interceptors;
+pub mod interceptor;
 pub mod prelude;
 
 pub use application::*;
@@ -30,7 +30,7 @@ pub mod internal {
     }
 
     pub mod core {
-        pub use crate::interceptors::MiddlewareRegistrar;
+        pub use crate::interceptor::InterceptorRegistrar;
         pub use sword_core::*;
     }
 

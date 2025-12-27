@@ -1,34 +1,29 @@
 use super::{JsonResponse, Request};
+use crate::interceptor::Interceptor;
+
 use axum::response::Response as AxumResponse;
 use std::future::Future;
-use sword_core::Build;
 
 pub use axum::middleware::Next;
 pub use sword_macros::{middleware, uses};
 
-pub type MiddlewareResult = Result<AxumResponse, JsonResponse>;
-
-/// Trait for middleware components that can intercept and modify requests/responses.
-///
-/// Middlewares in Sword must be cloneable to be shared across multiple requests
-/// efficiently. They are automatically constructed from the application State
-/// during initialization.
-///
-/// Use the `#[middleware]` macro to automatically implement this trait.
-pub trait Middleware: Build {}
+pub type HttpInterceptorResult = Result<AxumResponse, JsonResponse>;
 
 /// Trait for middlewares that handle requests
 ///
 /// This is the standard middleware trait for simple request interception.
 /// Implement this trait to create middlewares that don't require additional
 /// configuration at the route level.
-pub trait OnRequest: Middleware {
+pub trait OnRequest: Interceptor {
     /// Handles an incoming request.
     ///
     /// This method receives the request and the next middleware in the chain.
     /// It should either call `next` to continue the chain or return early with
     /// a response to short-circuit the request.
-    fn on_request(&self, req: Request) -> impl Future<Output = MiddlewareResult>;
+    fn on_request(
+        &self,
+        req: Request,
+    ) -> impl Future<Output = HttpInterceptorResult>;
 }
 
 /// Trait for middlewares that handle requests with route-specific configuration.
@@ -36,7 +31,7 @@ pub trait OnRequest: Middleware {
 /// This trait allows middlewares to receive configuration parameters when applied
 /// to specific routes. The configuration type `C` is provided at compile time
 /// through the `#[uses]` attribute.
-pub trait OnRequestWithConfig<C>: Middleware {
+pub trait OnRequestWithConfig<C>: Interceptor {
     /// Handles an incoming request with configuration.
     ///
     /// This method receives configuration, the request, and the next middleware.
@@ -46,5 +41,5 @@ pub trait OnRequestWithConfig<C>: Middleware {
         &self,
         config: C,
         req: Request,
-    ) -> impl Future<Output = MiddlewareResult>;
+    ) -> impl Future<Output = HttpInterceptorResult>;
 }

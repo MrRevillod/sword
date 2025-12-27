@@ -14,10 +14,10 @@ pub fn generate_middleware_builder(input: &MiddlewareInput) -> TokenStream {
         #build_impl
         #clone_impl
 
-        impl ::sword::adapters::rest::Middleware for #self_name {}
+        impl ::sword::interceptor::Interceptor for #self_name {}
 
         ::sword::internal::inventory::submit! {
-            ::sword::interceptors::MiddlewareRegistrar::new::<#self_name>()
+            ::sword::interceptor::InterceptorRegistrar::new::<#self_name>()
         }
     }
 }

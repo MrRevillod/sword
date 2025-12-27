@@ -6,7 +6,7 @@ use sword::prelude::*;
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
@@ -18,7 +18,7 @@ impl OnRequest for ExtensionsTestMiddleware {
 struct MwWithState;
 
 impl OnRequest for MwWithState {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions.insert::<u16>(8080);
         req.next().await
     }

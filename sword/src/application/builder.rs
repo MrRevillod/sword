@@ -1,7 +1,7 @@
 use super::router::InternalRouter;
 use crate::adapters::AdapterRegistry;
 use crate::application::{Application, ApplicationConfig};
-use crate::interceptors::MiddlewareRegistrar;
+use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
 
 use sword_core::layers::LayerStack;
@@ -168,10 +168,10 @@ impl ApplicationBuilder {
             .build_all(&self.state)
             .expect("Failed to build dependency injection container");
 
-        for MiddlewareRegistrar { register_fn } in
-            inventory::iter::<MiddlewareRegistrar>
+        for InterceptorRegistrar { register_fn } in
+            inventory::iter::<InterceptorRegistrar>
         {
-            (register_fn)(&self.state).expect("Failed to register middleware");
+            (register_fn)(&self.state).expect("Failed to register interceptor");
         }
 
         let router = self.build_router();
