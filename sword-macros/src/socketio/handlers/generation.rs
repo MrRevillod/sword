@@ -9,7 +9,7 @@ pub fn generate_socketio_handlers(
     struct_ty: &Type,
     categorized: CategorizedHandlers,
 ) -> syn::Result<TokenStream> {
-    let socketio_namespace = quote! { <#struct_ty as ::sword::web::socketio::SocketIoAdapter>::namespace() };
+    let socketio_namespace = quote! { <#struct_ty as ::sword::adapters::socketio::SocketIoAdapter>::namespace() };
 
     let connection_handler_code = categorized
         .on_connection
@@ -35,9 +35,9 @@ pub fn generate_socketio_handlers(
     Ok(quote! {
         impl #struct_ty {
             #[doc(hidden)]
-            pub fn __socketio_setup(state: &::sword::core::State) {
+            pub fn __socketio_setup(state: &::sword::internal::core::State) {
                 let adapter = std::sync::Arc::new(
-                    <#struct_ty as ::sword::core::Build>::build(state).unwrap_or_else(|err| {
+                    <#struct_ty as ::sword::internal::core::Build>::build(state).unwrap_or_else(|err| {
                         panic!(
                             "\n[!] Failed to build {} SocketIO adapter\n\n{}\n",
                             stringify!(#struct_ty),
@@ -46,12 +46,12 @@ pub fn generate_socketio_handlers(
                     })
                 );
 
-                let io = <::sword::web::socketio::SocketIo as ::sword::core::FromState>::from_state(state)
+                let io = <::sword::adapters::socketio::SocketIo as ::sword::internal::core::FromState>::from_state(state)
                     .unwrap_or_else(|_| {
                         panic!("\n[!] SocketIo component not found in state. Is SocketIo correctly configured?\n\n   ↳ Ensure that the `socketio` feature is enabled in your `Cargo.toml`.\n   ↳ Also, make sure to configure the `socketio` server in your configuration file.\n   ↳ See the Sword documentation for more details: https://sword-web.github.io\n")
                     });
 
-                io.ns(#socketio_namespace, move |socket: ::sword::web::socketio::SocketRef| {
+                io.ns(#socketio_namespace, move |socket: ::sword::adapters::socketio::SocketRef| {
                     let adapter_for_handler = adapter.clone();
 
                     async move {
@@ -64,12 +64,12 @@ pub fn generate_socketio_handlers(
             }
         }
 
-        impl ::sword::core::Adapter for #struct_ty
+        impl ::sword::adapters::Adapter for #struct_ty
         where
-            Self: ::sword::web::socketio::SocketIoAdapter
+            Self: ::sword::adapters::socketio::SocketIoAdapter,
         {
-            fn kind() -> ::sword::core::AdapterKind {
-                ::sword::core::AdapterKind::SocketIo(Box::new(Self::__socketio_setup))
+            fn kind() -> ::sword::adapters::AdapterKind {
+                ::sword::adapters::AdapterKind::SocketIo(Box::new(Self::__socketio_setup))
             }
         }
     })

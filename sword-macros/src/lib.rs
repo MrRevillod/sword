@@ -701,36 +701,6 @@ pub fn on_message(attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
-/// Marks a method as a WebSocket message handler (deprecated, use `on_message` instead).
-/// This method will be called when the client emits an event with the specified message type.
-///
-/// ### Parameters
-/// - `message_type`: The name of the event to handle, e.g., `"message"` or `"*"` for any event
-///
-/// ### Parameters in handler
-/// - `socket: SocketRef` - The connected client's socket
-/// - `Data(data): Data<T>` - The message payload deserialized to type T
-/// - `ack: AckSender` (optional) - For sending acknowledgments back to the client
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[subscribe_message("message")]
-/// async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
-///     println!("Received: {}", msg);
-/// }
-///
-/// #[subscribe_message("request")]
-/// async fn on_request(&self, Data(req): Data<Request>, ack: AckSender) {
-///     ack.send("response").ok();
-/// }
-/// ```
-#[deprecated(since = "0.1.0", note = "Use `on_message` instead")]
-#[proc_macro_attribute]
-pub fn subscribe_message(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
 /// Marks a method as a WebSocket fallback handler.
 /// This method will be called for any event that doesn't match a specific `#[subscribe_message]` handler.
 /// It's useful for debugging or handling dynamic events.

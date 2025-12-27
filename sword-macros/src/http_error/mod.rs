@@ -56,7 +56,7 @@ pub fn derive(input: DeriveInput) -> syn::Result<TokenStream> {
     }
 
     Ok(quote! {
-        impl From<#enum_name> for ::sword::web::JsonResponse {
+        impl From<#enum_name> for ::sword::adapters::rest::JsonResponse {
             fn from(err: #enum_name) -> Self {
                 match err {
                     #(#from_arms)*
@@ -64,9 +64,9 @@ pub fn derive(input: DeriveInput) -> syn::Result<TokenStream> {
             }
         }
 
-        impl ::sword::internal::IntoResponse for #enum_name {
-            fn into_response(self) -> ::sword::internal::AxumResponse {
-                ::sword::web::JsonResponse::from(self).into_response()
+        impl ::sword::internal::axum::IntoResponse for #enum_name {
+            fn into_response(self) -> ::sword::internal::axum::AxumResponse {
+                ::sword::adapters::rest::JsonResponse::from(self).into_response()
             }
         }
 
@@ -145,7 +145,7 @@ fn generate_from_arm(
     }
 
     quote! {
-        #enum_name::#variant_name(inner) => ::sword::web::JsonResponse::from(inner),
+        #enum_name::#variant_name(inner) => ::sword::adapters::rest::JsonResponse::from(inner),
     }
 }
 
@@ -186,7 +186,7 @@ fn generate_json_builder(fields: &Fields, config: &HttpErrorConfig) -> TokenStre
     };
 
     let base = quote! {
-        ::sword::web::JsonResponse::status(#code).message(#message_expr)
+        ::sword::adapters::rest::JsonResponse::status(#code).message(#message_expr)
     };
 
     match fields {

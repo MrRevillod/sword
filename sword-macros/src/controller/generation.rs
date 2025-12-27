@@ -24,15 +24,15 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
         #deps_impl
         #clone_impl
 
-        impl ::sword::web::Controller for #self_name {
+        impl ::sword::adapters::rest::Controller for #self_name {
             fn base_path() -> &'static str {
                 #base_path
             }
 
             fn apply_middlewares(
-                router: ::sword::internal::AxumRouter,
-                state: ::sword::core::State,
-            ) -> ::sword::internal::AxumRouter {
+                router: ::sword::internal::axum::AxumRouter,
+                state: ::sword::internal::core::State,
+            ) -> ::sword::internal::axum::AxumRouter {
                 let mut result = router;
                 #(
                     result = result.layer(#processed_middlewares);

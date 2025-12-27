@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
-sword = { workspace = true, features = ["validator", "multipart", "socketio"] }
+sword = { workspace = true, features = [
+    "validation-validator",
+    "multipart",
+    "adapter-socketio",
+] }
 serde = { workspace = true }
 validator = { workspace = true }
 serde_json = { workspace = true }

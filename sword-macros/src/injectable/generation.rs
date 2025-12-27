@@ -12,7 +12,7 @@ pub fn generate_component_trait(input: &InjectableInput) -> TokenStream {
     quote! {
         #build_impl
         #deps_impl
-        impl ::sword::core::Component for #struct_name {}
+        impl ::sword::internal::core::Component for #struct_name {}
     }
 }
 
@@ -20,6 +20,6 @@ pub fn generate_provider_trait(parsed: &InjectableInput) -> TokenStream {
     let struct_name = &parsed.struct_name;
 
     quote! {
-        impl ::sword::core::Provider for #struct_name {}
+        impl ::sword::internal::core::Provider for #struct_name {}
     }
 }

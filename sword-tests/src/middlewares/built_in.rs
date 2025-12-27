@@ -3,8 +3,6 @@ use serde_json::Value;
 use sword::prelude::*;
 use tokio::time::{Duration, sleep};
 
-use multipart::bytes::Bytes;
-
 #[controller("/test")]
 struct TestController;
 

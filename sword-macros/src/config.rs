@@ -32,7 +32,7 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
     let expanded = quote! {
         #input
 
-        impl ::sword::internal::ConfigItem for #struct_name {
+        impl ::sword::internal::core::ConfigItem for #struct_name {
             fn toml_key() -> &'static str {
                 #toml_key_str
             }
@@ -41,17 +41,17 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
         // Implement TryFrom for use with #[injectable] macro
         // Config structs are extracted from the Config object in State,
         // not directly from State, so they use TryFrom instead of FromState.
-        impl TryFrom<&::sword::core::State> for #struct_name {
-            type Error = ::sword::core::DependencyInjectionError;
+        impl TryFrom<&::sword::internal::core::State> for #struct_name {
+            type Error = ::sword::internal::core::DependencyInjectionError;
 
-            fn try_from(state: &::sword::core::State) -> Result<Self, Self::Error> {
-                let config = state.get::<::sword::core::Config>()
-                    .map_err(|_| ::sword::core::DependencyInjectionError::DependencyNotFound {
+            fn try_from(state: &::sword::internal::core::State) -> Result<Self, Self::Error> {
+                let config = state.get::<::sword::internal::core::Config>()
+                    .map_err(|_| ::sword::internal::core::DependencyInjectionError::DependencyNotFound {
                         type_name: "Config".to_string(),
                     })?;
 
                 config.get::<Self>()
-                    .map_err(|e| ::sword::core::DependencyInjectionError::ConfigInjectionError {
+                    .map_err(|e| ::sword::internal::core::DependencyInjectionError::ConfigInjectionError {
                         source: e,
                     })
             }
@@ -62,8 +62,8 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
         // We use the full path to inventory through sword's re-export
         const _: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::ConfigRegistrar::new(|config, state| {
-                    <#struct_name as ::sword::internal::ConfigItem>::register(config, state)
+                ::sword::internal::core::ConfigRegistrar::new(|config, state| {
+                    <#struct_name as ::sword::internal::core::ConfigItem>::register(config, state)
                 })
             }
         };

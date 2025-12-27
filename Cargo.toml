@@ -1,17 +1,19 @@
 [workspace]
 resolver = "2"
-members = ["sword-tests", "sword-macros", "sword", "examples/*"]
+members = ["sword-tests", "sword-macros", "sword", "examples/*", "sword-core"]
 exclude = ["sword-tests"]
 
 [workspace.dependencies]
 
 sword = { path = "sword" }
+sword-core = { path = "sword-core" }
 sword-macros = { path = "sword-macros" }
 sword-layers = { version = "0.1.4" }
 
 tokio = { version = "^1.0", features = ["full"] }
 axum = "0.8.7"
 axum_responses = "0.5.4"
+tower = "0.5.2"
 
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
@@ -25,3 +27,6 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 socketioxide = { version = "0.18.0", features = ["axum-websockets"] }
+
+inventory = "0.3.21"
+parking_lot = "0.12.5"

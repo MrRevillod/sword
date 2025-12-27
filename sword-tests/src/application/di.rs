@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use axum_test::TestServer;
+use axum_test::{TestServer, http::StatusCode};
 use serde_json::{Value, json};
-use sword::{core::ComponentRegistry, prelude::*};
+use sword::prelude::*;
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 

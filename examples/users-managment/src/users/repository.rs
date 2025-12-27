@@ -2,7 +2,7 @@ use super::entity::User;
 use crate::shared::{database::Database, errors::AppResult};
 
 use std::sync::Arc;
-use sword::core::injectable;
+use sword::prelude::*;
 use uuid::Uuid;
 
 #[injectable]
