@@ -68,6 +68,23 @@ impl ApplicationBuilder {
         }
     }
 
+    pub fn from_config(config: Config) -> Self {
+        let state = State::new();
+        state.insert(config.clone());
+
+        for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
+            register(&config, &state).expect("Failed to register config type");
+        }
+
+        Self {
+            state,
+            config,
+            container: DependencyContainer::new(),
+            adapter_registry: AdapterRegistry::new(),
+            layer_stack: LayerStack::new(),
+        }
+    }
+
     /// Register a module with the application builder.
     /// Can be used with any type that implements the `Module` trait.
     pub fn with_module<M>(self) -> Self

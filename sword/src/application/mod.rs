@@ -41,6 +41,14 @@ impl Application {
         ApplicationBuilder::new()
     }
 
+    pub fn from_config_path<P: AsRef<std::path::Path>>(
+        path: P,
+    ) -> ApplicationBuilder {
+        ApplicationBuilder::from_config(
+            Config::from_path(path).expect("Configuration loading error"),
+        )
+    }
+
     /// Runs the application server.
     ///
     /// This method starts the web server and begins listening for incoming

@@ -11,18 +11,45 @@ pub use error::ConfigError;
 pub use registrar::*;
 pub use sword_macros::config;
 
-/// Struct representing the application's configuration.
+const DEFAULT_CONFIG_PATH: &str = "config/config.toml";
+const CONFIG_ENV_VAR: &str = "SWORD_CONFIG_PATH";
+
+/// Application configuration loaded from TOML files.
 ///
-/// This struct loads and holds the configuration data from a TOML file,
-/// allowing retrieval of specific configuration sections through the `get` method.
+/// Loads configuration with the following priority:
+/// 1. Explicit path via `from_path()`
+/// 2. `SWORD_CONFIG_PATH` environment variable
+/// 3. `config/config.toml`
+/// 4. `<executable_dir>/config/config.toml`
 #[derive(Debug, Clone, Default)]
 pub struct Config {
     inner: Arc<Table>,
 }
 
 impl Config {
+    /// Loads configuration using default priority order.
+    ///
+    /// # Errors
+    ///
+    /// Returns `ConfigError` if no configuration file is found or contains invalid TOML.
     pub fn new() -> Result<Self, ConfigError> {
-        let content = Self::load_config_file()?;
+        let content = Self::load_config_file(None)?;
+
+        let expanded = expand_env_variables(&content)
+            .map_err(ConfigError::interpolation_error)?;
+
+        Ok(Self {
+            inner: Arc::new(Table::from_str(&expanded)?),
+        })
+    }
+
+    /// Loads configuration from a specific file path without fallbacks.
+    ///
+    /// # Errors
+    ///
+    /// Returns `ConfigError::FileNotFound` if the file doesn't exist.
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
+        let content = Self::load_config_file(Some(path.as_ref()))?;
 
         let expanded = expand_env_variables(&content)
             .map_err(ConfigError::interpolation_error)?;
@@ -34,14 +61,7 @@ impl Config {
 
     /// Retrieves and deserializes a configuration section.
     ///
-    /// This method extracts a specific section from the loaded TOML configuration
-    /// and deserializes it to the specified type.
-    ///
-    /// The `T` type must implement both
-    /// `DeserializeOwned` for parsing and `ConfigItem` to specify which section
-    /// to load from.
-    ///
-    /// The `ConfigItem` is implemented using the `#[config(key = "section_name")]` macro
+    /// Type `T` must implement `ConfigItem` via `#[config(key = "section")]` macro.
     pub fn get<T: DeserializeOwned + ConfigItem>(&self) -> Result<T, ConfigError> {
         let key = T::toml_key();
 
@@ -54,29 +74,44 @@ impl Config {
         Ok(T::deserialize(value)?)
     }
 
-    /// Retrieves and deserializes a configuration section, panicking on failure.
-    ///
-    /// This method may be ONLY used in scenarios where the configuration is
-    /// guaranteed to be present and valid. Use with caution.
+    /// Retrieves a configuration section, panicking if not found or invalid.
     pub fn get_or_panic<T: DeserializeOwned + ConfigItem>(&self) -> T {
         self.get::<T>().unwrap_or_else(|_| {
             panic!("Failed to load configuration for key '{}'", T::toml_key())
         })
     }
 
-    /// Retrieves and deserializes a configuration section, returning a default value on failure.
-    ///
-    /// This method is useful for optional configuration sections where
-    /// a default value is acceptable if the configuration is missing or invalid.
+    /// Retrieves a configuration section, returning default if not found or invalid.
     pub fn get_or_default<T: DeserializeOwned + ConfigItem + Default>(&self) -> T {
         self.get::<T>().unwrap_or_default()
     }
 
-    fn load_config_file() -> Result<String, ConfigError> {
-        let primary_path = Path::new("config/config.toml");
+    fn load_config_file(path: Option<&Path>) -> Result<String, ConfigError> {
+        if let Some(p) = path {
+            if p.exists() {
+                return Ok(fs::read_to_string(p)?);
+            }
+            return Err(ConfigError::FileNotFound);
+        }
 
-        if primary_path.exists() {
-            return Ok(fs::read_to_string(primary_path)?);
+        if let Ok(env_path) = std::env::var(CONFIG_ENV_VAR) {
+            let env_path = Path::new(&env_path);
+
+            if env_path.exists() {
+                return Ok(fs::read_to_string(env_path)?);
+            }
+
+            eprintln!(
+                "Warning: {} is set to '{}' but file does not exist. Falling back to default paths.",
+                CONFIG_ENV_VAR,
+                env_path.display()
+            );
+        }
+
+        let default_path = Path::new(DEFAULT_CONFIG_PATH);
+
+        if default_path.exists() {
+            return Ok(fs::read_to_string(default_path)?);
         }
 
         Self::load_from_exe_directory()
@@ -86,7 +121,7 @@ impl Config {
         let exe_path = current_exe().map_err(|_| ConfigError::FileNotFound)?;
         let exe_dir = exe_path.parent().ok_or(ConfigError::FileNotFound)?;
 
-        let fallback_path = exe_dir.join("config/config.toml");
+        let fallback_path = exe_dir.join(DEFAULT_CONFIG_PATH);
 
         if !fallback_path.exists() {
             return Err(ConfigError::FileNotFound);
