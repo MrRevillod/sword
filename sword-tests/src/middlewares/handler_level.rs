@@ -27,7 +27,7 @@ pub enum AuthMethod {
     None,
 }
 
-#[middleware]
+#[derive(Interceptor)]
 pub struct FileValidationMiddleware;
 
 impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddleware {
@@ -43,7 +43,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddlew
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
@@ -55,7 +55,7 @@ impl OnRequest for ExtensionsTestMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct MwWithState;
 
 impl OnRequest for MwWithState {
@@ -65,7 +65,7 @@ impl OnRequest for MwWithState {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct RoleMiddleware;
 
 impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
@@ -81,7 +81,7 @@ impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct TupleConfigMiddleware;
 
 impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware {
@@ -96,7 +96,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct ArrayConfigMiddleware;
 
 impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
@@ -111,7 +111,7 @@ impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct StringConfigMiddleware;
 
 impl OnRequestWithConfig<String> for StringConfigMiddleware {
@@ -126,7 +126,7 @@ impl OnRequestWithConfig<String> for StringConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct StrConfigMiddleware;
 
 impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
@@ -141,7 +141,7 @@ impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct NumberConfigMiddleware;
 
 impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
@@ -156,7 +156,7 @@ impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct BoolConfigMiddleware;
 
 impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
@@ -171,7 +171,7 @@ impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct ComplexConfigMiddleware;
 
 impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
@@ -198,7 +198,7 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct FunctionConfigMiddleware;
 
 impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
@@ -213,7 +213,7 @@ impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct MathConfigMiddleware;
 
 impl OnRequestWithConfig<i32> for MathConfigMiddleware {
@@ -228,7 +228,7 @@ impl OnRequestWithConfig<i32> for MathConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct ConstConfigMiddleware;
 
 impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
@@ -243,7 +243,7 @@ impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct LogMiddleware;
 
 impl OnRequestWithConfig<LogLevel> for LogMiddleware {
@@ -258,7 +258,7 @@ impl OnRequestWithConfig<LogLevel> for LogMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct DatabaseMiddleware;
 
 impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
@@ -273,7 +273,7 @@ impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct AuthMiddleware;
 
 impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
@@ -288,7 +288,7 @@ impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct EnumOptionMiddleware;
 
 impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
@@ -303,7 +303,7 @@ impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct EnumVecMiddleware;
 
 impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {

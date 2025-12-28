@@ -1,5 +1,8 @@
-use super::generation::generate_socketio_handlers;
-use super::parsing::{categorize, parse_handlers};
+mod generation;
+mod parsing;
+
+use generation::generate_socketio_handlers;
+use parsing::{categorize, parse_handlers};
 
 use proc_macro::TokenStream;
 use quote::quote;

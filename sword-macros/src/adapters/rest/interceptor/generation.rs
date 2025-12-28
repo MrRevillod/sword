@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::parse::MiddlewareArgs;
+use super::InterceptorArgs;
 
 /// Expands middleware arguments into the appropriate runtime code.
 ///
@@ -10,9 +10,9 @@ use super::parse::MiddlewareArgs;
 ///
 /// 2. **Middleware with config** (`#[uses(MyMiddleware(config))]`):
 ///    - Requires `MyMiddleware` to implement `OnRequestWithConfig<ConfigType>`
-pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
+pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
     match args {
-        MiddlewareArgs::SwordSimple(path) => {
+        InterceptorArgs::SwordSimple(path) => {
             quote! {
                 {
                     fn __check_on_request<M: ::sword::adapters::rest::OnRequest>(mw: &M) -> &M { mw }
@@ -36,7 +36,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
                 }
             }
         }
-        MiddlewareArgs::SwordWithConfig { middleware, config } => {
+        InterceptorArgs::SwordWithConfig { middleware, config } => {
             quote! {
                 {
                     fn __check_on_request_with_config<M, C>(mw: &M) -> &M
@@ -68,7 +68,7 @@ pub fn expand_middleware_args(args: &MiddlewareArgs) -> TokenStream {
                 }
             }
         }
-        MiddlewareArgs::Expression(expr) => {
+        InterceptorArgs::Expression(expr) => {
             quote! { #expr }
         }
     }

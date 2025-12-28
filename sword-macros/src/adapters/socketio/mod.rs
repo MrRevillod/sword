@@ -1,11 +1,13 @@
-use crate::{
-    shared::CommonHttpAdapterInput,
-    socketio::generation::generate_socketio_adapter_builder,
-};
+mod generation;
+mod handlers;
 
+use crate::shared::CommonHttpAdapterInput;
+use generation::generate_socketio_adapter_builder;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemStruct;
+
+pub use handlers::expand_socketio_handlers;
 
 pub fn expand_socketio_adapter(
     attr: TokenStream,

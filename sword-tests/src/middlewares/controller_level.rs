@@ -2,7 +2,7 @@ use axum_test::TestServer;
 use serde_json::json;
 use sword::prelude::*;
 
-#[middleware]
+#[derive(Interceptor)]
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
@@ -14,7 +14,7 @@ impl OnRequest for ExtensionsTestMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct MwWithState;
 
 impl OnRequest for MwWithState {

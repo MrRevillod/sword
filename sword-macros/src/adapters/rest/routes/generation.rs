@@ -2,26 +2,26 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::Type;
 
-use crate::{
-    controller::routes::{HTTP_METHODS, parsing::RouteInfo},
-    middlewares::expand_middleware_args,
+use crate::adapters::rest::{
+    interceptor::expand_interceptor_args,
+    routes::parsing::{HTTP_METHODS, RouteInfo},
 };
 
 pub fn generate_controller_routes(
     struct_ty: &Type,
     routes: &[RouteInfo],
-) -> Result<TokenStream, syn::Error> {
+) -> syn::Result<TokenStream> {
     let mut handlers = vec![];
 
     for route in routes {
         let route_path = &route.path;
         let mut handler = generate_handler(route)?;
 
-        for middleware in route.middlewares.iter().rev() {
-            let generated_middleware = expand_middleware_args(middleware);
+        for interceptor in route.interceptors.iter().rev() {
+            let generated_interceptor = expand_interceptor_args(interceptor);
 
             handler = quote! {
-                #handler.layer(#generated_middleware)
+                #handler.layer(#generated_interceptor)
             };
         }
 

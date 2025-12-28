@@ -5,7 +5,7 @@ use axum::response::Response as AxumResponse;
 use std::future::Future;
 
 pub use axum::middleware::Next;
-pub use sword_macros::{middleware, uses};
+pub use sword_macros::uses;
 
 pub type HttpInterceptorResult = Result<AxumResponse, JsonResponse>;
 

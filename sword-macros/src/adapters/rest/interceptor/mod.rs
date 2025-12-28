@@ -1,9 +1,13 @@
+mod generation;
+
+pub use generation::*;
+
 use syn::{
     Expr, Path, Token,
     parse::{Parse, ParseStream},
 };
 
-pub enum MiddlewareArgs {
+pub enum InterceptorArgs {
     SwordSimple(Path),
     SwordWithConfig {
         middleware: Path,
@@ -13,7 +17,7 @@ pub enum MiddlewareArgs {
     Expression(Expr),
 }
 
-impl Parse for MiddlewareArgs {
+impl Parse for InterceptorArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if let Some(result) = parse_as_sword_middleware(input)? {
             return Ok(result);
@@ -25,7 +29,7 @@ impl Parse for MiddlewareArgs {
 
 fn parse_as_sword_middleware(
     input: ParseStream,
-) -> syn::Result<Option<MiddlewareArgs>> {
+) -> syn::Result<Option<InterceptorArgs>> {
     let fork = input.fork();
 
     let Ok(_) = fork.parse::<Path>() else {
@@ -33,7 +37,7 @@ fn parse_as_sword_middleware(
     };
 
     if fork.is_empty() {
-        return Ok(Some(MiddlewareArgs::SwordSimple(input.parse()?)));
+        return Ok(Some(InterceptorArgs::SwordSimple(input.parse()?)));
     }
 
     if fork.peek(Token![,]) {
@@ -55,7 +59,7 @@ fn parse_as_sword_middleware(
                     input.parse::<syn::Ident>()?; // config
                     input.parse::<Token![=]>()?; // =
 
-                    return Ok(Some(MiddlewareArgs::SwordWithConfig {
+                    return Ok(Some(InterceptorArgs::SwordWithConfig {
                         middleware: path,
                         config: input.parse()?,
                     }));

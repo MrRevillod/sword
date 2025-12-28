@@ -1,8 +1,12 @@
+mod generation;
+mod parsing;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemImpl;
 
-use crate::controller::routes::*;
+use generation::generate_controller_routes;
+use parsing::parse_routes;
 
 pub fn expand_controller_routes(
     _: TokenStream,

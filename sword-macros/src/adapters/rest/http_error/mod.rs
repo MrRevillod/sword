@@ -5,7 +5,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Data, DeriveInput, Error, Fields, Ident, Type};
 
-pub fn derive(input: DeriveInput) -> syn::Result<TokenStream> {
+pub fn derive_http_error(input: DeriveInput) -> syn::Result<TokenStream> {
     let enum_name = &input.ident;
 
     let Data::Enum(data) = &input.data else {

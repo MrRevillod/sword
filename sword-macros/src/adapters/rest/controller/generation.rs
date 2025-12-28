@@ -1,18 +1,20 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::middlewares::expand_middleware_args;
-use crate::shared::{CommonHttpAdapterInput, gen_build, gen_clone, gen_deps};
+use crate::{
+    adapters::rest::interceptor::expand_interceptor_args,
+    shared::{CommonHttpAdapterInput, gen_build, gen_clone, gen_deps},
+};
 
 pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStream {
     let base_path = &input.base_path;
     let self_name = &input.struct_name;
     let self_fields = &input.fields;
-    let controller_middlewares = &input.middlewares;
+    let controller_interceptors = &input.interceptors;
 
-    let processed_middlewares: Vec<TokenStream> = controller_middlewares
+    let processed_interceptors: Vec<TokenStream> = controller_interceptors
         .iter()
-        .map(expand_middleware_args)
+        .map(expand_interceptor_args)
         .collect();
 
     let deps_impl = gen_deps(self_name, self_fields);
@@ -35,7 +37,7 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
             ) -> ::sword::internal::axum::AxumRouter {
                 let mut result = router;
                 #(
-                    result = result.layer(#processed_middlewares);
+                    result = result.layer(#processed_interceptors);
                 )*
                 result
             }

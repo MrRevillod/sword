@@ -1,4 +1,4 @@
-use crate::{middlewares::MiddlewareArgs, shared::StructFields};
+use crate::{adapters::InterceptorArgs, shared::StructFields};
 use proc_macro::TokenStream;
 use syn::{Ident, ItemStruct, LitStr, Type};
 
@@ -6,7 +6,7 @@ pub struct CommonHttpAdapterInput {
     pub struct_name: Ident,
     pub base_path: String,
     pub fields: Vec<(Ident, Type)>,
-    pub middlewares: Vec<MiddlewareArgs>,
+    pub interceptors: Vec<InterceptorArgs>,
 }
 
 impl CommonHttpAdapterInput {
@@ -14,12 +14,13 @@ impl CommonHttpAdapterInput {
         let input = syn::parse::<ItemStruct>(item)?;
         let base_path = syn::parse::<LitStr>(attr)?.value();
 
-        let mut middlewares = Vec::new();
+        let mut interceptors = Vec::new();
         let fields = StructFields::parse(&input)?;
 
         for attr in &input.attrs {
             if attr.path().is_ident("uses") {
-                middlewares.push(attr.parse_args::<MiddlewareArgs>()?);
+                let args = attr.parse_args::<InterceptorArgs>()?;
+                interceptors.push(args);
             }
         }
 
@@ -41,7 +42,7 @@ impl CommonHttpAdapterInput {
             base_path,
             struct_name: input.ident,
             fields,
-            middlewares,
+            interceptors,
         })
     }
 }

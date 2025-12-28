@@ -1,11 +1,11 @@
+mod generation;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemStruct;
 
-use crate::{
-    controller::generation::generate_controller_builder,
-    shared::CommonHttpAdapterInput,
-};
+use crate::shared::CommonHttpAdapterInput;
+use generation::generate_controller_builder;
 
 pub fn expand_controller(
     attr: TokenStream,

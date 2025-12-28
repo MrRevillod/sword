@@ -1,4 +1,4 @@
-use crate::{middlewares::MiddlewareArgs, shared::PATH_KIND_REGEX};
+use crate::{adapters::rest::interceptor::InterceptorArgs, shared::PATH_KIND_REGEX};
 
 use proc_macro2::Ident;
 use quote::ToTokens;
@@ -23,7 +23,7 @@ pub struct RouteInfo {
     pub method: String,
     pub path: String,
     pub handler_name: Ident,
-    pub middlewares: Vec<MiddlewareArgs>,
+    pub interceptors: Vec<InterceptorArgs>,
     pub needs_context: bool,
 }
 
@@ -42,7 +42,7 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
 
         let mut route_path = String::new();
         let mut route_method = String::new();
-        let mut middlewares: Vec<MiddlewareArgs> = vec![];
+        let mut interceptors: Vec<InterceptorArgs> = vec![];
 
         for attr in &handler.attrs {
             let Some(ident) = attr.path().get_ident() else {
@@ -56,8 +56,8 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
             }
 
             if ident == "uses" {
-                let args = attr.parse_args::<MiddlewareArgs>()?;
-                middlewares.push(args);
+                let args = attr.parse_args::<InterceptorArgs>()?;
+                interceptors.push(args);
             } else if HTTP_METHODS.contains(&ident_str.as_str()) {
                 route_method = ident.to_string();
                 route_path = parse_route_path(attr)?.value();
@@ -74,7 +74,7 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
             method: route_method,
             path: route_path,
             handler_name: handler.sig.ident.clone(),
-            middlewares,
+            interceptors,
             needs_context,
         });
     }

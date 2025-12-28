@@ -1,7 +1,7 @@
 use axum_test::TestServer;
 use sword::prelude::*;
 
-#[middleware]
+#[derive(Interceptor)]
 struct SetCookieMw {}
 
 impl OnRequest for SetCookieMw {

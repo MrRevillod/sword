@@ -4,6 +4,8 @@ pub use crate::module::*;
 
 pub use crate::adapters::rest::*;
 
+pub use sword_macros::{Interceptor, uses};
+
 #[cfg(feature = "adapter-socketio")]
 pub use crate::adapters::socketio::*;
 

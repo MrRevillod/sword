@@ -6,7 +6,7 @@ pub mod interceptor;
 pub mod prelude;
 
 pub use application::*;
-pub use sword_macros::main;
+pub use sword_macros::{Interceptor, main, uses};
 
 pub mod layers {
     pub use sword_layers::helmet;

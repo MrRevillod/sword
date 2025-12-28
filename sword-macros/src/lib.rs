@@ -1,13 +1,10 @@
-mod config;
+mod adapters;
+mod core;
+mod interceptor_derive;
+mod shared;
 
 #[macro_use]
-mod controller;
-
-mod http_error;
-mod injectable;
-mod middlewares;
-mod shared;
-mod socketio;
+mod macros;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -42,7 +39,7 @@ http_method! {
 /// ```
 #[proc_macro_attribute]
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controller::expand_controller(attr, item)
+    adapters::expand_controller(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -63,59 +60,16 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controller::expand_controller_routes(attr, item)
+    adapters::expand_controller_routes(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-///  Declares a middleware struct.
-#[proc_macro_attribute]
-pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
-    middlewares::expand_middleware(attr, item)
+#[proc_macro_derive(Interceptor)]
+pub fn derive_interceptor(input: TokenStream) -> TokenStream {
+    interceptor_derive::derive_interceptor(input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Declares a executable middleware to apply to a route controller.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `MiddlewareName`: The name of the middleware struct that implements the `OnRequest` or `OnRequestWithConfig` trait.
-///   Also can receive an instance of a `tower-http` service layer like `CorsLayer`, `CompressionLayer`, `TraceLayer`, etc.
-///   If the layer can be added without errors on `Application::with_layer` there will not be any problem using it.  
-///
-/// - `config`: (Optional) Configuration parameters for the middleware (only if the middleware implements `OnRequestWithConfig`).
-///
-/// ### Handle errors
-/// To throw an error from a middleware, simply return an `Err` with an `JsonResponse`
-/// struct in the same way as a controller handler.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[middleware]
-/// pub struct RoleMiddleware;
-///
-/// impl OnRequestWithConfig<Vec<&str>> for RoleMiddleware {
-///     async fn on_request_with_config(
-///         &self,
-///         roles: Vec<&str>,
-///         req: Request
-///     ) -> MiddlewareResult {
-///
-///         req.next().await
-///     }
-/// }
-///
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/items")]
-///     #[uses(RoleMiddleware, config = vec!["admin", "user"])]
-///     async fn get_items(&self) -> HttpResult {
-///         Ok(JsonResponse::Ok().message("List of items"))
-///     }
-/// }
-/// ```
 #[proc_macro_attribute]
 pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
@@ -142,7 +96,7 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
-    config::expand_config_struct(attr, item)
+    core::config::expand_config_struct(attr, item)
 }
 
 /// Marks a struct as injectable.
@@ -220,7 +174,7 @@ pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
-    injectable::expand_injectable(attr, item)
+    core::injectable::expand_injectable(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -292,7 +246,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match http_error::derive(input) {
+    match adapters::derive_http_error(input) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
@@ -594,7 +548,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
-    socketio::expand_socketio_adapter(attr, item)
+    adapters::expand_socketio_adapter(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -629,7 +583,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn handlers(attr: TokenStream, item: TokenStream) -> TokenStream {
-    socketio::expand_socketio_handlers(attr, item)
+    adapters::expand_socketio_handlers(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
