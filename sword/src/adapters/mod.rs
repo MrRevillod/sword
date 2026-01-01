@@ -3,11 +3,11 @@ pub mod rest;
 #[cfg(feature = "adapter-socketio")]
 pub mod socketio {
     mod adapter;
+    mod extract;
     mod interceptor;
 
     pub use adapter::*;
-
-    #[allow(unused_imports)]
+    pub use extract::*;
     pub use interceptor::*;
 }
 

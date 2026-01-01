@@ -71,7 +71,16 @@ pub fn derive_interceptor(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
+#[deprecated(
+    note = "Use #[interceptor] instead, this macro will be removed in future versions"
+)]
 pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+#[proc_macro_attribute]
+pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }

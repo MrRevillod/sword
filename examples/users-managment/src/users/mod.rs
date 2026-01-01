@@ -5,6 +5,7 @@ mod adapters {
 
 mod dtos;
 mod entity;
+pub mod interceptors;
 mod repository;
 
 use adapters::rest::UsersController;

@@ -29,6 +29,11 @@ pub mod internal {
         };
     }
 
+    pub mod socketio {
+        pub use socketioxide::SocketError;
+        pub use socketioxide::handler::connect::FromConnectParts;
+    }
+
     pub mod core {
         pub use crate::interceptor::InterceptorRegistrar;
         pub use sword_core::*;

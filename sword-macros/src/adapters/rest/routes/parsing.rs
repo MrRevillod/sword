@@ -55,7 +55,7 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
                 continue;
             }
 
-            if ident == "uses" {
+            if ident == "interceptor" {
                 let args = attr.parse_args::<InterceptorArgs>()?;
                 interceptors.push(args);
             } else if HTTP_METHODS.contains(&ident_str.as_str()) {

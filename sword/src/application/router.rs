@@ -45,6 +45,30 @@ impl InternalRouter {
         #[cfg(feature = "adapter-socketio")]
         {
             if let Some(socketio_layer) = socketio_layer {
+                use axum::{extract::Request, middleware::Next};
+
+                use crate::prelude::SocketIoParser;
+
+                let socketio_config =
+                    self.config.get_or_default::<SocketIoServerConfig>();
+
+                let parser = socketio_config
+                    .parser
+                    .map(|p| p.to_lowercase())
+                    .unwrap_or_else(|| "common".into());
+
+                let parsed = match parser.as_str() {
+                    "common" => SocketIoParser::Common,
+                    "msgpack" => SocketIoParser::MsgPack,
+                    _ => SocketIoParser::Common,
+                };
+
+                router = router.layer(axum::middleware::from_fn(
+                    move |mut req: Request, next: Next| async move {
+                        req.extensions_mut().insert::<SocketIoParser>(parsed);
+                        next.run(req).await
+                    },
+                ));
                 router = router.layer(socketio_layer);
             }
         }

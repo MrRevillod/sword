@@ -1,5 +1,6 @@
 pub use crate::adapters::{Adapter, AdapterRegistry};
 pub use crate::application::*;
+pub use crate::interceptor::interceptor;
 pub use crate::module::*;
 
 pub use crate::adapters::rest::*;

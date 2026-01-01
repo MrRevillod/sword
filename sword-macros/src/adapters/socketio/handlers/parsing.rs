@@ -2,16 +2,34 @@ use quote::ToTokens;
 use std::str::FromStr;
 use syn::{
     Error, FnArg, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Pat, PatIdent,
-    PatType, Type, parse as syn_parse, spanned::Spanned,
+    PatType, Path, Type, parse as syn_parse, spanned::Spanned,
 };
 
-#[derive(Default, PartialEq, Eq)]
+#[derive(Default)]
 pub enum EventKind {
-    #[default]
-    OnConnection,
+    OnConnection(Vec<Path>),
     OnDisconnection,
     OnMessage(String),
+
+    #[default]
     Fallback,
+}
+
+impl EventKind {
+    pub fn is_on_connection(&self) -> bool {
+        matches!(self, EventKind::OnConnection(_))
+    }
+
+    pub fn is_on_message(&self) -> bool {
+        matches!(self, EventKind::OnMessage(_))
+    }
+
+    pub fn get_interceptors(&self) -> &[Path] {
+        match self {
+            EventKind::OnConnection(interceptors) => interceptors,
+            _ => &[],
+        }
+    }
 }
 
 pub struct HandlerInfo {
@@ -41,21 +59,37 @@ pub fn parse_handlers(input: &ItemImpl) -> syn::Result<Vec<HandlerInfo>> {
         };
 
         let mut event_kind = EventKind::default();
+        let mut interceptors = Vec::new();
 
         for attr in &handler.attrs {
             let Some(ident) = attr.path().get_ident() else {
                 continue;
             };
 
+            if ident.to_string() == "interceptor" {
+                interceptors.push(attr.parse_args::<Path>()?);
+                continue;
+            }
+
             event_kind = match EventKind::from_str(&ident.to_string()) {
                 Ok(kind) => kind,
                 Err(error) => return Err(Error::new(item.span(), error)),
             };
 
-            if event_kind == EventKind::OnMessage(String::default()) {
+            if event_kind.is_on_message() {
                 let args = attr.parse_args::<LitStr>()?;
                 event_kind = EventKind::OnMessage(args.value());
             }
+
+            if event_kind.is_on_connection()
+                && !attr.meta.require_path_only().is_ok()
+            {
+                event_kind = EventKind::OnConnection(interceptors.clone());
+            }
+        }
+
+        if event_kind.is_on_connection() && !interceptors.is_empty() {
+            event_kind = EventKind::OnConnection(interceptors);
         }
 
         handlers.push(HandlerInfo {
@@ -76,7 +110,7 @@ pub fn categorize<'a>(handlers: &'a [HandlerInfo]) -> CategorizedHandlers<'a> {
 
     for handler in handlers {
         match &handler.event_kind {
-            EventKind::OnConnection => on_connection = Some(handler),
+            EventKind::OnConnection(_) => on_connection = Some(handler),
             EventKind::OnDisconnection => on_disconnection = Some(handler),
             EventKind::Fallback => on_fallback = Some(handler),
             EventKind::OnMessage(event_name) => {
@@ -98,7 +132,7 @@ impl FromStr for EventKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let variant = match s {
-            "on_connection" => Self::OnConnection,
+            "on_connection" => Self::OnConnection(Vec::new()),
             "on_disconnection" => Self::OnDisconnection,
             "on_fallback" => Self::Fallback,
             event if event.starts_with("on_message") => {

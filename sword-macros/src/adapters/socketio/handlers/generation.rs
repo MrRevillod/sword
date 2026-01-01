@@ -1,7 +1,7 @@
 use super::parsing::{CategorizedHandlers, HandlerInfo};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Ident, Type};
+use syn::{Ident, Path, Type};
 
 /// Generates the complete SocketIO adapter implementation.
 /// Creates the setup function and adapter trait implementation for the given struct.
@@ -10,11 +10,6 @@ pub fn generate_socketio_handlers(
     categorized: CategorizedHandlers,
 ) -> syn::Result<TokenStream> {
     let socketio_namespace = quote! { <#struct_ty as ::sword::adapters::socketio::SocketIoAdapter>::namespace() };
-
-    let connection_handler_code = categorized
-        .on_connection
-        .map(generate_connection_handler)
-        .transpose()?;
 
     let message_handler_codes: Vec<TokenStream> = categorized
         .message_handlers
@@ -32,6 +27,54 @@ pub fn generate_socketio_handlers(
         .map(generate_fallback_handler)
         .transpose()?;
 
+    let connection_handler_code = categorized
+        .on_connection
+        .as_ref()
+        .map(|h| generate_connection_handler(h))
+        .transpose()?;
+
+    // Generate interceptor setup code if needed
+    let interceptor_setup = categorized
+        .on_connection
+        .as_ref()
+        .and_then(|h| {
+            let interceptors = h.event_kind.get_interceptors();
+            if interceptors.is_empty() {
+                None
+            } else {
+                Some(generate_interceptor_setup(interceptors))
+            }
+        })
+        .transpose()?;
+
+    // Generate base handler
+    let base_handler = quote! {
+        let handler = move |socket: ::sword::adapters::socketio::SocketRef| {
+            let adapter_for_handler = adapter.clone();
+
+            async move {
+                #connection_handler_code
+                #(#message_handler_codes)*
+                #fallback_handler_code
+                #disconnection_handler_code
+            }
+        };
+    };
+
+    // Generate wrapped handler with interceptors
+    let wrapped_handler = categorized
+        .on_connection
+        .as_ref()
+        .and_then(|h| {
+            let interceptors = h.event_kind.get_interceptors();
+            if interceptors.is_empty() {
+                None
+            } else {
+                Some(generate_interceptor_wrapping(interceptors))
+            }
+        })
+        .transpose()?;
+
     Ok(quote! {
         impl #struct_ty {
             #[doc(hidden)]
@@ -47,20 +90,15 @@ pub fn generate_socketio_handlers(
                 );
 
                 let io = <::sword::adapters::socketio::SocketIo as ::sword::internal::core::FromState>::from_state(state)
-                    .unwrap_or_else(|_| {
-                        panic!("\n[!] SocketIo component not found in state. Is SocketIo correctly configured?\n\n   ↳ Ensure that the `socketio` feature is enabled in your `Cargo.toml`.\n   ↳ Also, make sure to configure the `socketio` server in your configuration file.\n   ↳ See the Sword documentation for more details: https://sword-web.github.io\n")
-                    });
+                    .expect("\n[!] SocketIo component not found in state. Is SocketIo correctly configured?\n\n   ↳ Ensure that the `socketio` feature is enabled in your `Cargo.toml`.\n   ↳ Also, make sure to configure the `socketio` server in your configuration file.\n   ↳ See the Sword documentation for more details: https://sword-web.github.io\n");
 
-                io.ns(#socketio_namespace, move |socket: ::sword::adapters::socketio::SocketRef| {
-                    let adapter_for_handler = adapter.clone();
+                #interceptor_setup
 
-                    async move {
-                        #connection_handler_code
-                        #(#message_handler_codes)*
-                        #fallback_handler_code
-                        #disconnection_handler_code
-                    }
-                });
+                #base_handler
+
+                #wrapped_handler
+
+                io.ns(#socketio_namespace, handler);
             }
         }
 
@@ -84,6 +122,54 @@ fn generate_connection_handler(handler: &HandlerInfo) -> syn::Result<TokenStream
 
     Ok(quote! {
         adapter_for_handler.#handler_name(#(#call_params),*).await;
+    })
+}
+
+/// Generates the interceptor setup and chaining code.
+/// Returns (setup_code, wrapping_code) where:
+/// - setup_code: builds all interceptors from state
+/// - wrapping_code: chains .with() calls to wrap the handler
+fn generate_interceptor_setup(interceptors: &[Path]) -> syn::Result<TokenStream> {
+    let setup_statements: Vec<TokenStream> = interceptors
+        .iter()
+        .enumerate()
+        .map(|(i, path)| {
+            let var_name = quote::format_ident!("__interceptor_{}", i);
+            quote! {
+                let #var_name = std::sync::Arc::new(
+                    <#path as ::sword::internal::core::Build>::build(state)
+                        .expect(&format!("\n[!] Failed to build interceptor {}\n", stringify!(#path)))
+                );
+            }
+        })
+        .collect();
+
+    Ok(quote! {
+        #(#setup_statements)*
+    })
+}
+
+/// Generates the .with() chain wrapping code for interceptors.
+/// Wraps the base handler with each interceptor using socketioxide's .with() method.
+fn generate_interceptor_wrapping(interceptors: &[Path]) -> syn::Result<TokenStream> {
+    let wrapping_statements: Vec<TokenStream> = interceptors
+        .iter()
+        .enumerate()
+        .map(|(i, _path)| {
+            let var_name = quote::format_ident!("__interceptor_{}", i);
+            quote! {
+                let handler = handler.with(move |socket: ::sword::adapters::socketio::SocketRef, ctx: ::sword::adapters::socketio::SocketContext| {
+                    let interceptor = #var_name.clone();
+                    async move {
+                        interceptor.on_connect(ctx).await
+                    }
+                });
+            }
+        })
+        .collect();
+
+    Ok(quote! {
+        #(#wrapping_statements)*
     })
 }
 

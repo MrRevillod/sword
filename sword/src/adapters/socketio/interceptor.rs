@@ -1,9 +1,5 @@
-use crate::interceptor::Interceptor;
-use socketioxide::{
-    adapter::{Adapter as SocketIoAdapter, LocalAdapter},
-    extract::SocketRef,
-    handler::FromConnectParts,
-};
+use crate::{adapters::socketio::extract::SocketContext, interceptor::Interceptor};
+use socketioxide::adapter::{Adapter as SocketIoAdapter, LocalAdapter};
 use std::fmt::Display;
 
 #[allow(async_fn_in_trait)]
@@ -13,20 +9,11 @@ where
 {
     type Error: Display;
 
-    async fn on_connect(&self, socket: SocketRef<A>) -> Result<(), Self::Error>;
+    async fn on_connect(&self, socket: SocketContext<A>) -> Result<(), Self::Error>;
 }
 
-#[allow(async_fn_in_trait)]
-pub trait OnConnectWith<E, A = LocalAdapter>: Interceptor
-where
-    A: SocketIoAdapter,
-    E: FromConnectParts<A>,
-{
-    type Error: Display;
-
-    async fn on_connect_with(
-        &self,
-        socket: SocketRef<A>,
-        extractor: E,
-    ) -> Result<(), Self::Error>;
+#[derive(Copy, Clone)]
+pub enum SocketIoParser {
+    Common,
+    MsgPack,
 }

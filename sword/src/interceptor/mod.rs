@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use sword_core::{Build, DependencyInjectionError, State};
 
+pub use sword_macros::interceptor;
+
 /// Base trait for all interceptors in Sword.
 /// Implement this trait to create interceptors that can be automatically
 /// registered and built via the dependency injection system.

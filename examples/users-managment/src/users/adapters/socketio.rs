@@ -1,4 +1,5 @@
 use crate::shared::Database;
+use crate::users::interceptors::{AuthInterceptor, LoggingInterceptor};
 
 use serde::Deserialize;
 use std::sync::Arc;
@@ -23,6 +24,8 @@ struct MessageWithAck {
 #[handlers]
 impl UserMessagesAdapter {
     #[on_connection]
+    #[interceptor(AuthInterceptor)]
+    #[interceptor(LoggingInterceptor)]
     async fn on_connect(&self) {
         println!("New client connected");
     }

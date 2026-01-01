@@ -12,7 +12,7 @@ pub fn expand_socketio_handlers(
     _: TokenStream,
     item: TokenStream,
 ) -> syn::Result<TokenStream> {
-    let input = syn::parse::<ItemImpl>(item.clone())?;
+    let input = syn::parse::<ItemImpl>(item)?;
     let handlers = parse_handlers(&input)?;
     let categorized = categorize(&handlers);
 
