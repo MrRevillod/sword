@@ -55,9 +55,4 @@ impl ComponentRegistry {
     pub(crate) fn get_dependency_graph(&self) -> &RwMap<TypeId, Vec<TypeId>> {
         &self.dependency_graph
     }
-
-    pub(crate) fn clear(&self) {
-        self.builders.write().clear();
-        self.dependency_graph.write().clear();
-    }
 }

@@ -1,6 +1,5 @@
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;
-use parking_lot::Mutex;
 use serde::{Serialize, de::DeserializeOwned};
 use socketioxide::{
     ParserError, ProtocolVersion, SendError, SocketError, TransportType,
@@ -22,7 +21,7 @@ use crate::prelude::SocketIoParser;
 /// and disconnect reasons depending on the handler type.
 pub struct SocketContext<A: Adapter = LocalAdapter> {
     socket: SocketRef<A>,
-    data: Mutex<Option<Value>>,
+    data: Option<Value>,
     ack: Option<AckSender<A>>,
     disconnect_reason: Option<DisconnectReason>,
     event: Option<Box<str>>,
@@ -37,37 +36,11 @@ where
         &self.socket
     }
 
-    /// Gets the raw data as a `Value` without deserialization.
-    /// Useful for connection handlers where auth data is already a Value.
-    /// **Consumes the data** - subsequent calls will return `None`.
-    pub fn data(&self) -> Option<Value> {
-        self.data.lock().take()
-    }
-
-    /// Deserializes auth/connection data to the specified type.
-    /// Use this in `on_connect` handlers to parse authentication data.
-    /// **Consumes the data** - subsequent calls will return an error.
-    pub fn try_auth<T: DeserializeOwned>(&self) -> Result<T, ParserError> {
-        let Some(data) = self.data.lock().take() else {
-            return Err(ParserError::new(ParseError::InvalidData));
-        };
-
-        // Extract raw bytes from Value and deserialize directly with serde_json
-        let bytes = match &data {
-            Value::Str(s, _) => s.as_ref(),
-            Value::Bytes(b) => b.as_ref(),
-        };
-
-        serde_json::from_slice(bytes)
-            .map_err(|_| ParserError::new(ParseError::InvalidData))
-    }
-
     /// The `TryData<T>` extractor equivalent method.
     ///   
     /// Deserializes message data to the specified type.
-    /// **Consumes the data** - subsequent calls will return an error.
     pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, ParserError> {
-        let Some(data) = self.data.lock().take() else {
+        let Some(data) = &self.data else {
             return Err(ParserError::new(ParseError::InvalidData));
         };
 
@@ -78,7 +51,6 @@ where
             .get::<SocketIoParser>()
             .unwrap_or(&SocketIoParser::Common);
 
-        // Extract raw bytes from Value
         let bytes = match &data {
             Value::Str(s, _) => s.as_ref(),
             Value::Bytes(b) => b.as_ref(),
@@ -127,7 +99,7 @@ where
 
     /// Checks if data is still available (not consumed by `try_data()`).
     pub fn has_data(&self) -> bool {
-        self.data.lock().is_some()
+        self.data.is_some()
     }
 
     /// Returns access to the socket's extension storage.
@@ -192,7 +164,7 @@ where
 
         Ok(SocketContext {
             socket: socket_ref,
-            data: Mutex::new(Some(data)),
+            data: Some(data),
             ack,
             disconnect_reason: None,
             event,
@@ -212,7 +184,7 @@ where
     ) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_connect_parts(s, auth)?,
-            data: Mutex::new(auth.clone()),
+            data: auth.clone(),
             ack: None,
             disconnect_reason: None,
             event: None,
@@ -232,7 +204,7 @@ where
     ) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_disconnect_parts(s, reason)?,
-            data: Mutex::new(None),
+            data: None,
             ack: None,
             disconnect_reason: Some(reason),
             event: None,

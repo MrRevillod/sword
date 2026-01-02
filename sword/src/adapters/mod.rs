@@ -13,7 +13,7 @@ pub mod socketio {
 
 use axum::Router;
 use parking_lot::RwLock;
-use sword_core::State;
+use sword_core::{HasDeps, State};
 
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
@@ -47,7 +47,7 @@ pub enum AdapterKind {
 ///     adapters.register::<ItemsController>();
 /// }
 /// ```
-pub trait Adapter {
+pub trait Adapter: HasDeps {
     fn kind() -> AdapterKind;
 }
 

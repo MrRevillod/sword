@@ -5,7 +5,7 @@ mod validator;
 use super::interceptor::HttpInterceptorResult;
 use axum::{
     body::Bytes as BodyBytes,
-    http::{Extensions, Method, Uri},
+    http::{Extensions, HeaderMap, HeaderName, HeaderValue, Method, Uri},
     middleware::Next,
 };
 use axum_responses::JsonResponse;
@@ -38,7 +38,7 @@ pub struct Request {
     params: HashMap<String, String>,
     body_bytes: BodyBytes,
     method: Method,
-    headers: HashMap<String, String>,
+    headers: HeaderMap,
     uri: Uri,
     next: Option<Next>,
     /// Axum extensions for additional request metadata.
@@ -66,12 +66,12 @@ impl Request {
     /// Gets the value of a specific header by name.
     ///
     /// ### Arguments
-    /// * `key` - The header name to search for (case-insensitive).
+    /// * `key` - The header name to get.
     ///
     /// ### Returns
     /// `Some(&str)` with the header value if it exists, `None` if not found.
     pub fn header(&self, key: &str) -> Option<&str> {
-        self.headers.get(&key.to_lowercase()).map(String::as_str)
+        self.headers.get(key).and_then(|value| value.to_str().ok())
     }
 
     /// Gets an immutable reference to all request headers.
@@ -79,16 +79,16 @@ impl Request {
     /// ### Returns
     /// A reference to `HashMap<String, String>` containing all request headers
     /// where the key is the header name and the value is its content.
-    pub const fn headers(&self) -> &HashMap<String, String> {
+    pub const fn headers(&self) -> &HeaderMap {
         &self.headers
     }
 
     /// Gets a mutable reference to all request headers.
     ///
     /// ### Returns
-    /// A mutable reference to `HashMap<String, String>` that allows modifying
+    /// A mutable reference to `HeaderMap` that allows modifying
     /// existing headers or adding new headers to the request.
-    pub const fn headers_mut(&mut self) -> &mut HashMap<String, String> {
+    pub fn headers_mut(&mut self) -> &mut HeaderMap {
         &mut self.headers
     }
 
@@ -100,8 +100,24 @@ impl Request {
     ///
     /// ### Note
     /// If the header already exists, its value will be overwritten.
-    pub fn set_header(&mut self, name: impl Into<String>, value: impl Into<String>) {
-        self.headers.insert(name.into(), value.into());
+    pub fn set_header(
+        &mut self,
+        name: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Result<(), RequestError> {
+        let header_name = name.into();
+        let header_value = value.into();
+
+        let header_name = header_name
+            .parse::<HeaderName>()
+            .map_err(|_| RequestError::InvalidHeaderName(header_name.clone()))?;
+
+        let header_value = HeaderValue::from_str(&header_value)
+            .map_err(|_| RequestError::InvalidHeaderValue(header_value.clone()))?;
+
+        self.headers.insert(header_name, header_value);
+
+        Ok(())
     }
 
     /// Retrieves and parses a route parameter by name.
@@ -456,6 +472,9 @@ impl Request {
     /// pass control to the next middleware or the final request handler.
     pub async fn next(mut self) -> HttpInterceptorResult {
         let Some(next) = self.next.take() else {
+            eprintln!(
+                "Error: Attempted to call `next()` on Request in a context that is not a `OnRequest` `Interceptor`"
+            );
             return Err(JsonResponse::InternalServerError());
         };
 

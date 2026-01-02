@@ -29,6 +29,12 @@ pub enum RequestError {
 
     #[error("Unsupported media type: {message}")]
     UnsupportedMediaType { message: &'static str },
+
+    #[error("Invalid header name: {0}")]
+    InvalidHeaderName(String),
+
+    #[error("Invalid header value: {0}")]
+    InvalidHeaderValue(String),
 }
 
 impl RequestError {

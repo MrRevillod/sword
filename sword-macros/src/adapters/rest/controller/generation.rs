@@ -26,7 +26,7 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
         #deps_impl
         #clone_impl
 
-        impl ::sword::adapters::rest::Controller for #self_name {
+        impl ::sword::adapters::rest::RestAdapter for #self_name {
             fn base_path() -> &'static str {
                 #base_path
             }

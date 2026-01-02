@@ -18,7 +18,7 @@ pub trait OnRequest: Interceptor {
     /// Handles an incoming request.
     ///
     /// This method receives the request and the next middleware in the chain.
-    /// It should either call `next` to continue the chain or return early with
+    /// It should either call `req.next().await` to continue the chain or return early with
     /// a response to short-circuit the request.
     fn on_request(
         &self,
@@ -30,7 +30,7 @@ pub trait OnRequest: Interceptor {
 ///
 /// This trait allows middlewares to receive configuration parameters when applied
 /// to specific routes. The configuration type `C` is provided at compile time
-/// through the `#[uses]` attribute.
+/// through the `#[interceptor]` attribute.
 pub trait OnRequestWithConfig<C>: Interceptor {
     /// Handles an incoming request with configuration.
     ///

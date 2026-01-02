@@ -1,6 +1,6 @@
 use super::super::Adapter;
 use axum::Router as AxumRouter;
-use sword_core::{HasDeps, State};
+use sword_core::State;
 
 pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 
@@ -32,7 +32,7 @@ pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 ///     }
 /// }
 /// ```
-pub trait Controller: HasDeps + Adapter {
+pub trait RestAdapter: Adapter {
     fn base_path() -> &'static str;
     fn apply_middlewares(router: AxumRouter, state: State) -> AxumRouter;
 }

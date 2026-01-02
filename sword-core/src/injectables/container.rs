@@ -123,11 +123,6 @@ impl DependencyContainer {
 
         Ok(())
     }
-
-    pub fn clear(&mut self) {
-        self.providers.clear();
-        self.components.clear();
-    }
 }
 
 impl Default for DependencyContainer {

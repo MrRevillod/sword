@@ -1,5 +1,4 @@
-use super::super::Adapter as SwordAdapter;
-use sword_core::HasDeps;
+use super::super::Adapter;
 
 pub use socketioxide::{
     ProtocolVersion, SocketIo, TransportType,
@@ -18,6 +17,17 @@ pub use sword_macros::{
     socketio_adapter,
 };
 
+/// Trait for providing Socket.IO adapter functionality.
+///
+/// This trait is implemented by types annotated with the `#[socketio_adapter]` macro
+/// and contains the actual handler implementations for Socket.IO events.
+pub trait SocketIoAdapter: Adapter {
+    fn namespace() -> &'static str;
+}
+
+// fn interceptors<A: SocketIoxideAdapterType>() -> Vec<OnConnectFn<A>> {
+//     Vec::new()
+// }
 // type OnConnectFn<A> = Box<
 //     dyn Fn(
 //             SocketContext<A>,
@@ -26,14 +36,3 @@ pub use sword_macros::{
 //         > + Send
 //         + Sync,
 // >;
-
-/// Trait for providing Socket.IO adapter functionality.
-///
-/// This trait is implemented by types annotated with the `#[socketio_adapter]` macro
-/// and contains the actual handler implementations for Socket.IO events.
-pub trait SocketIoAdapter: HasDeps + SwordAdapter {
-    fn namespace() -> &'static str;
-    // fn interceptors<A: SocketIoxideAdapterType>() -> Vec<OnConnectFn<A>> {
-    //     Vec::new()
-    // }
-}

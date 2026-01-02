@@ -41,8 +41,4 @@ impl ProviderRegistry {
     pub(crate) fn get_providers(&self) -> &RwMap<TypeId, Injectable> {
         &self.providers
     }
-
-    pub(crate) fn clear(&self) {
-        self.providers.write().clear();
-    }
 }

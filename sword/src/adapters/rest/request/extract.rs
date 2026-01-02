@@ -4,7 +4,6 @@ use sword_core::{Config, State, layers::MiddlewaresConfig};
 use axum::{
     body::{Body, to_bytes},
     extract::{FromRef, FromRequest, Path, Request as AxumReq},
-    http::{HeaderName, HeaderValue},
 };
 
 use http_body_util::LengthLimitError;
@@ -56,19 +55,11 @@ where
             )
         })?;
 
-        let mut headers = HashMap::new();
-
-        for (key, value) in &parts.headers {
-            if let Ok(value_str) = value.to_str() {
-                headers.insert(key.to_string(), value_str.to_string());
-            }
-        }
-
         Ok(Self {
             params,
             body_bytes,
             method: parts.method,
-            headers,
+            headers: parts.headers,
             uri: parts.uri,
             extensions: parts.extensions,
             next: None,
@@ -86,12 +77,8 @@ impl TryFrom<Request> for AxumReq {
     fn try_from(req: Request) -> Result<Self, Self::Error> {
         let mut builder = AxumReq::builder().method(req.method).uri(req.uri);
 
-        for (key, value) in req.headers {
-            if let (Ok(header_name), Ok(header_value)) =
-                (key.parse::<HeaderName>(), value.parse::<HeaderValue>())
-            {
-                builder = builder.header(header_name, header_value);
-            }
+        for (key, value) in &req.headers {
+            builder = builder.header(key, value);
         }
 
         let body = Body::from(req.body_bytes);

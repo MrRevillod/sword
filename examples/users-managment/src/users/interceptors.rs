@@ -10,7 +10,7 @@ impl OnConnect for LoggingInterceptor {
     async fn on_connect(&self, socket: SocketContext) -> Result<(), Self::Error> {
         println!("[Interceptor] New connection: {}", socket.id());
 
-        match socket.try_auth::<Value>() {
+        match socket.try_data::<Value>() {
             Ok(data) => {
                 println!("[Interceptor] Connection data: {:?}", data);
             }

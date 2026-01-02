@@ -38,6 +38,21 @@ impl From<RequestError> for JsonResponse {
                 tracing::error!(source = %source, "Request deserialization error: {message}");
                 JsonResponse::BadRequest().message(message).error(error)
             }
+            RequestError::InvalidHeaderName(name) => {
+                tracing::error!(header = %name, "Invalid header name");
+                JsonResponse::BadRequest()
+                    .message("Invalid header name")
+                    .error(format!("Header '{}' contains invalid characters", name))
+            }
+            RequestError::InvalidHeaderValue(name) => {
+                tracing::error!(header = %name, "Invalid header value");
+                JsonResponse::BadRequest()
+                    .message("Invalid header value")
+                    .error(format!(
+                        "Value for header '{}' contains invalid characters",
+                        name
+                    ))
+            }
         }
     }
 }

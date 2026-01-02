@@ -54,10 +54,7 @@ pub fn generate_controller_routes(
             }
         }
 
-        impl ::sword::adapters::Adapter for #struct_ty
-        where
-            Self: ::sword::adapters::rest::Controller,
-        {
+        impl ::sword::adapters::Adapter for #struct_ty {
             fn kind() -> ::sword::adapters::AdapterKind {
                 ::sword::adapters::AdapterKind::Rest(Box::new(Self::router_builder))
             }

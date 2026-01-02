@@ -102,10 +102,7 @@ pub fn generate_socketio_handlers(
             }
         }
 
-        impl ::sword::adapters::Adapter for #struct_ty
-        where
-            Self: ::sword::adapters::socketio::SocketIoAdapter,
-        {
+        impl ::sword::adapters::Adapter for #struct_ty {
             fn kind() -> ::sword::adapters::AdapterKind {
                 ::sword::adapters::AdapterKind::SocketIo(Box::new(Self::__socketio_setup))
             }
