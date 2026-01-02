@@ -23,7 +23,7 @@ impl InternalRouter {
                 self.config.get_or_default::<SocketIoServerConfig>();
 
             socketio_config.enabled.then(|| {
-                let (layer, io) = SocketIoServerLayer::new(socketio_config);
+                let (layer, io) = SocketIoServerLayer::new(&socketio_config);
                 self.state.insert(io);
 
                 layer
@@ -46,35 +46,27 @@ impl InternalRouter {
         {
             if let Some(socketio_layer) = socketio_layer {
                 use axum::{extract::Request, middleware::Next};
-
-                use crate::prelude::SocketIoParser;
+                use sword_layers::socketio::*;
 
                 let socketio_config =
                     self.config.get_or_default::<SocketIoServerConfig>();
 
-                let parser = socketio_config
-                    .parser
-                    .map(|p| p.to_lowercase())
-                    .unwrap_or_else(|| "common".into());
+                let parsed = socketio_config.parser.unwrap_or_default();
 
-                let parsed = match parser.as_str() {
-                    "common" => SocketIoParser::Common,
-                    "msgpack" => SocketIoParser::MsgPack,
-                    _ => SocketIoParser::Common,
-                };
+                router = router.layer(socketio_layer);
 
+                // Then apply parser middleware (outer - executes first)
+                // This ensures extensions are set before SocketIO handshake
                 router = router.layer(axum::middleware::from_fn(
                     move |mut req: Request, next: Next| async move {
                         req.extensions_mut().insert::<SocketIoParser>(parsed);
                         next.run(req).await
                     },
                 ));
-                router = router.layer(socketio_layer);
             }
         }
 
         // Apply shared middlewares (external to SocketIO layer - affects both)
-        // These wrap everything including SocketIO
         router = self.apply_shared_middlewares(router);
 
         // Apply custom user middlewares from layer stack
@@ -124,8 +116,6 @@ impl InternalRouter {
             router = router.layer(response_mapper);
         }
 
-        // Request ID and Cookie Manager - Apply early for REST
-        // These will also be available during SocketIO handshake
         router = router.layer(RequestIdLayer::new());
         router = router.layer(CookieManagerLayer::new());
 

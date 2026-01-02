@@ -25,7 +25,7 @@ impl OnRequest for MwWithState {
 }
 
 #[controller("/test")]
-#[uses(ExtensionsTestMiddleware)]
+#[interceptor(ExtensionsTestMiddleware)]
 struct TestController {}
 
 #[routes]
@@ -42,7 +42,7 @@ impl TestController {
     }
 
     #[get("/middleware-state")]
-    #[uses(MwWithState)]
+    #[interceptor(MwWithState)]
     async fn middleware_state(&self, req: Request) -> HttpResult {
         let port = req.extensions.get::<u16>().cloned().unwrap_or(0);
         let message = req.extensions.get::<String>().cloned().unwrap_or_default();

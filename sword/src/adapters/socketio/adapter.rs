@@ -1,3 +1,7 @@
+use std::{fmt::Display, pin::Pin};
+
+use crate::prelude::SocketContext;
+
 use super::super::Adapter;
 
 pub use socketioxide::{
@@ -23,6 +27,16 @@ pub use sword_macros::{
 /// and contains the actual handler implementations for Socket.IO events.
 pub trait SocketIoAdapter: Adapter {
     fn namespace() -> &'static str;
+    fn interceptors<A>() -> Vec<
+        fn(
+            SocketContext<A>,
+        ) -> Pin<Box<dyn Future<Output = Result<(), Box<dyn Display>>>>>,
+    >
+    where
+        A: SocketIoxideAdapterType,
+    {
+        Vec::new()
+    }
 }
 
 // fn interceptors<A: SocketIoxideAdapterType>() -> Vec<OnConnectFn<A>> {

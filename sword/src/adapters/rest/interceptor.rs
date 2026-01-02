@@ -1,11 +1,9 @@
 use super::{JsonResponse, Request};
 use crate::interceptor::Interceptor;
 
+pub use axum::middleware::Next;
 use axum::response::Response as AxumResponse;
 use std::future::Future;
-
-pub use axum::middleware::Next;
-pub use sword_macros::uses;
 
 pub type HttpInterceptorResult = Result<AxumResponse, JsonResponse>;
 

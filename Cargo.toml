@@ -8,7 +8,7 @@ exclude = ["sword-tests"]
 sword = { path = "sword" }
 sword-core = { path = "sword-core" }
 sword-macros = { path = "sword-macros" }
-sword-layers = { version = "0.1.4" }
+sword-layers = { version = "0.1.4", git = "https://github.com/sword-web/sword-layers.git" }
 
 tokio = { version = "^1.0", features = ["full"] }
 axum = "0.8.7"

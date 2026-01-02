@@ -41,7 +41,7 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[uses(SetCookieMw)]
+    #[interceptor(SetCookieMw)]
     async fn with_middleware(&self, req: Request) -> HttpResult {
         let cookies = req.cookies()?;
 

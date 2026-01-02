@@ -1,7 +1,6 @@
 use axum_test::TestServer;
 use serde_json::json;
 use sword::prelude::*;
-use tower_http::cors::CorsLayer;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]
@@ -324,7 +323,7 @@ struct TestController {}
 #[routes]
 impl TestController {
     #[get("/extensions-test")]
-    #[uses(ExtensionsTestMiddleware)]
+    #[interceptor(ExtensionsTestMiddleware)]
     async fn extensions_test(&self, req: Request) -> JsonResponse {
         let extension_value = req.extensions.get::<String>();
 
@@ -336,8 +335,8 @@ impl TestController {
     }
 
     #[get("/middleware-state")]
-    #[uses(ExtensionsTestMiddleware)]
-    #[uses(MwWithState)]
+    #[interceptor(ExtensionsTestMiddleware)]
+    #[interceptor(MwWithState)]
     async fn middleware_state(&self, req: Request) -> HttpResult {
         let port = req.extensions.get::<u16>().cloned().unwrap_or(0);
         let message = req.extensions.get::<String>().cloned().unwrap_or_default();
@@ -353,7 +352,7 @@ impl TestController {
     }
 
     #[get("/role-test")]
-    #[uses(RoleMiddleware, config = vec!["admin", "user"])]
+    #[interceptor(RoleMiddleware, config = vec!["admin", "user"])]
     async fn role_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
@@ -367,7 +366,7 @@ impl TestController {
     }
 
     #[get("/error-test")]
-    #[uses(FileValidationMiddleware, config = ("jpg", "png"))]
+    #[interceptor(FileValidationMiddleware, config = ("jpg", "png"))]
     async fn error_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
@@ -381,7 +380,7 @@ impl TestController {
     }
 
     #[get("/tower-middleware-test")]
-    #[uses(CorsLayer::permissive())]
+    #[interceptor(CorsLayer::permissive())]
     async fn tower_middleware_test(&self) -> JsonResponse {
         JsonResponse::Ok()
             .message("Test with tower middleware")
@@ -389,7 +388,7 @@ impl TestController {
     }
 
     #[get("/tuple-config-test")]
-    #[uses(TupleConfigMiddleware, config = ("jpg", "png"))]
+    #[interceptor(TupleConfigMiddleware, config = ("jpg", "png"))]
     async fn tuple_config_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
@@ -404,7 +403,7 @@ impl TestController {
     }
 
     #[get("/array-config-test")]
-    #[uses(ArrayConfigMiddleware, config = [1, 2, 3])]
+    #[interceptor(ArrayConfigMiddleware, config = [1, 2, 3])]
     async fn array_config_test(&self, req: Request) -> JsonResponse {
         let config = req
             .extensions
@@ -419,7 +418,7 @@ impl TestController {
     }
 
     #[get("/string-config-test")]
-    #[uses(StringConfigMiddleware, config = "test string".to_string())]
+    #[interceptor(StringConfigMiddleware, config = "test string".to_string())]
     async fn string_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<String>().cloned().unwrap_or_default();
 
@@ -432,7 +431,7 @@ impl TestController {
     }
 
     #[get("/str-config-test")]
-    #[uses(StrConfigMiddleware, config = "test str")]
+    #[interceptor(StrConfigMiddleware, config = "test str")]
     async fn str_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<String>().cloned().unwrap_or_default();
 
@@ -443,7 +442,7 @@ impl TestController {
     }
 
     #[get("/number-config-test")]
-    #[uses(NumberConfigMiddleware, config = 42)]
+    #[interceptor(NumberConfigMiddleware, config = 42)]
     async fn number_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<i32>().cloned().unwrap_or(0);
 
@@ -456,7 +455,7 @@ impl TestController {
     }
 
     #[get("/bool-config-test")]
-    #[uses(BoolConfigMiddleware, config = true)]
+    #[interceptor(BoolConfigMiddleware, config = true)]
     async fn bool_config_test(&self, req: Request) -> JsonResponse {
         let config = req.extensions.get::<bool>().cloned().unwrap_or(false);
 

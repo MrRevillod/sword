@@ -10,6 +10,12 @@ impl OnConnect for LoggingInterceptor {
     async fn on_connect(&self, socket: SocketContext) -> Result<(), Self::Error> {
         println!("[Interceptor] New connection: {}", socket.id());
 
+        let parser = socket
+            .http_extensions()
+            .get::<sword_layers::socketio::SocketIoParser>();
+
+        println!("[Interceptor] Parser: {:?}", parser);
+
         match socket.try_data::<Value>() {
             Ok(data) => {
                 println!("[Interceptor] Connection data: {:?}", data);

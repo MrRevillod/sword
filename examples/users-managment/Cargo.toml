@@ -9,6 +9,7 @@ sword = { workspace = true, features = [
     "multipart",
     "adapter-socketio",
 ] }
+sword-layers = { workspace = true }
 serde = { workspace = true }
 validator = { workspace = true }
 serde_json = { workspace = true }

@@ -13,7 +13,7 @@ use socketioxide::{
 use socketioxide_core::{Sid, Value, parser::ParseError};
 use std::{convert::Infallible, sync::Arc};
 
-use crate::prelude::SocketIoParser;
+use sword_layers::socketio::SocketIoParser;
 
 /// A unified extractor that combines multiple socketioxide extractors into a single context.
 ///
