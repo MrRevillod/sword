@@ -1,23 +1,48 @@
-pub use crate::core::{
-    Application, ApplicationBuilder, ApplicationConfig, Build, Component,
-    ComponentRegistry, Config, ConfigError, DependencyInjectionError, FromState,
-    FromStateArc, Gateway, GatewayRegistry, HasDeps, Module, Provider,
-    ProviderRegistry, State, config, injectable,
+pub use crate::adapters::AdapterRegistry;
+pub use crate::application::*;
+pub use crate::module::Module;
+pub use sword_macros::{Interceptor, interceptor, main};
+
+pub use sword_core::{
+    ComponentRegistry, Config, Provider, ProviderRegistry, config, injectable,
 };
 
-pub use crate::web::{
-    Controller, controller, delete, get, patch, post, put, routes,
-};
+#[cfg(feature = "validation-validator")]
+pub use validator::Validate;
 
-pub use crate::web::{
-    ContentDisposition, File, HttpError, HttpResult, JsonResponse, JsonResponseBody,
-    Method, Middleware, MiddlewareResult, MiddlewaresConfig, Next, OnRequest,
-    OnRequestWithConfig, Redirect, Request, RequestError, StatusCode, cookies::*,
-    headers, middleware, uses,
+pub use crate::adapters::rest::{
+    ContentDisposition, File, HttpError, HttpInterceptorResult, HttpResult,
+    JsonResponse, JsonResponseBody, Next, OnRequest, OnRequestWithConfig, Redirect,
+    Request, RequestError, controller, cookies as sword_cookies, delete, get, patch,
+    post, put, rest_adapter, routes,
 };
 
 #[cfg(feature = "multipart")]
-pub use crate::web::multipart;
+pub use crate::adapters::rest::multipart as sword_multipart;
 
-#[cfg(feature = "validator")]
-pub use crate::web::request_validator::*;
+#[cfg(feature = "validation-validator")]
+pub use crate::adapters::rest::ValidatorRequestValidation;
+
+#[cfg(feature = "adapter-socketio")]
+pub use crate::adapters::socketio::{
+    AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
+    LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
+    SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData,
+    handlers, on_connection, on_disconnection, on_fallback, on_message,
+    socketio_adapter,
+};
+
+#[doc(hidden)]
+pub use sword_core::{
+    Build, Component, ConfigItem, FromState, FromStateArc, HasDeps,
+};
+
+#[doc(hidden)]
+pub use crate::{
+    adapters::{Adapter, rest::RestAdapter},
+    interceptor::Interceptor,
+};
+
+#[doc(hidden)]
+#[cfg(feature = "adapter-socketio")]
+pub use crate::adapters::socketio::SocketIoAdapter;

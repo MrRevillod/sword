@@ -1,9 +1,8 @@
 use axum_test::{TestServer, multipart::MultipartForm};
 use serde_json::Value;
 use sword::prelude::*;
+use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
-
-use multipart::bytes::Bytes;
 
 #[controller("/test")]
 struct TestController;
@@ -65,8 +64,8 @@ impl TestController {
 struct V1UsersModule;
 
 impl Module for V1UsersModule {
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<TestController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TestController>();
     }
 }
 

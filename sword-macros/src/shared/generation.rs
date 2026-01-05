@@ -49,12 +49,12 @@ pub fn generate_field_extractions(fields: &[(Ident, Type)]) -> TokenStream {
         match extract_arc_inner_type(field_type) {
             Some(_inner_type) => {
                 quote! {
-                    let #field_name = <#field_type as ::sword::core::FromStateArc>::from_state_arc(state)?;
+                    let #field_name = <#field_type as ::sword::internal::core::FromStateArc>::from_state_arc(state)?;
                 }
             },
             None => {
                 quote! {
-                    let #field_name = <#field_type as ::sword::core::FromState>::from_state(state)?;
+                    let #field_name = <#field_type as ::sword::internal::core::FromState>::from_state(state)?;
                 }
             }
         }
@@ -90,8 +90,8 @@ pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let assigns = generate_field_assignments(fields);
 
     quote! {
-        impl ::sword::core::Build for #name {
-            fn build(state: &::sword::core::State) -> Result<Self, ::sword::core::DependencyInjectionError>
+        impl ::sword::internal::core::Build for #name {
+            fn build(state: &::sword::internal::core::State) -> Result<Self, ::sword::internal::core::DependencyInjectionError>
             where
                 Self: Sized,
             {
@@ -138,7 +138,7 @@ pub fn gen_deps(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     });
 
     quote! {
-        impl ::sword::core::HasDeps for #name {
+        impl ::sword::internal::core::HasDeps for #name {
             fn deps() -> Vec<::std::any::TypeId> {
                 vec![#(#dep_types),*]
             }

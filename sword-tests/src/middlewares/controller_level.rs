@@ -2,11 +2,11 @@ use axum_test::TestServer;
 use serde_json::json;
 use sword::prelude::*;
 
-#[middleware]
+#[derive(Interceptor)]
 struct ExtensionsTestMiddleware;
 
 impl OnRequest for ExtensionsTestMiddleware {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions
             .insert::<String>("test_extension".to_string());
 
@@ -14,18 +14,18 @@ impl OnRequest for ExtensionsTestMiddleware {
     }
 }
 
-#[middleware]
+#[derive(Interceptor)]
 struct MwWithState;
 
 impl OnRequest for MwWithState {
-    async fn on_request(&self, mut req: Request) -> MiddlewareResult {
+    async fn on_request(&self, mut req: Request) -> HttpInterceptorResult {
         req.extensions.insert::<u16>(8080);
         req.next().await
     }
 }
 
 #[controller("/test")]
-#[uses(ExtensionsTestMiddleware)]
+#[interceptor(ExtensionsTestMiddleware)]
 struct TestController {}
 
 #[routes]
@@ -42,7 +42,7 @@ impl TestController {
     }
 
     #[get("/middleware-state")]
-    #[uses(MwWithState)]
+    #[interceptor(MwWithState)]
     async fn middleware_state(&self, req: Request) -> HttpResult {
         let port = req.extensions.get::<u16>().cloned().unwrap_or(0);
         let message = req.extensions.get::<String>().cloned().unwrap_or_default();
@@ -61,8 +61,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<TestController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TestController>();
     }
 }
 

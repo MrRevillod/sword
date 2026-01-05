@@ -139,8 +139,8 @@ impl UserController {
 struct UserModule;
 
 impl Module for UserModule {
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<UserController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<UserController>();
     }
 }
 

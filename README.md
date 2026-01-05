@@ -13,10 +13,10 @@ It takes advantage of the tokio and axum ecosystem to bring you performance with
 - **Macro-based routing** - Clean and intuitive route definitions
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` crate and extensible validation system
-- **HTTP responses standarization** - Using `axum_responses` crate
+- **HTTP responses standarization** - Consistent response formats out of the box
 - **Dependency Injection** - Built-in DI support with declarative macros
-- **Asynchronous by default** - Built on top of `axum` and `tokio`
 - **Interactive CLI** - Built to improve the developer experience
+- **Real time support** - Built-in support for SocketIO with `socketioxide` crate
 
 ## Usage
 

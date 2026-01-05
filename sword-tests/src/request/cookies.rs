@@ -1,11 +1,12 @@
 use axum_test::TestServer;
 use sword::prelude::*;
+use sword_cookies::*;
 
-#[middleware]
+#[derive(Interceptor)]
 struct SetCookieMw {}
 
 impl OnRequest for SetCookieMw {
-    async fn on_request(&self, req: Request) -> MiddlewareResult {
+    async fn on_request(&self, req: Request) -> HttpInterceptorResult {
         let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("session_id", "abc123")
@@ -41,7 +42,7 @@ impl CookieController {
     }
 
     #[get("/with_middleware")]
-    #[uses(SetCookieMw)]
+    #[interceptor(SetCookieMw)]
     async fn with_middleware(&self, req: Request) -> HttpResult {
         let cookies = req.cookies()?;
 
@@ -57,8 +58,8 @@ impl CookieController {
 struct CookieModule;
 
 impl Module for CookieModule {
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<CookieController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<CookieController>();
     }
 }
 

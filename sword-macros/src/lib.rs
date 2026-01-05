@@ -1,161 +1,26 @@
+mod adapters;
+mod core;
+mod interceptor_derive;
+mod shared;
+
+#[macro_use]
+mod macros;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
-mod config;
-mod http_error;
-mod shared;
-
-mod controller {
-    pub mod expand;
-    pub mod generation;
-    pub mod parsing;
-
-    pub mod routes {
-        mod expand;
-        mod generation;
-        mod parsing;
-
-        pub use expand::*;
-        pub use generation::*;
-        pub use parsing::*;
-    }
-
-    pub use expand::expand_controller;
-    pub use routes::expand_controller_routes;
+http_method! {
+    get,
+    post,
+    put,
+    delete,
+    patch,
 }
 
-mod middlewares;
-
-mod injectable;
-
-/// Defines a handler for HTTP GET requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the GET request, e.g., `"/items"`
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/items")]
-///     async fn get_items(&self) -> HttpResponse {
-///         HttpResponse::Ok().message("List of items")
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP POST requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the POST request, e.g., `"/api"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[post("/items")]
-///     async fn create_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item created"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP PUT requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the PUT request, e.g., `"/items"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[put("/item/{id}")]
-///     async fn update_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item updated"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for HTTP DELETE requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the DELETE request, e.g., `"/item/{id}"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[delete("/item/{id}")]
-///     async fn delete_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item deleted"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a handler for PATCH DELETE requests.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the PATCH request, e.g., `"/item/{id}"`
-///
-/// ## Usage
-/// ```rust,ignore
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[patch("/item/{id}")]
-///     async fn patch_item(&self, req: Request) -> HttpResult<HttpResponse> {
-///         Ok(HttpResponse::Ok().message("Item patched"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-/// Defines a controller with a base path.
-/// This macro should be used in combination with the `#[routes]` macro.
+/// This macro is alias for `#[rest_adapter]`.
+/// Defines a REST adapter with a base path, and should be used in combination
+/// with the `#[routes]` macro for route implementation.
 ///
 /// ### Parameters
 /// - `base_path`: The base path for the controller, e.g., "/api
@@ -168,89 +33,87 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResponse {
-///        Ok(HttpResponse::Ok().message("Hello from MyController"))    
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controller::expand_controller(attr, item)
+    adapters::expand_controller(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Implements the routes for a controller defined with the `#[controller]` macro.
+/// Defines a REST adapter with a base path, and should be used in combination
+/// with the `#[routes]` macro for route implementation.
+///
+/// ## Parameters
+/// - `base_path`: The base path for the controller, e.g., "/api"
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[controller("/base_path")]
+/// #[rest_adapter("/base_path")]
 /// struct MyController {}
 ///
 /// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResponse {
-///        HttpResponse::Ok().message("Hello from MyController")
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn rest_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::expand_controller(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+/// Implements the routes for a controller defined with the `#[rest_adapter]` macro.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[rest_adapter("/base_path")]
+/// struct MyController {}
+///
+/// #[routes]
+/// impl MyController {
+///     #[get("/sub_path")]
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
 pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controller::expand_controller_routes(attr, item)
+    adapters::expand_controller_routes(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-///  Declares a middleware struct.
-#[proc_macro_attribute]
-pub fn middleware(attr: TokenStream, item: TokenStream) -> TokenStream {
-    middlewares::expand_middleware(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-/// Declares a executable middleware to apply to a route controller.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[controller]` macro.
+/// Derive macro for creating interceptors.
 ///
-/// ### Parameters
-/// - `MiddlewareName`: The name of the middleware struct that implements the `OnRequest` or `OnRequestWithConfig` trait.
-///   Also can receive an instance of a `tower-http` service layer like `CorsLayer`, `CompressionLayer`, `TraceLayer`, etc.
-///   If the layer can be added without errors on `Application::with_layer` there will not be any problem using it.  
+/// Generates implementations for the `Interceptor` trait.
 ///
-/// - `config`: (Optional) Configuration parameters for the middleware (only if the middleware implements `OnRequestWithConfig`).
-///
-/// ### Handle errors
-/// To throw an error from a middleware, simply return an `Err` with an `HttpResponse`
-/// struct in the same way as a controller handler.
-///
-/// ### Usage
+/// # Usage
 /// ```rust,ignore
-/// #[middleware]
-/// pub struct RoleMiddleware;
+/// use sword::prelude::*;
 ///
-/// impl OnRequestWithConfig<Vec<&str>> for RoleMiddleware {
-///     async fn on_request_with_config(
-///         &self,
-///         roles: Vec<&str>,
-///         req: Request
-///     ) -> MiddlewareResult {
+/// #[derive(Interceptor)]
+/// struct MyInterceptor;
 ///
-///         req.next().await
-///     }
-/// }
-///
-/// #[controller("/api")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/items")]
-///     #[uses(RoleMiddleware, config = vec!["admin", "user"])]
-///     async fn get_items(&self) -> HttpResponse {
-///         HttpResponse::Ok().message("List of items")
-///     }
-/// }
-/// ```
+/// // then implement some Interceptor trait variants
+/// // depending on the adapter type (e. g. OnRequest, OnConnect.)
+#[proc_macro_derive(Interceptor)]
+pub fn derive_interceptor(input: TokenStream) -> TokenStream {
+    interceptor_derive::derive_interceptor(input)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+/// Applies the interceptor to the current scope.
+/// This macro can be used to apply an `Interceptor` to different `Adapter` types,
+/// such as REST controllers or Socket.IO adapters.
 #[proc_macro_attribute]
-pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
     item
 }
@@ -265,6 +128,7 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - `key`: The key in the configuration file where the struct is located.
 ///
 /// ### Usage
+///
 /// ```rust,ignore
 /// #[derive(Deserialize)]
 /// #[config(key = "my-section")]
@@ -272,27 +136,9 @@ pub fn uses(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     my_key: String,
 /// }
 /// ```
-///
-/// This allows you to access the configuration in your handlers or middlewares
-///
-/// ```rust,ignore
-/// #[controller("/some_path")]
-/// struct SomeController {
-///     my_config: MyConfig,
-/// }
-///
-/// #[routes]
-/// impl SomeController {
-///     #[get("/config")]
-///     async fn get_config(&self) -> HttpResponse {
-///         let message = format!("Config key: {}", &self.config.my_key);
-///
-///         HttpResponse::Ok().message(message)
-///     }
-/// }
 #[proc_macro_attribute]
 pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
-    config::expand_config_struct(attr, item)
+    core::config::expand_config_struct(attr, item)
 }
 
 /// Marks a struct as injectable.
@@ -370,7 +216,7 @@ pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
-    injectable::expand_injectable(attr, item)
+    core::injectable::expand_injectable(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -442,7 +288,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match http_error::derive(input) {
+    match adapters::derive_http_error(input) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
@@ -723,4 +569,157 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     output.into()
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Marks a struct as a Socket.IO adapter.
+/// This macro should be used in combination with the `#[handlers]`
+/// macro for handler implementation.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[socketio_adapter("/chat")]
+/// struct ChatSocket;
+///
+/// #[handlers]
+/// impl ChatSocket {
+///     #[on_connection]
+///     async fn on_connect(&self, socket: SocketRef) {
+///         println!("Client connected");
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::expand_socketio_adapter(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Defines Socket.IO handlers for its associated adapter.
+/// This macro should be used inside an `impl` block of a struct annotated with the `#[socketio_adapter]` macro.
+///
+/// ### Parameters
+/// - `path`: The path for the Socket.IO endpoint, e.g., `"/socket"`
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[socketio_adapter("/socket")]
+/// struct SocketController;
+///
+/// #[handlers]
+/// impl SocketController {
+///     #[on_connection]
+///     async fn on_connect(&self, socket: SocketRef) {
+///         println!("Client connected");
+///     }
+///
+///     #[on_message("message")]
+///     async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
+///         println!("Received: {}", msg);
+///     }
+///
+///     #[on_disconnect]
+///     async fn on_disconnect(&self, socket: SocketRef) {
+///         println!("Client disconnected");
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn handlers(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::expand_socketio_handlers(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Marks a method as a WebSocket connection handler.
+/// This method will be called when a client establishes a WebSocket connection.
+///
+/// ### Parameters
+/// The handler receives a `SocketRef` parameter for interacting with the connected client.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_connection]
+/// async fn on_connect(&self, socket: SocketRef) {
+///     println!("Client connected: {}", socket.id);
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_connection(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Marks a method as a WebSocket disconnection handler.
+/// This method will be called when a client disconnects from the WebSocket.
+///
+/// ### Parameters
+/// The handler receives a `SocketRef` parameter with the disconnected client's information.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_disconnection]
+/// async fn on_disconnect(&self, socket: SocketRef) {
+///     println!("Client disconnected: {}", socket.id);
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_disconnection(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Marks a method as a WebSocket message handler.
+/// This method will be called when the client emits an event with the specified message type.
+///
+/// ### Parameters
+/// - `event_name`: The name of the event to handle, e.g., `"message"`, `"chat"`, etc.
+///
+/// ### Parameters in handler
+/// - `socket: SocketRef` (optional) - The connected client's socket
+/// - `Event(name): Event` (optional) - The event name
+/// - `Data(data): Data<T>` (optional) - The message payload deserialized to type T
+/// - `ack: AckSender` (optional) - For sending acknowledgments back to the client
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_message("message")]
+/// async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
+///     println!("Received: {}", msg);
+/// }
+///
+/// #[on_message("request")]
+/// async fn on_request(&self, Data(req): Data<Request>, ack: AckSender) {
+///     ack.send("response").ok();
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_message(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
+}
+
+#[cfg(feature = "adapter-socketio")]
+/// Marks a method as a WebSocket fallback handler.
+/// This method will be called for any event that doesn't match a specific `#[subscribe_message]` handler.
+/// It's useful for debugging or handling dynamic events.
+///
+/// ### Parameters in handler
+/// - `Event(name): Event` - The event name
+/// - `Data(data): Data<T>` - The message payload
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[on_fallback]
+/// async fn on_fallback(&self, Event(event): Event, Data(data): Data<Value>) {
+///     println!("Unhandled event: {} with data: {:?}", event, data);
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn on_fallback(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let _ = attr;
+    item
 }

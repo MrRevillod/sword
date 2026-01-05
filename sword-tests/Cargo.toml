@@ -6,7 +6,11 @@ edition = "2024"
 publish = false
 
 [dependencies]
-sword = { path = "../sword", features = ["multipart", "validator"] }
+sword = { path = "../sword", features = [
+    "multipart",
+    "validation-validator",
+    "adapter-socketio",
+] }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

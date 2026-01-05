@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use axum_test::TestServer;
+use axum_test::{TestServer, http::StatusCode};
 use serde_json::{Value, json};
-use sword::{core::ComponentRegistry, prelude::*};
+use sword::prelude::*;
 
 pub type Store = Arc<RwLock<HashMap<&'static str, Vec<Value>>>>;
 
@@ -68,7 +68,7 @@ impl TaskRepository {
     }
 }
 
-#[controller("/tasks", version = "v1")]
+#[controller("/tasks")]
 pub struct TasksController {
     tasks: TasksService,
 }
@@ -105,8 +105,8 @@ impl Module for TasksModule {
         components.register::<TasksService>();
     }
 
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<TasksController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TasksController>();
     }
 }
 
@@ -120,7 +120,7 @@ async fn test_get_tasks_empty() {
 
     let server = TestServer::new(app.build().router()).unwrap();
 
-    let response = server.get("/v1/tasks").await;
+    let response = server.get("/tasks").await;
 
     assert_eq!(response.status_code(), StatusCode::OK);
 
@@ -141,7 +141,7 @@ async fn test_create_task() {
 
     let server = TestServer::new(app.build().router()).unwrap();
 
-    let response = server.post("/v1/tasks").await;
+    let response = server.post("/tasks").await;
 
     assert_eq!(response.status_code(), 201);
 

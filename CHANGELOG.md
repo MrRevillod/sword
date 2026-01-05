@@ -13,11 +13,17 @@
 
 - Added `Cors` middleware based on `tower_http::cors::CorsLayer`. The configuration can be set in the config file under the `cors` key.
 
-- Added `middlewares` field to `Config` struct. This allows to define global middlewares in the configuration file.
+- Added `middlewares` field to config file. This allows to define global middlewares in the configuration file.
 
 - Added `Compression` middleware based on `tower_http::compression::CompressionLayer`. The configuration can be set in the config file under the `compression` key.
 
-- Added `GatewayRegistry` system for managing multiple gateway instances in the application and modules.
+- Added `AdapterRegistry` system for managing multiple adapter instances in the application and modules.
+
+- Added `RequestId` middleware for generating and attaching unique request IDs to each incoming request. This middleware uses the tower-http `RequestIdLayer` with a UUID generator under the hood.
+
+- Added unified error handling macros that works with `thiserror` crate. It allows to map custom errors to standarized JSON error responses.
+
+- Added `SocketIo` adapter for handling SocketIO connections.
 
 ### Changed
 
@@ -33,7 +39,7 @@
 
 - The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
 
-- The associated type in `Module` trait is not required anymore. Use the `register_gateways` method to register rest controllers and other gateway types.
+- The associated type in `Module` trait is not required anymore. Use the `register_adapters` method to register rest controllers and other adapter kinds.
 
 ## [0.2.0]
 

@@ -1,9 +1,9 @@
 [package]
 name = "sword-macros"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
-description = "Macros for the Sword web framework"
+description = "Structured Rust web framework built on top of Axum, providing powerful features for building robust web applications."
 repository = "https://github.com/sword-web/sword"
 homepage = "https://github.com/sword-web/sword"
 documentation = "https://docs.rs/sword-macros"
@@ -31,3 +31,4 @@ proc-macro-error = "1.0.4"
 [features]
 default = []
 hot-reload = []
+adapter-socketio = []

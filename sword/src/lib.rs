@@ -1,30 +1,51 @@
-pub mod core;
-pub mod prelude;
-pub mod web;
+mod adapters;
+mod application;
+mod interceptor;
+mod module;
 
-use parking_lot::RwLock;
-use std::collections::HashMap;
+pub use application::*;
+pub mod prelude;
 
 pub use sword_macros::main;
 
+pub mod layers {
+    pub use sword_layers::helmet;
+}
+
 #[doc(hidden)]
 pub mod internal {
-    pub use axum::body::{Body as AxumBody, HttpBody as AxumHttpBody};
-    pub use axum::extract::{FromRequest, FromRequestParts, Request as AxumRequest};
-    pub use axum::middleware::Next as AxumNext;
-    pub use axum::middleware::from_fn_with_state as mw_with_state;
-    pub use axum::response::{IntoResponse, Response as AxumResponse};
-    pub use axum::routing::Router as AxumRouter;
-    pub use axum::routing::{
-        delete as axum_delete_fn, get as axum_get_fn, patch as axum_patch_fn,
-        post as axum_post_fn, put as axum_put_fn,
-    };
+    pub mod axum {
+        pub use axum::body::{Body as AxumBody, HttpBody as AxumHttpBody};
+        pub use axum::extract::{
+            FromRequest, FromRequestParts, Request as AxumRequest,
+        };
+        pub use axum::middleware::{
+            Next as AxumNext, from_fn_with_state as mw_with_state,
+        };
+        pub use axum::response::{IntoResponse, Response as AxumResponse};
+        pub use axum::routing::{
+            Router as AxumRouter, delete as delete_fn, get as get_fn,
+            patch as patch_fn, post as post_fn, put as put_fn,
+        };
+    }
 
-    pub use crate::core::__internal::*;
-    pub use crate::web::__internal::*;
+    pub mod socketio {
+        pub use socketioxide::SocketError;
+        pub use socketioxide::handler::ConnectHandler;
+        pub use socketioxide::handler::connect::FromConnectParts;
+    }
+
+    pub mod core {
+        pub use crate::adapters::rest::RestAdapter;
+        pub use crate::adapters::socketio::SocketIoAdapter;
+        pub use crate::adapters::{Adapter, AdapterKind};
+        pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
+        pub use sword_core::*;
+    }
 
     pub use inventory;
     pub use tokio::runtime as tokio_runtime;
+
     pub use tracing;
 
     #[cfg(feature = "hot-reload")]
@@ -33,5 +54,3 @@ pub mod internal {
     #[cfg(feature = "hot-reload")]
     pub use subsecond;
 }
-
-pub(crate) type RwMap<K, V> = RwLock<HashMap<K, V>>;

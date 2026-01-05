@@ -47,8 +47,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_gateways(gateways: &GatewayRegistry) {
-        gateways.register::<TestController>();
+    fn register_adapters(adapters: &AdapterRegistry) {
+        adapters.register::<TestController>();
     }
 }
 

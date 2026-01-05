@@ -1,0 +1,37 @@
+[package]
+name = "sword-core"
+version = "0.2.1"
+edition = "2024"
+authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
+description = "Structured Rust web framework built on top of Axum, providing powerful features for building robust web applications."
+repository = "https://github.com/sword-web/sword"
+homepage = "https://github.com/sword-web/sword"
+documentation = "https://docs.rs/sword"
+keywords = ["sword", "web", "framework", "axum", "microservices"]
+categories = ["web-programming", "web-programming::http-server"]
+readme = "../README.md"
+license-file = "../LICENSE"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+axum = { workspace = true }
+axum_responses = { workspace = true }
+tower = { workspace = true }
+
+sword-layers = { workspace = true }
+sword-macros = { workspace = true }
+
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+toml = "0.9.0"
+inventory = { workspace = true }
+parking_lot = { workspace = true }
+regex-lite = { workspace = true }
+
+[features]
+default = []
