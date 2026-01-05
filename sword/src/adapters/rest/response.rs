@@ -42,15 +42,14 @@ impl From<RequestError> for JsonResponse {
                 tracing::error!(header = %name, "Invalid header name");
                 JsonResponse::BadRequest()
                     .message("Invalid header name")
-                    .error(format!("Header '{}' contains invalid characters", name))
+                    .error(format!("Header '{name}' contains invalid characters"))
             }
             RequestError::InvalidHeaderValue(name) => {
                 tracing::error!(header = %name, "Invalid header value");
                 JsonResponse::BadRequest()
                     .message("Invalid header value")
                     .error(format!(
-                        "Value for header '{}' contains invalid characters",
-                        name
+                        "Value for header '{name}' contains invalid characters",
                     ))
             }
         }
@@ -82,7 +81,9 @@ impl From<RequestError> for JsonResponse {
 ///   ]
 /// }
 /// ```
-pub fn format_validator_errors(e: validator::ValidationErrors) -> serde_json::Value {
+pub(crate) fn format_validator_errors(
+    e: validator::ValidationErrors,
+) -> serde_json::Value {
     let mut formatted_errors = serde_json::Map::new();
 
     for (field, field_errors) in e.field_errors() {

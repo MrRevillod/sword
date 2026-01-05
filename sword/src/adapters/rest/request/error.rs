@@ -80,6 +80,7 @@ impl From<axum::extract::multipart::MultipartRejection> for RequestError {
     }
 }
 
+#[cfg(feature = "multipart")]
 impl From<axum::extract::multipart::MultipartError> for RequestError {
     fn from(err: axum::extract::multipart::MultipartError) -> Self {
         Self::parse_error("Failed to parse multipart form data", err.to_string())

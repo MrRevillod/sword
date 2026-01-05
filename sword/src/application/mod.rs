@@ -4,8 +4,8 @@ mod router;
 
 use axum::routing::Router;
 use colored::Colorize;
-use sword_core::Config;
-use sword_core::layers::*;
+use std::path::Path;
+use sword_core::{Config, layers::*};
 use tokio::net::TcpListener;
 
 pub use builder::ApplicationBuilder;
@@ -22,7 +22,7 @@ pub struct Application {
 }
 
 impl Application {
-    pub fn new(router: Router, config: Config) -> Self {
+    pub(crate) fn new(router: Router, config: Config) -> Self {
         Self { router, config }
     }
 
@@ -41,9 +41,7 @@ impl Application {
         ApplicationBuilder::new()
     }
 
-    pub fn from_config_path<P: AsRef<std::path::Path>>(
-        path: P,
-    ) -> ApplicationBuilder {
+    pub fn from_config_path<P: AsRef<Path>>(path: P) -> ApplicationBuilder {
         ApplicationBuilder::from_config(
             Config::from_path(path).expect("Configuration loading error"),
         )

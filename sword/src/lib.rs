@@ -1,12 +1,12 @@
+mod adapters;
 mod application;
+mod interceptor;
 mod module;
 
-pub mod adapters;
-pub mod interceptor;
+pub use application::*;
 pub mod prelude;
 
-pub use application::*;
-pub use sword_macros::{Interceptor, main};
+pub use sword_macros::main;
 
 pub mod layers {
     pub use sword_layers::helmet;
@@ -31,11 +31,15 @@ pub mod internal {
 
     pub mod socketio {
         pub use socketioxide::SocketError;
+        pub use socketioxide::handler::ConnectHandler;
         pub use socketioxide::handler::connect::FromConnectParts;
     }
 
     pub mod core {
-        pub use crate::interceptor::InterceptorRegistrar;
+        pub use crate::adapters::rest::RestAdapter;
+        pub use crate::adapters::socketio::SocketIoAdapter;
+        pub use crate::adapters::{Adapter, AdapterKind};
+        pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
         pub use sword_core::*;
     }
 

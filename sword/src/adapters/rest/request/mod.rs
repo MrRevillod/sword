@@ -1,5 +1,5 @@
 mod error;
-pub mod extract;
+mod extract;
 mod validator;
 
 use super::interceptor::HttpInterceptorResult;
@@ -12,22 +12,15 @@ use axum_responses::JsonResponse;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, str::FromStr};
 use sword_core::layers::RequestId;
-
-pub use sword_layers::cookies::{
-    Cookies, Key, PrivateCookies, SignedCookies,
-    cookie::{
-        Cookie, CookieBuilder, Expiration, KeyError as CookieKeyError,
-        ParseError as CookieParseError, SameSite,
-    },
-};
+use sword_layers::cookies::Cookies;
 
 pub use error::*;
 
-#[cfg(feature = "multipart")]
-pub use bytes::*;
+#[allow(unused_imports)]
+pub use extract::*;
 
 #[cfg(feature = "validation-validator")]
-pub use validator::*;
+pub use validator::ValidatorRequestValidation;
 
 /// Represents the incoming request in the Sword framework.
 ///

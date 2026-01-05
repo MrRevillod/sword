@@ -1537,6 +1537,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "interceptors"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sword",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "inventory"
 version = "0.3.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2237,6 +2249,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rest-adapter"
+version = "0.1.0"
+dependencies = [
+ "bcrypt",
+ "dotenv",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sword",
+ "thiserror",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "rkyv"
 version = "0.7.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2579,6 +2607,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "socketio-adapter"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "sword",
+ "sword-layers",
+ "tokio",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "socketioxide"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2914,7 +2956,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "sword"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "axum_responses",
@@ -2936,8 +2978,6 @@ dependencies = [
  "serde_urlencoded",
  "socketioxide",
  "socketioxide-core",
- "socketioxide-parser-common",
- "socketioxide-parser-msgpack",
  "subsecond",
  "sword-core",
  "sword-layers",
@@ -2951,7 +2991,7 @@ dependencies = [
 
 [[package]]
 name = "sword-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "axum_responses",
@@ -2989,7 +3029,7 @@ dependencies = [
 
 [[package]]
 name = "sword-macros"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "axum",
  "proc-macro-error",
@@ -3502,23 +3542,6 @@ dependencies = [
  "idna",
  "percent-encoding",
  "serde",
-]
-
-[[package]]
-name = "users-managment"
-version = "0.1.0"
-dependencies = [
- "bcrypt",
- "dotenv",
- "serde",
- "serde_json",
- "sqlx",
- "sword",
- "sword-layers",
- "thiserror",
- "tracing-subscriber",
- "uuid",
- "validator",
 ]
 
 [[package]]

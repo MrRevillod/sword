@@ -44,7 +44,7 @@ pub fn generate_controller_routes(
                     .with_state(state.clone());
 
                 let base_path = #struct_ty::base_path();
-                let router = #struct_ty::apply_middlewares(base_router, state);
+                let router = #struct_ty::apply_interceptors(base_router, state);
 
                 match base_path {
                     "/" => router,
@@ -54,9 +54,9 @@ pub fn generate_controller_routes(
             }
         }
 
-        impl ::sword::adapters::Adapter for #struct_ty {
-            fn kind() -> ::sword::adapters::AdapterKind {
-                ::sword::adapters::AdapterKind::Rest(Box::new(Self::router_builder))
+        impl ::sword::internal::core::Adapter for #struct_ty {
+            fn kind() -> ::sword::internal::core::AdapterKind {
+                ::sword::internal::core::AdapterKind::Rest(Box::new(Self::router_builder))
             }
         }
     })
@@ -88,32 +88,23 @@ fn generate_handler(route: &RouteInfo) -> syn::Result<TokenStream> {
 
     let RouteInfo { handler_name, .. } = route;
 
-    let handler = if route.needs_context {
-        quote! {
-            ::sword::internal::axum::#routing_function({
-                let ctrl = std::sync::Arc::clone(&controller);
+    let req_param = route
+        .needs_context
+        .then(|| quote! { req: ::sword::prelude::Request })
+        .into_iter();
 
-                move |req: ::sword::adapters::rest::Request| {
-                    async move {
-                        use ::sword::internal::axum::IntoResponse;
-                        ctrl.#handler_name(req).await.into_response()
-                    }
-                }
-            })
-        }
-    } else {
-        quote! {
-            ::sword::internal::axum::#routing_function({
-                let ctrl = std::sync::Arc::clone(&controller);
+    let req_arg = route.needs_context.then(|| quote! { req }).into_iter();
 
-                move |_: ::sword::adapters::rest::Request| {
-                    async move {
-                        use ::sword::internal::axum::IntoResponse;
-                        ctrl.#handler_name().await.into_response()
-                    }
+    let handler = quote! {
+        ::sword::internal::axum::#routing_function({
+            let ctrl = std::sync::Arc::clone(&controller);
+            move |#(#req_param)*| {
+                async move {
+                    use ::sword::internal::axum::IntoResponse;
+                    ctrl.#handler_name(#(#req_arg)*).await.into_response()
                 }
-            })
-        }
+            }
+        })
     };
 
     Ok(handler)

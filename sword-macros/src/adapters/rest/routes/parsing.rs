@@ -14,7 +14,7 @@ const VALID_ROUTE_MACROS: &[&str; 7] = &[
     "patch",
     "delete",
     "middleware",
-    "uses",
+    "interceptor",
 ];
 
 pub const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "delete", "patch"];

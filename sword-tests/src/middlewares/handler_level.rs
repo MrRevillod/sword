@@ -1,6 +1,7 @@
 use axum_test::TestServer;
 use serde_json::json;
 use sword::prelude::*;
+use tower_http::cors::CorsLayer;
 
 #[allow(unused)]
 #[derive(Debug, Clone)]

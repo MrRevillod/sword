@@ -3,10 +3,12 @@ pub mod rest;
 #[cfg(feature = "adapter-socketio")]
 pub mod socketio {
     mod adapter;
+    mod error;
     mod extract;
     mod interceptor;
 
     pub use adapter::*;
+    pub use error::*;
     pub use extract::*;
     pub use interceptor::*;
 }
@@ -75,7 +77,7 @@ pub struct AdapterRegistry {
 }
 
 impl AdapterRegistry {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             adapters: RwLock::new(Vec::new()),
         }
@@ -93,12 +95,8 @@ impl AdapterRegistry {
         self.adapters.write().push(A::kind());
     }
 
-    pub fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
+    pub(crate) fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
         &self.adapters
-    }
-
-    pub fn clear(&self) {
-        self.adapters.write().clear();
     }
 }
 

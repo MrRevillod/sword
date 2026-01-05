@@ -1,5 +1,6 @@
 use axum_test::TestServer;
 use sword::prelude::*;
+use sword_cookies::*;
 
 #[derive(Interceptor)]
 struct SetCookieMw {}

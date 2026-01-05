@@ -1,0 +1,19 @@
+[package]
+name = "socketio-adapter"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sword = { workspace = true, features = [
+    "validation-validator",
+    "multipart",
+    "adapter-socketio",
+] }
+
+tokio = { workspace = true }
+sword-layers = { workspace = true }
+serde = { workspace = true }
+validator = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = "0.4.42"

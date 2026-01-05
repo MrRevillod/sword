@@ -18,7 +18,7 @@ impl CommonHttpAdapterInput {
         let fields = StructFields::parse(&input)?;
 
         for attr in &input.attrs {
-            if attr.path().is_ident("uses") {
+            if attr.path().is_ident("interceptor") {
                 let args = attr.parse_args::<InterceptorArgs>()?;
                 interceptors.push(args);
             }

@@ -18,8 +18,9 @@ http_method! {
     patch,
 }
 
-/// Defines a controller with a base path.
-/// This macro should be used in combination with the `#[routes]` macro.
+/// This macro is alias for `#[rest_adapter]`.
+/// Defines a REST adapter with a base path, and should be used in combination
+/// with the `#[routes]` macro for route implementation.
 ///
 /// ### Parameters
 /// - `base_path`: The base path for the controller, e.g., "/api
@@ -43,11 +44,36 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Implements the routes for a controller defined with the `#[controller]` macro.
+/// Defines a REST adapter with a base path, and should be used in combination
+/// with the `#[routes]` macro for route implementation.
+///
+/// ## Parameters
+/// - `base_path`: The base path for the controller, e.g., "/api"
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[controller("/base_path")]
+/// #[rest_adapter("/base_path")]
+/// struct MyController {}
+///
+/// #[routes]
+/// impl MyController {
+///     #[get("/sub_path")]
+///     async fn my_handler(&self) -> HttpResult {
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn rest_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::expand_controller(attr, item)
+        .unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+/// Implements the routes for a controller defined with the `#[rest_adapter]` macro.
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[rest_adapter("/base_path")]
 /// struct MyController {}
 ///
 /// #[routes]
@@ -64,12 +90,28 @@ pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+/// Derive macro for creating interceptors.
+///
+/// Generates implementations for the `Interceptor` trait.
+///
+/// # Usage
+/// ```rust,ignore
+/// use sword::prelude::*;
+///
+/// #[derive(Interceptor)]
+/// struct MyInterceptor;
+///
+/// // then implement some Interceptor trait variants
+/// // depending on the adapter type (e. g. OnRequest, OnConnect.)
 #[proc_macro_derive(Interceptor)]
 pub fn derive_interceptor(input: TokenStream) -> TokenStream {
     interceptor_derive::derive_interceptor(input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+/// Applies the interceptor to the current scope.
+/// This macro can be used to apply an `Interceptor` to different `Adapter` types,
+/// such as REST controllers or Socket.IO adapters.
 #[proc_macro_attribute]
 pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
@@ -529,6 +571,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Marks a struct as a Socket.IO adapter.
 /// This macro should be used in combination with the `#[handlers]`
 /// macro for handler implementation.
@@ -552,6 +595,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Defines Socket.IO handlers for its associated adapter.
 /// This macro should be used inside an `impl` block of a struct annotated with the `#[socketio_adapter]` macro.
 ///
@@ -587,6 +631,7 @@ pub fn handlers(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Marks a method as a WebSocket connection handler.
 /// This method will be called when a client establishes a WebSocket connection.
 ///
@@ -606,6 +651,7 @@ pub fn on_connection(attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Marks a method as a WebSocket disconnection handler.
 /// This method will be called when a client disconnects from the WebSocket.
 ///
@@ -625,6 +671,7 @@ pub fn on_disconnection(attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Marks a method as a WebSocket message handler.
 /// This method will be called when the client emits an event with the specified message type.
 ///
@@ -655,6 +702,7 @@ pub fn on_message(attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
+#[cfg(feature = "adapter-socketio")]
 /// Marks a method as a WebSocket fallback handler.
 /// This method will be called for any event that doesn't match a specific `#[subscribe_message]` handler.
 /// It's useful for debugging or handling dynamic events.

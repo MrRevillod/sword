@@ -1,6 +1,7 @@
 use axum_test::{TestServer, multipart::MultipartForm};
 use serde_json::Value;
 use sword::prelude::*;
+use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
 
 #[controller("/test")]

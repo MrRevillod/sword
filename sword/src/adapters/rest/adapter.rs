@@ -2,9 +2,11 @@ use super::super::Adapter;
 use axum::Router as AxumRouter;
 use sword_core::State;
 
-pub use sword_macros::{controller, delete, get, patch, post, put, routes};
+pub use sword_macros::{
+    controller, delete, get, patch, post, put, rest_adapter, routes,
+};
 
-/// Trait for controllers with automatic dependency injection and middleware support.
+/// Trait for controllers with automatic dependency injection and interceptors support.
 ///
 /// Controllers in Sword group related route handlers together and can declare
 /// dependencies that will be automatically resolved and injected.
@@ -12,14 +14,14 @@ pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 /// Controllers automatically implement the `Adapter` trait, making them registrable
 /// as REST adapters within modules via `AdapterRegistry::register::<YourController>()`.
 ///
-/// Use the `#[controller]` macro to automatically implement this trait.
+/// Use the `#[rest_adapter]` or `#[controller]` macro to automatically implement this trait.
 ///
 /// # Example
 ///
 /// ```rust,ignore
 /// use sword::prelude::*;
 ///
-/// #[controller("/api/users")]
+/// #[rest_adapter("/api/users")]
 /// struct UserController {
 ///     service: Arc<UserService>,
 /// }
@@ -34,5 +36,5 @@ pub use sword_macros::{controller, delete, get, patch, post, put, routes};
 /// ```
 pub trait RestAdapter: Adapter {
     fn base_path() -> &'static str;
-    fn apply_middlewares(router: AxumRouter, state: State) -> AxumRouter;
+    fn apply_interceptors(router: AxumRouter, state: State) -> AxumRouter;
 }

@@ -2,7 +2,7 @@ mod generation;
 mod parsing;
 
 use generation::generate_socketio_handlers;
-use parsing::{categorize, parse_handlers};
+use parsing::parse_handlers;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -14,10 +14,9 @@ pub fn expand_socketio_handlers(
 ) -> syn::Result<TokenStream> {
     let input = syn::parse::<ItemImpl>(item)?;
     let handlers = parse_handlers(&input)?;
-    let categorized = categorize(&handlers);
 
     let struct_ty = &input.self_ty;
-    let generated = generate_socketio_handlers(struct_ty, categorized)?;
+    let generated = generate_socketio_handlers(struct_ty, &handlers)?;
 
     let expanded = quote! {
         #input

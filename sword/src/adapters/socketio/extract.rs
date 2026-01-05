@@ -1,8 +1,10 @@
+use super::error::SocketError;
+
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;
 use serde::{Serialize, de::DeserializeOwned};
 use socketioxide::{
-    ParserError, ProtocolVersion, SendError, SocketError, TransportType,
+    ProtocolVersion, SendError, TransportType,
     adapter::{Adapter, LocalAdapter},
     extensions::Extensions,
     extract::{AckSender, Event, SocketRef},
@@ -13,6 +15,9 @@ use socketioxide::{
 use socketioxide_core::{Sid, Value, parser::ParseError};
 use std::{convert::Infallible, sync::Arc};
 
+#[cfg(feature = "validation-validator")]
+use validator::Validate;
+
 use sword_layers::socketio::SocketIoParser;
 
 /// A unified extractor that combines multiple socketioxide extractors into a single context.
@@ -20,7 +25,7 @@ use sword_layers::socketio::SocketIoParser;
 /// Provides access to socket operations, message data, acknowledgments, event names,
 /// and disconnect reasons depending on the handler type.
 pub struct SocketContext<A: Adapter = LocalAdapter> {
-    socket: SocketRef<A>,
+    pub socket: SocketRef<A>,
     data: Option<Value>,
     ack: Option<AckSender<A>>,
     disconnect_reason: Option<DisconnectReason>,
@@ -31,37 +36,87 @@ impl<A> SocketContext<A>
 where
     A: Adapter,
 {
-    /// The `SocketRef` extractor equivalent method.
-    pub fn socket(&self) -> &Socket<A> {
-        &self.socket
+    fn parser(&self) -> &SocketIoParser {
+        self.socket
+            .req_parts()
+            .extensions
+            .get::<SocketIoParser>()
+            .unwrap_or(&SocketIoParser::Common)
     }
 
     /// The `TryData<T>` extractor equivalent method.
     ///   
     /// Deserializes message data to the specified type.
-    pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, ParserError> {
+    pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, SocketError> {
         let Some(data) = &self.data else {
-            return Err(ParserError::new(ParseError::InvalidData));
+            return Err(ParseError::InvalidData)?;
         };
-
-        let parser = self
-            .socket
-            .req_parts()
-            .extensions
-            .get::<SocketIoParser>()
-            .unwrap_or(&SocketIoParser::Common);
 
         let bytes = match &data {
             Value::Str(s, _) => s.as_ref(),
             Value::Bytes(b) => b.as_ref(),
         };
 
-        match parser {
-            SocketIoParser::Common => serde_json::from_slice(bytes)
-                .map_err(|_| ParserError::new(ParseError::InvalidData)),
-            SocketIoParser::MsgPack => rmp_serde::from_slice(bytes)
-                .map_err(|_| ParserError::new(ParseError::InvalidData)),
-        }
+        let result = match self.parser() {
+            SocketIoParser::Common => {
+                let mut parsed: serde_json::Value = serde_json::from_slice(bytes)
+                    .map_err(|_| ParseError::InvalidData)?;
+
+                if let serde_json::Value::Array(mut arr) = parsed {
+                    if arr.len() > 1 {
+                        arr.remove(0);
+                        parsed = if arr.len() == 1 {
+                            arr.pop().ok_or(ParseError::InvalidData)?
+                        } else {
+                            serde_json::Value::Array(arr)
+                        };
+                    } else {
+                        return Err(ParseError::InvalidData.into());
+                    }
+                }
+
+                serde_json::from_value(parsed).map_err(|_| ParseError::InvalidData)
+            }
+            SocketIoParser::MsgPack => {
+                let mut parsed: rmpv::Value =
+                    rmpv::decode::read_value(&mut &bytes[..])
+                        .map_err(|_| ParseError::InvalidData)?;
+
+                if let rmpv::Value::Array(mut arr) = parsed {
+                    if arr.len() > 1 {
+                        arr.remove(0);
+                        parsed = if arr.len() == 1 {
+                            arr.pop().ok_or(ParseError::InvalidData)?
+                        } else {
+                            rmpv::Value::Array(arr)
+                        };
+                    } else {
+                        return Err(ParseError::InvalidData.into());
+                    }
+                }
+
+                let mut buf = Vec::new();
+
+                rmpv::encode::write_value(&mut buf, &parsed)
+                    .map_err(|_| ParseError::InvalidData)?;
+
+                rmp_serde::from_slice(&buf).map_err(|_| ParseError::InvalidData)
+            }
+        };
+
+        Ok(result?)
+    }
+
+    #[cfg(feature = "validation-validator")]
+    pub fn try_validated_data<T>(&self) -> Result<T, SocketError>
+    where
+        T: DeserializeOwned + Validate,
+    {
+        let data: T = self.try_data()?;
+
+        data.validate()?;
+
+        Ok(data)
     }
 
     /// The `Event` extractor equivalent method.
@@ -80,7 +135,7 @@ where
         D: Serialize + ?Sized,
     {
         let Some(ack) = self.ack else {
-            return Err(SendError::Socket(SocketError::Closed));
+            return Err(SendError::Socket(socketioxide::SocketError::Closed));
         };
 
         ack.send(data)?;
@@ -124,7 +179,7 @@ where
 
     /// Disconnects the socket and triggers the disconnect handler.
     pub fn disconnect(self) -> Result<(), SocketError> {
-        self.socket.disconnect()
+        self.socket.disconnect().map_err(SocketError::from)
     }
 
     /// Returns the reason for socket disconnection if this context was created from a disconnect event.

@@ -15,7 +15,7 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
         InterceptorArgs::SwordSimple(path) => {
             quote! {
                 {
-                    fn __check_on_request<M: ::sword::adapters::rest::OnRequest>(mw: &M) -> &M { mw }
+                    fn __check_on_request<M: ::sword::prelude::OnRequest>(mw: &M) -> &M { mw }
 
                     let middleware = state.borrow::<::std::sync::Arc<#path>>()
                         .expect("Failed to retrieve middleware from State");
@@ -24,12 +24,12 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
 
                     ::sword::internal::axum::mw_with_state(
                         state.clone(),
-                        move |mut req: ::sword::adapters::rest::Request, next: ::sword::adapters::rest::Next| {
+                        move |mut req: ::sword::prelude::Request, next: ::sword::prelude::Next| {
                             req.set_next(next);
 
                             let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
-                                <#path as ::sword::adapters::rest::OnRequest>::on_request(&*mw, req).await
+                                <#path as ::sword::prelude::OnRequest>::on_request(&*mw, req).await
                             }
                         }
                     )
@@ -41,7 +41,7 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
                 {
                     fn __check_on_request_with_config<M, C>(mw: &M) -> &M
                     where
-                        M: ::sword::adapters::rest::OnRequestWithConfig<C>
+                        M: ::sword::prelude::OnRequestWithConfig<C>
                     {
                         mw
                     }
@@ -53,11 +53,11 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
 
                     ::sword::internal::axum::mw_with_state(
                         state.clone(),
-                        move |mut req: ::sword::adapters::rest::Request, next: ::sword::adapters::rest::Next| {
+                        move |mut req: ::sword::prelude::Request, next: ::sword::prelude::Next| {
                             req.set_next(next);
                             let mw = ::std::sync::Arc::clone(&middleware);
                             async move {
-                                <#middleware as ::sword::adapters::rest::OnRequestWithConfig<_>>::on_request_with_config(
+                                <#middleware as ::sword::prelude::OnRequestWithConfig<_>>::on_request_with_config(
                                     &*mw,
                                     #config,
                                     req,

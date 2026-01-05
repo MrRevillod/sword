@@ -1,5 +1,8 @@
 mod rest;
+pub use rest::*;
+
+#[cfg(feature = "adapter-socketio")]
 mod socketio;
 
-pub use rest::*;
+#[cfg(feature = "adapter-socketio")]
 pub use socketio::*;

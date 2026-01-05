@@ -1,9 +1,9 @@
 [package]
 name = "sword-core"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
-description = "a structured rust web framework built on top of axum, providing clean routing, configuration, and middleware support"
+description = "Structured Rust web framework built on top of Axum, providing powerful features for building robust web applications."
 repository = "https://github.com/sword-web/sword"
 homepage = "https://github.com/sword-web/sword"
 documentation = "https://docs.rs/sword"

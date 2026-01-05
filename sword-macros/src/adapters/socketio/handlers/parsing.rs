@@ -23,26 +23,12 @@ impl EventKind {
     pub fn is_on_message(&self) -> bool {
         matches!(self, EventKind::OnMessage(_))
     }
-
-    pub fn get_interceptors(&self) -> &[Path] {
-        match self {
-            EventKind::OnConnection(interceptors) => interceptors,
-            _ => &[],
-        }
-    }
 }
 
 pub struct HandlerInfo {
     pub name: Ident,
     pub event_kind: EventKind,
     pub args: Vec<(Ident, Type)>,
-}
-
-pub struct CategorizedHandlers<'a> {
-    pub on_connection: Option<&'a HandlerInfo>,
-    pub on_disconnection: Option<&'a HandlerInfo>,
-    pub on_fallback: Option<&'a HandlerInfo>,
-    pub message_handlers: Vec<(&'a String, &'a HandlerInfo)>,
 }
 
 pub fn parse_handlers(input: &ItemImpl) -> syn::Result<Vec<HandlerInfo>> {
@@ -66,7 +52,7 @@ pub fn parse_handlers(input: &ItemImpl) -> syn::Result<Vec<HandlerInfo>> {
                 continue;
             };
 
-            if ident.to_string() == "interceptor" {
+            if *ident == "interceptor" {
                 interceptors.push(attr.parse_args::<Path>()?);
                 continue;
             }
@@ -82,7 +68,7 @@ pub fn parse_handlers(input: &ItemImpl) -> syn::Result<Vec<HandlerInfo>> {
             }
 
             if event_kind.is_on_connection()
-                && !attr.meta.require_path_only().is_ok()
+                && attr.meta.require_path_only().is_err()
             {
                 event_kind = EventKind::OnConnection(interceptors.clone());
             }
@@ -100,31 +86,6 @@ pub fn parse_handlers(input: &ItemImpl) -> syn::Result<Vec<HandlerInfo>> {
     }
 
     Ok(handlers)
-}
-
-pub fn categorize<'a>(handlers: &'a [HandlerInfo]) -> CategorizedHandlers<'a> {
-    let mut on_connection = None;
-    let mut on_disconnection = None;
-    let mut on_fallback = None;
-    let mut message_handlers = Vec::new();
-
-    for handler in handlers {
-        match &handler.event_kind {
-            EventKind::OnConnection(_) => on_connection = Some(handler),
-            EventKind::OnDisconnection => on_disconnection = Some(handler),
-            EventKind::Fallback => on_fallback = Some(handler),
-            EventKind::OnMessage(event_name) => {
-                message_handlers.push((event_name, handler));
-            }
-        }
-    }
-
-    CategorizedHandlers {
-        on_connection,
-        on_disconnection,
-        on_fallback,
-        message_handlers,
-    }
 }
 
 impl FromStr for EventKind {
