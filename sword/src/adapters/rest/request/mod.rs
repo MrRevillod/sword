@@ -421,7 +421,7 @@ impl Request {
     ///
     ///     // Process each field in the multipart form data
     ///     // And ensure to handle errors appropriately
-    ///     while let Some(field) = multipart.next_field().await.unwrap() {
+    ///     while let Some(field) = multipart.next_field().await? {
     ///         field_names.push(field.name().unwrap_or("Uknown").to_string());
     ///     }
     ///

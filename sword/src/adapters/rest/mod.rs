@@ -20,6 +20,8 @@ pub mod cookies {
 
 #[cfg(feature = "multipart")]
 pub mod multipart {
-    pub use axum::extract::Multipart;
+    pub use axum::extract::multipart::{
+        Field, InvalidBoundary, Multipart, MultipartError, MultipartRejection,
+    };
     pub use bytes::*;
 }
