@@ -62,7 +62,7 @@ impl DependencyContainer {
         let providers = &self.providers.get_providers();
 
         for (type_id, instance) in providers.read().iter() {
-            state.insert_dependency(*type_id, Arc::clone(instance));
+            state.insert_instance(*type_id, Arc::clone(instance));
             built.insert(*type_id);
         }
 
@@ -117,7 +117,7 @@ impl DependencyContainer {
         visiting.remove(type_id);
 
         if let Some(builder) = &self.components.get_builders().read().get(type_id) {
-            state.insert_dependency(*type_id, builder(state)?);
+            state.insert_instance(*type_id, builder(state)?);
             built.insert(*type_id);
         }
 

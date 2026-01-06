@@ -61,7 +61,7 @@ dioxus-devtools = { version = "0.7.2", features = ["serve"], optional = true }
 [features]
 default = ["validation-validator"]
 
-multipart = ["axum/multipart"]
+multipart = ["axum/multipart", "axum_responses/multipart"]
 validation-validator = ["dep:validator"]
 adapter-socketio = [
     "sword-macros/adapter-socketio",

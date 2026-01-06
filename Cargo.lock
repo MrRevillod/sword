@@ -269,7 +269,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50a9a817cf5c2f11cbf917feb58ca50e26fbb44ec459b6676409e46b07dcf00b"
 dependencies = [
  "axum",
- "axum_responses_macros",
+ "axum_responses_macros 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "axum_responses"
+version = "0.5.4"
+source = "git+https://github.com/MrRevillod/AxumResponses.git#3a9fca3acb189718d04677627d344f5c247d58e4"
+dependencies = [
+ "axum",
+ "axum_responses_macros 0.1.3 (git+https://github.com/MrRevillod/AxumResponses.git)",
  "chrono",
  "serde",
  "serde_json",
@@ -282,6 +296,17 @@ name = "axum_responses_macros"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab84ecadf0586fb9bce16f441345a2fc392ca08f3aa725665b414ce739301417"
+dependencies = [
+ "axum",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.112",
+]
+
+[[package]]
+name = "axum_responses_macros"
+version = "0.1.3"
+source = "git+https://github.com/MrRevillod/AxumResponses.git#3a9fca3acb189718d04677627d344f5c247d58e4"
 dependencies = [
  "axum",
  "proc-macro2",
@@ -2959,7 +2984,7 @@ name = "sword"
 version = "0.2.1"
 dependencies = [
  "axum",
- "axum_responses",
+ "axum_responses 0.5.4 (git+https://github.com/MrRevillod/AxumResponses.git)",
  "bytes",
  "colored",
  "console 0.15.11",
@@ -2994,7 +3019,7 @@ name = "sword-core"
 version = "0.2.1"
 dependencies = [
  "axum",
- "axum_responses",
+ "axum_responses 0.5.4 (git+https://github.com/MrRevillod/AxumResponses.git)",
  "inventory",
  "parking_lot",
  "regex-lite",
@@ -3014,7 +3039,7 @@ source = "git+https://github.com/sword-web/sword-layers.git#99ec90ef2526b96cbd1f
 dependencies = [
  "axum",
  "axum-helmet",
- "axum_responses",
+ "axum_responses 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "byte-unit",
  "console 0.16.2",
  "duration-str",

@@ -1,16 +1,14 @@
-use crate::{Config, ConfigError, State};
+use crate::{Config, State};
 use serde::de::DeserializeOwned;
-
-type RegisterConfigFn = fn(&Config, &State) -> Result<(), ConfigError>;
 
 /// A struct that holds a function to register a config type.
 /// Used by the inventory system to collect all config types at compile time.
 pub struct ConfigRegistrar {
-    pub register: RegisterConfigFn,
+    pub register: fn(&State, &Config) -> (),
 }
 
 impl ConfigRegistrar {
-    pub const fn new(register: RegisterConfigFn) -> Self {
+    pub const fn new(register: fn(&State, &Config) -> ()) -> Self {
         Self { register }
     }
 }
@@ -39,8 +37,12 @@ pub trait ConfigItem: DeserializeOwned + Clone + Send + Sync + 'static {
 
     /// Registers this config type in the application State.
     /// This is called automatically during application bootstrap.
-    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
-        state.insert(config.get::<Self>()?);
-        Ok(())
+    fn register(state: &State, config: &Config) {
+        let config_item = config.get::<Self>().expect(&format!(
+            "Failed to load config item '{}' from the configuration file",
+            Self::toml_key()
+        ));
+
+        state.insert(config_item);
     }
 }

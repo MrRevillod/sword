@@ -50,30 +50,39 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        let state = State::new();
-        let config = Config::new().expect("Configuration loading error");
-
-        state.insert(config.clone());
-
-        for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
-            register(&config, &state).expect("Failed to register config type");
-        }
-
-        Self {
-            state,
-            config,
-            container: DependencyContainer::new(),
-            adapter_registry: AdapterRegistry::new(),
-            layer_stack: LayerStack::new(),
-        }
+        Self::from_config(Config::new().expect("Configuration loading error"))
     }
 
+    /// Builder for constructing a Sword application with a provided configuration.
+    ///
+    /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
+    /// before building the final `Application` instance. It allows you to register
+    /// modules, add middleware layers, and set up dependency injection.
+    ///
+    /// The builder follows this configuration pattern:
+    /// 1. Create with `Application::builder()`
+    /// 2. Register modules with `with_module::<M>()`
+    /// 3. Optionally add custom layers with `with_layer()`
+    /// 4. Optionally register providers directly with `with_provider()`
+    /// 5. Build the application with `build()`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let app = Application::from_config(Config::new().expect("Configuration loading error"))
+    ///     .with_module::<UsersModule>()
+    ///     .with_module::<ProductsModule>()
+    ///     .with_layer(custom_middleware)
+    ///     .build();
+    ///
+    /// app.run().await;
+    /// ```
     pub fn from_config(config: Config) -> Self {
         let state = State::new();
         state.insert(config.clone());
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
-            register(&config, &state).expect("Failed to register config type");
+            register(&state, &config)
         }
 
         Self {
@@ -122,9 +131,9 @@ impl ApplicationBuilder {
         self
     }
 
-    /// Register a provider with the application's dependency injection container.
+    /// Register a provider directly with the application builder.
     ///
-    /// This method can be used to add providers directly to the container, avoiding the need
+    /// This method can be used to add providers directly to the application, avoiding the need
     /// to create a full module when only a provider is needed.
     pub fn with_provider<T>(self, provider: T) -> Self
     where
@@ -134,14 +143,26 @@ impl ApplicationBuilder {
         self
     }
 
-    /// Builds the application router using InternalRouter.
+    /// Build the `Application` instance with the configured options.
     ///
-    /// The router construction is delegated to InternalRouter which organizes
-    /// middlewares into three categories:
-    ///
-    /// 1. **REST-only middlewares**
-    /// 2. **Shared middlewares**
-    /// 3. **Custom middlewares**: User-provided via `with_layer()`
+    /// This method ends the builder pattern and constructs the final `Application`
+    /// instance ready to run.
+    pub fn build(mut self) -> Application {
+        self.container
+            .build_all(&self.state)
+            .expect("Failed to build dependency injection container");
+
+        for InterceptorRegistrar { register } in
+            inventory::iter::<InterceptorRegistrar>
+        {
+            register(&self.state)
+        }
+
+        let router = self.build_router();
+
+        Application::new(router, self.config)
+    }
+
     fn build_router(&mut self) -> Router {
         let internal_router =
             InternalRouter::new(self.state.clone(), self.config.clone());
@@ -157,26 +178,6 @@ impl ApplicationBuilder {
         }
 
         router
-    }
-
-    /// Build the `Application` instance with the configured options.
-    ///
-    /// This method ends the builder pattern and constructs the final `Application`
-    /// instance ready to run.
-    pub fn build(mut self) -> Application {
-        self.container
-            .build_all(&self.state)
-            .expect("Failed to build dependency injection container");
-
-        for InterceptorRegistrar { register_fn } in
-            inventory::iter::<InterceptorRegistrar>
-        {
-            (register_fn)(&self.state).expect("Failed to register interceptor");
-        }
-
-        let router = self.build_router();
-
-        Application::new(router, self.config)
     }
 }
 

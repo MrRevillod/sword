@@ -58,8 +58,7 @@ impl Application {
     pub async fn run(&self) {
         if self
             .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config")
+            .get_or_panic::<ApplicationConfig>()
             .graceful_shutdown
         {
             self.run_with_graceful_shutdown(Self::graceful_signal())
@@ -114,10 +113,7 @@ impl Application {
     }
 
     async fn build_listener(&self) -> TcpListener {
-        let app_config = self
-            .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config");
+        let app_config = self.config.get_or_panic::<ApplicationConfig>();
 
         self.display();
 
@@ -159,10 +155,7 @@ impl Application {
 
 impl DisplayConfig for Application {
     fn display(&self) {
-        let app_config = self
-            .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config");
+        let app_config = self.config.get_or_panic::<ApplicationConfig>();
 
         app_config.display();
 

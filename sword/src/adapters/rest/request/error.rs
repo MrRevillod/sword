@@ -35,6 +35,14 @@ pub enum RequestError {
 
     #[error("Invalid header value: {0}")]
     InvalidHeaderValue(String),
+
+    #[cfg(feature = "multipart")]
+    #[error("Multipart error: {0}")]
+    MultipartError(#[from] axum::extract::multipart::MultipartError),
+
+    #[cfg(feature = "multipart")]
+    #[error("Multipart Rejection: {0}")]
+    MultipartRejection(#[from] axum::extract::multipart::MultipartRejection),
 }
 
 impl RequestError {
@@ -70,19 +78,5 @@ impl RequestError {
             error,
             source,
         }
-    }
-}
-
-#[cfg(feature = "multipart")]
-impl From<axum::extract::multipart::MultipartRejection> for RequestError {
-    fn from(err: axum::extract::multipart::MultipartRejection) -> Self {
-        Self::parse_error("Failed to parse multipart form data", err.to_string())
-    }
-}
-
-#[cfg(feature = "multipart")]
-impl From<axum::extract::multipart::MultipartError> for RequestError {
-    fn from(err: axum::extract::multipart::MultipartError) -> Self {
-        Self::parse_error("Failed to parse multipart form data", err.to_string())
     }
 }

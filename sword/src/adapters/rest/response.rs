@@ -52,6 +52,16 @@ impl From<RequestError> for JsonResponse {
                         "Value for header '{name}' contains invalid characters",
                     ))
             }
+            #[cfg(feature = "multipart")]
+            RequestError::MultipartError(err) => {
+                tracing::error!(error = %err, "Multipart error");
+                JsonResponse::status(err.status()).message("Multipart error")
+            }
+            #[cfg(feature = "multipart")]
+            RequestError::MultipartRejection(err) => {
+                tracing::error!(error = %err, "Multipart rejection");
+                JsonResponse::status(err.status()).message("Multipart rejection")
+            }
         }
     }
 }
