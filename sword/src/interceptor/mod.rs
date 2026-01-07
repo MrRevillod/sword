@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use sword_core::{Build, State};
 
 /// Base trait for all interceptors in Sword.
@@ -8,12 +7,12 @@ use sword_core::{Build, State};
 /// This means that the interceptor can have dependencies injected into it,
 /// and also be stored one time and reused  throughout the application lifecycle.
 pub trait Interceptor: Build {
-    fn register(state: &State) -> () {
-        let interceptor = Self::build(state).map_err(|err| {
+    fn register(state: &State) {
+        let interceptor = Self::build(state).unwrap_or_else(|err| {
             panic!("\n[!] Failed to build Interceptor\n\n{err}\n");
         });
 
-        state.insert(Arc::new(interceptor));
+        state.insert(interceptor);
     }
 }
 

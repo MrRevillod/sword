@@ -29,6 +29,7 @@ pub mod internal {
         };
     }
 
+    #[cfg(feature = "adapter-socketio")]
     pub mod socketio {
         pub use socketioxide::SocketError;
         pub use socketioxide::handler::ConnectHandler;
@@ -37,6 +38,7 @@ pub mod internal {
 
     pub mod core {
         pub use crate::adapters::rest::RestAdapter;
+        #[cfg(feature = "adapter-socketio")]
         pub use crate::adapters::socketio::SocketIoAdapter;
         pub use crate::adapters::{Adapter, AdapterKind};
         pub use crate::interceptor::{Interceptor, InterceptorRegistrar};

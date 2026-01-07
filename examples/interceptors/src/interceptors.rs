@@ -1,11 +1,7 @@
-use std::sync::Arc;
-
 use sword::prelude::*;
 
 #[derive(Interceptor)]
-pub struct LoggingInterceptor {
-    pub a: Arc<String>,
-}
+pub struct LoggingInterceptor;
 
 impl OnRequest for LoggingInterceptor {
     async fn on_request(&self, req: Request) -> HttpInterceptorResult {

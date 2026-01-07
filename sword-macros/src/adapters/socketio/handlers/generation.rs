@@ -46,7 +46,7 @@ pub fn generate_socketio_handlers(
 
     let interceptor_applications = all_interceptors.iter().map(|interceptor_path| {
         quote! {
-            let interceptor = state.borrow::<::std::sync::Arc<#interceptor_path>>()
+            let interceptor = state.borrow::<#interceptor_path>()
                 .expect(&format!("\n[!] Failed to retrieve interceptor {} from State\n", stringify!(#interceptor_path)));
 
             let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {

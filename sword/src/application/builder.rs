@@ -155,7 +155,8 @@ impl ApplicationBuilder {
         for InterceptorRegistrar { register } in
             inventory::iter::<InterceptorRegistrar>
         {
-            register(&self.state)
+            register(&self.state);
+            println!("Registered interceptor: {register:?}");
         }
 
         let router = self.build_router();

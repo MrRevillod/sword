@@ -2,11 +2,7 @@ use crate::{
     ComponentRegistry, DependencyInjectionError as DIError, ProviderRegistry, State,
 };
 
-use std::{
-    any::{TypeId, type_name},
-    collections::HashSet,
-    sync::Arc,
-};
+use std::{any::TypeId, collections::HashSet, sync::Arc};
 
 /// A container for managing dependencies and their builders.
 ///
@@ -95,9 +91,7 @@ impl DependencyContainer {
         }
 
         if visiting.contains(type_id) {
-            return Err(DIError::CircularDependency {
-                type_name: type_name::<()>().to_string(),
-            });
+            return Err(DIError::CircularDependency);
         }
 
         visiting.insert(*type_id);

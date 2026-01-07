@@ -18,8 +18,10 @@ pub enum DependencyInjectionError {
         source: ConfigError,
     },
 
-    #[error("Circular dependency detected involving '{type_name}'")]
-    CircularDependency { type_name: String },
+    #[error(
+        "Circular dependency detected\n  ↳ Ensure there are no cycles in your dependencies"
+    )]
+    CircularDependency,
 }
 
 impl From<DependencyInjectionError> for JsonResponse {

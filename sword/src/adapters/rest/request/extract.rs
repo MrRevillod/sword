@@ -44,6 +44,14 @@ where
             .max_size
             .parsed;
 
+        if let Some(content_length) = parts.headers.get("content-length")
+            && let Ok(size) =
+                content_length.to_str().unwrap_or_default().parse::<usize>()
+            && size > body_limit
+        {
+            return Err(RequestError::BodyTooLarge)?;
+        }
+
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
             if err.into_inner().is::<LengthLimitError>() {
                 return RequestError::BodyTooLarge;
