@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use sword::prelude::*;
 use tokio::sync::RwLock;
 
@@ -6,32 +6,31 @@ use crate::chat::Message;
 
 #[injectable(provider)]
 pub struct Database {
-    pool: Arc<RwLock<HashMap<String, Message>>>,
+    pool: Arc<RwLock<Vec<Message>>>,
 }
 
 impl Database {
     pub fn new() -> Self {
         Database {
-            pool: Arc::new(RwLock::new(HashMap::new())),
+            pool: Arc::new(RwLock::new(Vec::new())),
         }
     }
 
     pub async fn get(&self, key: &str) -> Option<Message> {
         let pool = self.pool.read().await;
 
-        pool.get(key).cloned()
+        pool.iter().find(|m| m.id == key).cloned()
     }
 
     pub async fn get_all(&self) -> Vec<Message> {
         let pool = self.pool.read().await;
 
-        pool.values().cloned().collect()
+        pool.clone()
     }
 
-    pub async fn set(&self, key: &str, value: Message) {
+    pub async fn set(&self, value: Message) {
         let mut pool = self.pool.write().await;
-
-        pool.insert(key.to_string(), value);
+        pool.push(value);
     }
 }
 

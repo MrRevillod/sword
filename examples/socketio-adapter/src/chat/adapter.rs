@@ -14,25 +14,31 @@ pub struct ChatAdapter {
 #[handlers]
 impl ChatAdapter {
     #[on_connection]
-    async fn on_connect(&self) {
+    async fn on_connect(&self, ctx: SocketContext) {
         println!("New client connected");
+
+        let messages = self.db.get_all().await;
+
+        ctx.socket.emit("messages", &messages).ok();
     }
 
     #[on_message("message")]
     async fn handle_message(&self, ctx: SocketContext) {
         let Ok(data) = ctx.try_validated_data::<IncommingMessageDto>() else {
-            eprintln!("Failed to parse message data");
+            eprintln!("Failed to validate message data");
             return;
         };
 
-        let message = Message::from(data);
-
-        self.db.set(&message.id.clone(), message).await;
+        self.db.set(Message::from(data)).await;
 
         let messages = self.db.get_all().await;
 
-        if let Err(e) = ctx.socket.emit("messages", &messages) {
-            eprintln!("Failed to emit messages: {:?}", e);
-        }
+        ctx.socket.emit("messages", &messages).ok();
+
+        ctx.socket
+            .broadcast()
+            .emit("messages", &messages)
+            .await
+            .ok();
     }
 }

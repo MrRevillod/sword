@@ -1,5 +1,4 @@
 use crate::adapters::{AdapterKind, AdapterRegistry};
-
 use axum::Router;
 use sword_core::layers::*;
 use sword_core::{Config, State};
@@ -51,7 +50,7 @@ impl InternalRouter {
                 let socketio_config =
                     self.config.get_or_default::<SocketIoServerConfig>();
 
-                let parsed = socketio_config.parser.unwrap_or_default();
+                let parsed = socketio_config.parser;
 
                 router = router.layer(socketio_layer);
 

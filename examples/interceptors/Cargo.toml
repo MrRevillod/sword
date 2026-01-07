@@ -4,10 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sword = { workspace = true, features = ["adapter-socketio", "multipart"] }
+sword = { workspace = true, features = ["adapter-socketio"] }
 serde = { workspace = true }
-tracing = { workspace = true }
 serde_json = { workspace = true }
-
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-uuid = { workspace = true, features = ["v4"] }
