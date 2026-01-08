@@ -29,7 +29,7 @@ impl LayerStack {
         <L::Service as Service<Request>>::Future: Send + 'static,
     {
         self.layers
-            .push(Box::new(move |router| router.layer(layer.clone())));
+            .push(Box::new(move |router| router.layer(layer.to_owned())));
     }
 
     /// Apply all accumulated layers to the given router in order.

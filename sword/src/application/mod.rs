@@ -63,17 +63,11 @@ impl Application {
         {
             self.run_with_graceful_shutdown(Self::graceful_signal())
                 .await;
+
+            return;
         }
 
-        let listener = self.build_listener().await;
-
-        let mut router = self.router.clone();
-
-        router = router.layer(NotFoundLayer::new());
-
-        axum::serve(listener, router)
-            .await
-            .expect("Internal 'axum::serve' error");
+        self.serve_internal(None::<std::future::Pending<()>>).await;
     }
 
     /// Runs the application server with graceful shutdown support.
@@ -89,13 +83,24 @@ impl Application {
     where
         F: Future<Output = ()> + Send + 'static,
     {
+        self.serve_internal(Some(signal)).await;
+    }
+
+    /// Internal method that handles the common server startup logic.
+    async fn serve_internal<F>(&self, signal: Option<F>)
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
         let listener = self.build_listener().await;
         let router = self.router.clone().layer(NotFoundLayer::new());
 
-        axum::serve(listener, router)
-            .with_graceful_shutdown(signal)
-            .await
-            .expect("Internal 'axum::serve' error");
+        let serve = axum::serve(listener, router);
+
+        match signal {
+            Some(sig) => serve.with_graceful_shutdown(sig).await,
+            None => serve.await,
+        }
+        .expect("Internal 'axum::serve' error");
     }
 
     /// Returns a clone of the internal Axum router.

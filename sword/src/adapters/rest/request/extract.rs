@@ -1,9 +1,12 @@
 use super::{super::JsonResponse, Request, RequestError};
-use sword_core::{Config, State, layers::MiddlewaresConfig};
+use sword_core::{State, layers::MiddlewaresConfig};
 
 use axum::{
+    RequestPartsExt,
     body::{Body, to_bytes},
-    extract::{FromRef, FromRequest, Path, Request as AxumReq},
+    extract::{
+        FromRef, FromRequest, Path, Request as AxumReq, rejection::PathRejection,
+    },
 };
 
 use http_body_util::LengthLimitError;
@@ -23,33 +26,48 @@ where
     async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
-        let mut params = HashMap::new();
+        let path_params = parts
+            .extract::<Path<HashMap<String, String>>>()
+            .await
+            .map_err(|e| {
+                let message = match e {
+                    PathRejection::FailedToDeserializePathParams(_) => {
+                        "Failed to deserialize path parameters".to_string()
+                    }
+                    PathRejection::MissingPathParams(m) => m.body_text().to_string(),
+                    _ => "Failed to extract path parameters".to_string(),
+                };
 
-        let path_result = {
-            use axum::extract::OptionalFromRequestParts;
-            Path::<HashMap<String, String>>::from_request_parts(&mut parts, &())
-                .await
-        };
-
-        if let Ok(Some(path_params)) = path_result {
-            params.extend(path_params.0);
-        }
+                JsonResponse::BadRequest().message(message)
+            })?;
 
         let state = State::from_ref(state);
 
         let body_limit = state
-            .get::<Config>()?
-            .get_or_default::<MiddlewaresConfig>()
+            .get::<MiddlewaresConfig>()
+            .unwrap_or_default()
             .body_limit
             .max_size
             .parsed;
 
-        if let Some(content_length) = parts.headers.get("content-length")
-            && let Ok(size) =
-                content_length.to_str().unwrap_or_default().parse::<usize>()
-            && size > body_limit
-        {
-            return Err(RequestError::BodyTooLarge)?;
+        if let Some(content_length) = parts.headers.get("content-length") {
+            let cl_str = content_length.to_str().map_err(|_| {
+                RequestError::parse_error(
+                    "Invalid Content-Length header",
+                    "Header contains invalid format",
+                )
+            })?;
+
+            let size = cl_str.parse::<usize>().map_err(|_| {
+                RequestError::parse_error(
+                    "Invalid Content-Length header",
+                    "Header value must be a valid number",
+                )
+            })?;
+
+            if size > body_limit {
+                return Err(RequestError::BodyTooLarge.into());
+            }
         }
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
@@ -64,7 +82,7 @@ where
         })?;
 
         Ok(Self {
-            params,
+            params: path_params.0,
             body_bytes,
             method: parts.method,
             headers: parts.headers,

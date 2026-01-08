@@ -61,5 +61,9 @@ default = ["validation-validator"]
 
 multipart = ["axum/multipart", "axum_responses/multipart"]
 validation-validator = ["dep:validator"]
-adapter-socketio = ["sword-macros/adapter-socketio", "dep:socketioxide"]
+adapter-socketio = [
+    "sword-macros/adapter-socketio",
+    "dep:socketioxide",
+    "dep:socketioxide-core",
+]
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]

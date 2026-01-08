@@ -10,7 +10,7 @@ use axum::{
 };
 use axum_responses::JsonResponse;
 use serde::de::DeserializeOwned;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 use sword_core::layers::RequestId;
 use sword_layers::cookies::Cookies;
 
@@ -26,7 +26,7 @@ pub use validator::ValidatorRequestValidation;
 ///
 /// `Request` is the primary extractor for accessing request data in Sword applications.
 /// It provides access to request parameters, body data, HTTP method, headers, URI,
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Request {
     params: HashMap<String, String>,
     body_bytes: BodyBytes,
@@ -103,10 +103,10 @@ impl Request {
 
         let header_name = header_name
             .parse::<HeaderName>()
-            .map_err(|_| RequestError::InvalidHeaderName(header_name.clone()))?;
+            .map_err(|_| RequestError::InvalidHeaderName(header_name))?;
 
         let header_value = HeaderValue::from_str(&header_value)
-            .map_err(|_| RequestError::InvalidHeaderValue(header_value.clone()))?;
+            .map_err(|_| RequestError::InvalidHeaderValue(header_value))?;
 
         self.headers.insert(header_name, header_value);
 
@@ -155,27 +155,31 @@ impl Request {
     ///     Ok(JsonResponse::Ok().message(message))
     /// }
     /// ```
-    pub fn param<T: FromStr>(&self, key: &str) -> Result<T, RequestError> {
+    pub fn param<T>(&self, key: &str) -> Result<T, RequestError>
+    where
+        T: FromStr,
+        T::Err: Display,
+    {
         if let Some(value) = self.params.get(key) {
-            let Ok(param) = value.parse::<T>() else {
-                let message = format!("Invalid parameter format for '{key}'");
-                let details = "Failed to deserialize parameter to the required type";
-
-                return Err(RequestError::parse_error(message, details));
-            };
-
-            return Ok(param);
+            return value.parse::<T>().map_err(|e| {
+                RequestError::parse_error(
+                    format!("Invalid parameter format for '{key}'"),
+                    format!("Parse  Error: {e}"),
+                )
+            });
         }
 
-        let message = "Parameter not found";
-        let details = format!("Parameter '{key}' not found in request parameters");
-
-        Err(RequestError::parse_error(message, details))
+        Err(RequestError::parse_error(
+            "Parameter not found",
+            format!("Parameter '{key}' not found in request parameters"),
+        ))
     }
 
-    pub const fn params(&self) -> &HashMap<String, String> {
-        &self.params
-    }
+    // pub const fn params(&self) -> Result<&HashMap<String, String>, RequestError> {
+    //     let params = self.uri.path_and_query().ok_or(
+
+    //     )
+    // }
 
     /// Deserializes the request body from JSON to a specific type.
     ///
@@ -295,7 +299,9 @@ impl Request {
     /// }
     /// ```
     pub fn query<T: DeserializeOwned>(&self) -> Result<Option<T>, RequestError> {
-        let query_string = self.uri.query().unwrap_or("");
+        let Some(query_string) = self.uri.query() else {
+            return Ok(None);
+        };
 
         if query_string.is_empty() {
             return Ok(None);
@@ -305,18 +311,15 @@ impl Request {
             form_urlencoded::parse(query_string.as_bytes()),
         );
 
-        let parsed: T =
-            serde_path_to_error::deserialize(deserializer).map_err(|e| {
-                // TODO: Implement tracing for loging the errors
-                RequestError::deserialization_error(
-                    "Invalid query parameters",
-                    "Failed to deserialize query parameters to the required type."
-                        .into(),
-                    e.into(),
-                )
-            })?;
+        let deserialized = T::deserialize(deserializer).map_err(|e| {
+            RequestError::deserialization_error(
+                "Invalid query parameters",
+                "Failed to deserialize query params to the required type.".into(),
+                e.into(),
+            )
+        })?;
 
-        Ok(Some(parsed))
+        Ok(Some(deserialized))
     }
 
     /// Access the cookies from the request.
@@ -422,7 +425,7 @@ impl Request {
     ///     // Process each field in the multipart form data
     ///     // And ensure to handle errors appropriately
     ///     while let Some(field) = multipart.next_field().await? {
-    ///         field_names.push(field.name().unwrap_or("Uknown").to_string());
+    ///         field_names.push(field.name().unwrap_or("Unknown").to_string());
     ///     }
     ///
     ///     Ok(JsonResponse::Ok().data(field_names))
@@ -459,14 +462,14 @@ impl Request {
         self.next = Some(next);
     }
 
-    /// Runs the next middleware or handler in the chain.
+    /// Runs the next interceptor or handler in the chain.
     ///
-    /// This method must be used only in middleware implementations to
-    /// pass control to the next middleware or the final request handler.
+    /// This method must be used only in interceptor implementations to
+    /// pass control to the next interceptor or the final request handler.
     pub async fn next(mut self) -> HttpInterceptorResult {
         let Some(next) = self.next.take() else {
-            eprintln!(
-                "Error: Attempted to call `next()` on Request in a context that is not a `OnRequest` `Interceptor`"
+            tracing::error!(
+                "Attempted to call `next()` on Request in a context that is not a `OnRequest` `Interceptor`"
             );
             return Err(JsonResponse::InternalServerError());
         };
