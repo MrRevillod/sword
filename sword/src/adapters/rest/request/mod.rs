@@ -1,5 +1,6 @@
 mod error;
 mod extract;
+pub mod extractors;
 mod validator;
 
 use super::interceptor::HttpInterceptorResult;
@@ -18,6 +19,9 @@ pub use error::*;
 
 #[allow(unused_imports)]
 pub use extract::*;
+
+#[allow(unused_imports)]
+pub use extractors::*;
 
 #[cfg(feature = "validation-validator")]
 pub use validator::ValidatorRequestValidation;

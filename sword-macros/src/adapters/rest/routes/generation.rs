@@ -86,22 +86,49 @@ fn generate_axum_routing_fn(method: &str) -> syn::Result<TokenStream> {
 fn generate_handler(route: &RouteInfo) -> syn::Result<TokenStream> {
     let routing_function = generate_axum_routing_fn(&route.method)?;
 
-    let RouteInfo { handler_name, .. } = route;
+    let RouteInfo {
+        handler_name, args, ..
+    } = route;
 
-    let req_param = route
-        .needs_context
-        .then(|| quote! { req: ::sword::prelude::Request })
-        .into_iter();
+    if args.is_empty() {
+        return Ok(quote! {
+            ::sword::internal::axum::#routing_function({
+                let ctrl = std::sync::Arc::clone(&controller);
+                move || {
+                    async move {
+                        use ::sword::internal::axum::IntoResponse;
+                        ctrl.#handler_name().await.into_response()
+                    }
+                }
+            })
+        });
+    }
 
-    let req_arg = route.needs_context.then(|| quote! { req }).into_iter();
+    let closure_params: Vec<TokenStream> = args
+        .iter()
+        .enumerate()
+        .map(|(i, (_, ty))| {
+            let param_name = quote::format_ident!("p{}", i);
+            quote! { #param_name: #ty }
+        })
+        .collect();
+
+    let call_args: Vec<TokenStream> = args
+        .iter()
+        .enumerate()
+        .map(|(i, _)| {
+            let param_name = quote::format_ident!("p{}", i);
+            quote! { #param_name }
+        })
+        .collect();
 
     let handler = quote! {
         ::sword::internal::axum::#routing_function({
             let ctrl = std::sync::Arc::clone(&controller);
-            move |#(#req_param)*| {
+            move |#(#closure_params),*| {
                 async move {
                     use ::sword::internal::axum::IntoResponse;
-                    ctrl.#handler_name(#(#req_arg)*).await.into_response()
+                    ctrl.#handler_name(#(#call_args),*).await.into_response()
                 }
             }
         })

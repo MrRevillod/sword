@@ -1,4 +1,7 @@
-use crate::{adapters::rest::interceptor::InterceptorArgs, shared::PATH_KIND_REGEX};
+use crate::{
+    adapters::rest::interceptor::InterceptorArgs,
+    shared::{PATH_KIND_REGEX, extract_function_args},
+};
 
 use proc_macro2::Ident;
 use quote::ToTokens;
@@ -7,7 +10,7 @@ use syn::{
     spanned::Spanned,
 };
 
-const VALID_ROUTE_MACROS: &[&str; 7] = &[
+const VALID_ROUTE_MACROS: &[&str; 8] = &[
     "get",
     "post",
     "put",
@@ -15,6 +18,7 @@ const VALID_ROUTE_MACROS: &[&str; 7] = &[
     "delete",
     "middleware",
     "interceptor",
+    "returns",
 ];
 
 pub const HTTP_METHODS: [&str; 5] = ["get", "post", "put", "delete", "patch"];
@@ -24,7 +28,9 @@ pub struct RouteInfo {
     pub path: String,
     pub handler_name: Ident,
     pub interceptors: Vec<InterceptorArgs>,
+    #[allow(dead_code)]
     pub needs_context: bool,
+    pub args: Vec<(Ident, syn::Type)>,
 }
 
 pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
@@ -64,11 +70,8 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
             }
         }
 
-        let needs_context = handler
-            .sig
-            .inputs
-            .iter()
-            .any(|arg| matches!(arg, syn::FnArg::Typed(_)));
+        let args = extract_function_args(&handler);
+        let needs_context = !args.is_empty();
 
         routes.push(RouteInfo {
             method: route_method,
@@ -76,6 +79,7 @@ pub fn parse_routes(input: &ItemImpl) -> syn::Result<Vec<RouteInfo>> {
             handler_name: handler.sig.ident.clone(),
             interceptors,
             needs_context,
+            args,
         });
     }
 

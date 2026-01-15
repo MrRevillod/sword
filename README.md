@@ -18,54 +18,11 @@ It takes advantage of the tokio and axum ecosystem to bring you performance with
 - **Interactive CLI** - Built to improve the developer experience
 - **Real time support** - Built-in support for SocketIO with `socketioxide` crate
 
-## Usage
+## Examples
 
-### Add to your `Cargo.toml`
-
-```toml
-[dependencies]
-sword = "0.2.0"
-```
-
-### Basic web server
-
-```rust
-use sword::prelude::*;
-use serde_json::Value;
-
-#[controller("/")]
-struct AppController;
-
-#[routes]
-impl AppController {
-    #[get("/hello")]
-    async fn hello(&self) -> JsonResponse {
-        JsonResponse::Ok().message("Hello, World!")
-    }
-
-    #[post("/submit")]
-    async fn submit_data(&self, req: Request) -> HttpResult {
-        let body = req.body::<Value>()?;
-
-        Ok(JsonResponse::Ok()
-            .data(body)
-            .message("Data submitted successfully"))
-    }
-}
-
-#[sword::main]
-async fn main() {
-    let app = Application::builder()
-        .with_module::<AppController>()
-        .build();
-
-    app.run().await;
-}
-```
-
-## More Examples
-
-See the [examples directory](./examples) for more advanced usage.
+- [Rest API](./examples/rest_adapter)
+- [SocketIO Adapter Chat](./examples/socketio_adapter)
+- [Interceptors (Both adapters)](./examples/interceptors)
 
 ## Changelog
 

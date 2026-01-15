@@ -1,8 +1,9 @@
+use crate::shared::extract_function_args;
 use quote::ToTokens;
 use std::str::FromStr;
 use syn::{
-    Error, FnArg, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Pat, PatIdent,
-    PatType, Path, Type, parse as syn_parse, spanned::Spanned,
+    Error, Ident, ImplItem, ImplItemFn, ItemImpl, LitStr, Path, Type,
+    parse as syn_parse, spanned::Spanned,
 };
 
 #[derive(Default)]
@@ -108,27 +109,5 @@ impl FromStr for EventKind {
         };
 
         Ok(variant)
-    }
-}
-
-fn extract_function_args(func: &ImplItemFn) -> Vec<(Ident, Type)> {
-    func.sig
-        .inputs
-        .iter()
-        .filter_map(|arg| match arg {
-            FnArg::Receiver(_) => None,
-            FnArg::Typed(PatType { pat, ty, .. }) => {
-                let ident = extract_pat_ident(pat)?;
-                Some((ident, (**ty).clone()))
-            }
-        })
-        .collect()
-}
-
-fn extract_pat_ident(pat: &Pat) -> Option<Ident> {
-    match pat {
-        Pat::Ident(PatIdent { ident, .. }) => Some(ident.clone()),
-        Pat::TupleStruct(tuple_struct) => tuple_struct.path.get_ident().cloned(),
-        _ => None,
     }
 }

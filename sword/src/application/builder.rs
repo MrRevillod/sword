@@ -100,27 +100,10 @@ impl ApplicationBuilder {
     where
         M: Module,
     {
-        // Try to use the current tokio runtime if available, otherwise block
-        match tokio::runtime::Handle::try_current() {
-            Ok(handle) => {
-                handle.block_on(async {
-                    M::register_providers(
-                        &self.config,
-                        self.container.provider_registry(),
-                    )
-                    .await;
-                });
-            }
-            Err(_) => {
-                futures::executor::block_on(async {
-                    M::register_providers(
-                        &self.config,
-                        self.container.provider_registry(),
-                    )
-                    .await;
-                });
-            }
-        };
+        futures_lite::future::block_on(M::register_providers(
+            &self.config,
+            self.container.provider_registry(),
+        ));
 
         M::register_components(self.container.component_registry());
         M::register_adapters(&self.adapter_registry);

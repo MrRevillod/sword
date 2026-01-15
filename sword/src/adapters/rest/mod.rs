@@ -8,6 +8,10 @@ pub use interceptor::*;
 pub use request::*;
 pub use response::*;
 
+pub mod extractors {
+    pub use super::request::extractors::*;
+}
+
 pub mod cookies {
     pub use sword_layers::cookies::{
         Cookies, Key as CookiesKey, PrivateCookies, SignedCookies,

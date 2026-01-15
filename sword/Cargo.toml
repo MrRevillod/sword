@@ -51,7 +51,7 @@ parking_lot = { workspace = true }
 
 colored = "3.0.0"
 console = "0.15.8"
-futures = "0.3.31"
+futures-lite = "2.6"
 
 subsecond = { version = "0.7.2", optional = true }
 dioxus-devtools = { version = "0.7.2", features = ["serve"], optional = true }

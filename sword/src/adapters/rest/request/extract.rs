@@ -3,27 +3,52 @@ use sword_core::{State, layers::MiddlewaresConfig};
 
 use axum::{
     RequestPartsExt,
-    body::{Body, to_bytes},
+    body::to_bytes,
     extract::{
-        FromRef, FromRequest, Path, Request as AxumReq, rejection::PathRejection,
+        FromRef, Path, Request as AxumReq,
+        rejection::PathRejection,
+        FromRequest as AxumFromRequest,
     },
+    http::request::Parts,
+    response::IntoResponse,
 };
 
 use http_body_util::LengthLimitError;
 use std::collections::HashMap;
 
+#[allow(async_fn_in_trait)]
+/// Fixed-state version of `axum::extract::FromRequest` using sword's State.
+///
+/// This allows extractors to avoid the generic state parameter while still
+/// leveraging Axum's extractor ecosystem.
+pub trait FromRequest: Sized {
+    type Rejection: IntoResponse;
+
+    async fn from_request(
+        req: AxumReq,
+        state: &State,
+    ) -> Result<Self, Self::Rejection>;
+}
+
+#[allow(async_fn_in_trait)]
+/// Fixed-state version of `axum::extract::FromRequestParts` using sword's State.
+pub trait FromRequestParts: Sized {
+    type Rejection: IntoResponse;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &State,
+    ) -> Result<Self, Self::Rejection>;
+}
+
 /// Implementation of `FromRequest` for `Request`.
 ///
 /// Allows `Request` to be automatically extracted from HTTP requests
 /// in Axum handlers, providing easy access to parameters, headers, body, and state.
-impl<S> FromRequest<S> for Request
-where
-    S: Send + Sync + 'static,
-    State: FromRef<S>,
-{
+impl FromRequest for Request {
     type Rejection = JsonResponse;
 
-    async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: AxumReq, state: &State) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
         let path_params = parts
@@ -40,8 +65,6 @@ where
 
                 JsonResponse::BadRequest().message(message)
             })?;
-
-        let state = State::from_ref(state);
 
         let body_limit = state
             .get::<MiddlewaresConfig>()
@@ -101,6 +124,8 @@ impl TryFrom<Request> for AxumReq {
     type Error = RequestError;
 
     fn try_from(req: Request) -> Result<Self, Self::Error> {
+        use axum::body::Body;
+        
         let mut builder = AxumReq::builder().method(req.method).uri(req.uri);
 
         for (key, value) in &req.headers {
@@ -119,5 +144,19 @@ impl TryFrom<Request> for AxumReq {
         *request.extensions_mut() = req.extensions;
 
         Ok(request)
+    }
+}
+
+/// Implementation for compatibility with Axum's generic state system
+impl<S> AxumFromRequest<S> for Request
+where
+    S: Send + Sync + 'static,
+    State: FromRef<S>,
+{
+    type Rejection = JsonResponse;
+
+    async fn from_request(req: AxumReq, state: &S) -> Result<Self, Self::Rejection> {
+        let state = State::from_ref(state);
+        <Self as FromRequest>::from_request(req, &state).await
     }
 }
