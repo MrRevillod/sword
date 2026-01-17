@@ -14,8 +14,34 @@ macro_rules! http_method {
                     parse_macro_input!(attr as LitStr).value()
                 };
 
-                let input_fn = parse_macro_input!(item as ItemFn);
+                let mut input_fn = parse_macro_input!(item as ItemFn);
                 let fn_name = input_fn.sig.ident.clone();
+
+                // === Parse interceptor attributes from the function ===
+
+                use crate::adapters::{InterceptorArgs, expand_interceptor_args};
+
+                let mut interceptors = Vec::new();
+                let mut retained_attrs = Vec::new();
+
+                for attr in input_fn.attrs.iter() {
+                    if attr.path().is_ident("interceptor") {
+                        // Parse interceptor attribute
+                        match attr.parse_args::<InterceptorArgs>() {
+                            Ok(args) => interceptors.push(args),
+                            Err(e) => {
+                                return syn::Error::new_spanned(attr, format!("Failed to parse interceptor: {}", e))
+                                    .to_compile_error()
+                                    .into();
+                            }
+                        }
+                    } else {
+                        retained_attrs.push(attr.clone());
+                    }
+                }
+
+                // Remove interceptor attributes from the original function
+                input_fn.attrs = retained_attrs;
 
                 // === Read CMeta to get controller context ===
 
@@ -72,7 +98,7 @@ macro_rules! http_method {
                     _ => quote! { get },
                 };
 
-                let handler = if params.is_empty() {
+                let mut handler = if params.is_empty() {
                     // No parameters (except &self)
                     quote! {
                         ::sword::internal::axum::routing::#routing_fn({
@@ -111,6 +137,15 @@ macro_rules! http_method {
                     }
                 };
 
+                // === Apply interceptors as layers (in reverse order) ===
+
+                for interceptor in interceptors.iter().rev() {
+                    let generated_interceptor = expand_interceptor_args(interceptor);
+                    handler = quote! {
+                        #handler.layer(#generated_interceptor)
+                    };
+                }
+
                 // Generate inventory registration for this route
                 // The closure captures the controller type and method at compile time
                 // Use a unique name based on controller and method to avoid collisions
@@ -136,7 +171,7 @@ macro_rules! http_method {
                                             panic!("\n[!] Failed to build controller '{}'\n\n{}\n", #controller_name, err)
                                         })
                                     );
-                                    #controller_ident::#route_fn_name(controller)
+                                    #controller_ident::#route_fn_name(controller, state)
                                 },
                                 |router: ::sword::internal::axum::AxumRouter<::sword::internal::core::State>, state: ::sword::internal::core::State| -> ::sword::internal::axum::AxumRouter<::sword::internal::core::State> {
                                     #controller_ident::apply_interceptors(router, state)
@@ -152,6 +187,7 @@ macro_rules! http_method {
                     // Generated helper method that returns MethodRouter<State>
                     pub fn #route_fn_name(
                         controller: std::sync::Arc<Self>,
+                        state: ::sword::internal::core::State,
                     ) -> ::sword::internal::axum::MethodRouter<::sword::internal::core::State> {
                         #handler
                     }
