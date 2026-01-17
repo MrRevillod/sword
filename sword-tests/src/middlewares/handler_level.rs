@@ -321,7 +321,6 @@ impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
 #[controller("/test")]
 struct TestController {}
 
-#[routes]
 impl TestController {
     #[get("/extensions-test")]
     #[interceptor(ExtensionsTestMiddleware)]

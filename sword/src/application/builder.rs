@@ -20,7 +20,7 @@ pub struct ApplicationBuilder {
     state: State,
     container: DependencyContainer,
     adapter_registry: AdapterRegistry,
-    layer_stack: LayerStack,
+    layer_stack: LayerStack<State>,
     pub config: Config,
 }
 
@@ -158,12 +158,12 @@ impl ApplicationBuilder {
             register(&self.state);
         }
 
-        let router = self.build_router();
+        let (router, state) = self.build_router();
 
-        Application::new(router, self.config)
+        Application::new(router, state, self.config)
     }
 
-    fn build_router(&mut self) -> Router {
+    fn build_router(&mut self) -> (Router<State>, State) {
         let internal_router =
             InternalRouter::new(self.state.clone(), self.config.clone());
 
@@ -177,7 +177,7 @@ impl ApplicationBuilder {
             router = Router::new().nest(&prefix, router);
         }
 
-        router
+        (router, self.state.clone())
     }
 }
 

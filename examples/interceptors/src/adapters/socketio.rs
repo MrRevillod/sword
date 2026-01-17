@@ -21,6 +21,18 @@ impl EventsHandler {
         println!("Client connected: {}", ctx.socket.id);
     }
 
+    #[on_message("eventWithAck")]
+    async fn handle_event_ack(
+        &self,
+        ack: AckSender,
+        socket: SocketRef,
+        Data(payload): Data<Event>,
+    ) {
+        println!("Received 'event' from {}: {payload:?}", socket.id);
+
+        ack.send("ok").ok();
+    }
+
     #[on_message("event")]
     async fn handle_event(&self, socket: SocketRef, Data(payload): Data<Event>) {
         println!("Received 'event' from {}: {payload:?}", socket.id);

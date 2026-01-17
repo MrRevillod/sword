@@ -72,7 +72,6 @@ struct ComplexQueryData {
 #[controller("/users")]
 pub struct UserController {}
 
-#[routes]
 impl UserController {
     #[get("/simple-query")]
     async fn get_users(&self, req: Request) -> HttpResult {

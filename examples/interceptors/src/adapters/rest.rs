@@ -11,9 +11,9 @@ use sword::prelude::*;
 #[interceptor(LoggingInterceptor)]
 pub struct ExampleRestController;
 
-#[routes]
 impl ExampleRestController {
     #[get("/")]
+    #[interceptor(LoggingInterceptor)]
     async fn hello(&self) -> JsonResponse {
         JsonResponse::Ok().message("Hello from sword application!")
     }

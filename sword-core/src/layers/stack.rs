@@ -7,11 +7,14 @@ use tower::{Layer, Service};
 /// `LayerStack` provides a way to accumulate layers and apply them to a router in the
 /// order they were added. Layers are applied via the `push()` method during configuration,
 /// and then applied to the router via `apply()` during the build phase.
-pub struct LayerStack {
-    layers: Vec<Box<dyn Fn(Router) -> Router + Send + Sync>>,
+pub struct LayerStack<S = ()> {
+    layers: Vec<Box<dyn Fn(Router<S>) -> Router<S> + Send + Sync>>,
 }
 
-impl LayerStack {
+impl<S> LayerStack<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     pub fn new() -> Self {
         Self { layers: Vec::new() }
     }
@@ -35,7 +38,7 @@ impl LayerStack {
     /// Apply all accumulated layers to the given router in order.
     ///
     /// Layers are applied sequentially, with each layer wrapping the result of the previous one.
-    pub fn apply(&self, mut router: Router) -> Router {
+    pub fn apply(&self, mut router: Router<S>) -> Router<S> {
         for layer_fn in &self.layers {
             router = layer_fn(router);
         }
@@ -48,7 +51,10 @@ impl LayerStack {
     }
 }
 
-impl Default for LayerStack {
+impl<S> Default for LayerStack<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     fn default() -> Self {
         Self::new()
     }

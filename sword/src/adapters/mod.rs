@@ -16,6 +16,7 @@ pub mod socketio {
 use axum::Router;
 use parking_lot::RwLock;
 use sword_core::{HasDeps, State};
+use std::any::TypeId;
 
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
@@ -74,12 +75,16 @@ pub trait Adapter: HasDeps {
 /// ```
 pub struct AdapterRegistry {
     adapters: RwLock<Vec<AdapterKind>>,
+    /// TypeIds of controllers registered manually via Module::register_adapters
+    /// Used to filter inventory routes to only include manually registered controllers
+    registered_controller_types: RwLock<Vec<TypeId>>,
 }
 
 impl AdapterRegistry {
     pub(crate) fn new() -> Self {
         Self {
             adapters: RwLock::new(Vec::new()),
+            registered_controller_types: RwLock::new(Vec::new()),
         }
     }
 
@@ -92,11 +97,17 @@ impl AdapterRegistry {
     /// adapters.register::<MyController>();
     /// ```
     pub fn register<A: Adapter>(&self) {
+        // Track the TypeId for inventory filtering
+        self.registered_controller_types.write().push(TypeId::of::<A>());
         self.adapters.write().push(A::kind());
     }
 
     pub(crate) fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
         &self.adapters
+    }
+
+    pub(crate) fn registered_types(&self) -> Vec<TypeId> {
+        self.registered_controller_types.read().clone()
     }
 }
 

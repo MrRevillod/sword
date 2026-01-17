@@ -55,16 +55,14 @@ struct PostPath {
 #[controller("/extractors")]
 pub struct ExtractorController {}
 
-#[routes]
 impl ExtractorController {
     #[post("/json")]
-    async fn test_json(&self, Json(data): Json<CreateUserDto>) {
+    async fn test_json(&self, Json(data): Json<CreateUserDto>) -> JsonResponse {
         JsonResponse::Ok().data(data)
     }
 
     #[get("/query")]
-    #[returns(HttpResult)]
-    async fn test_query(&self, Query(params): Query<SearchParams>) {
+    async fn test_query(&self, Query(params): Query<SearchParams>) -> HttpResult {
         Ok(JsonResponse::Ok().data(params))
     }
 
@@ -77,7 +75,10 @@ impl ExtractorController {
     }
 
     #[get("/path/{user_id}/posts/{post_id}")]
-    async fn test_path_multiple(&self, PathParams(path): PathParams<PostPath>) {
+    async fn test_path_multiple(
+        &self,
+        PathParams(path): PathParams<PostPath>,
+    ) -> JsonResponse {
         JsonResponse::Ok().data(path)
     }
 
@@ -87,7 +88,7 @@ impl ExtractorController {
         PathParams(path): PathParams<UserIdPath>,
         Query(params): Query<SearchParams>,
         Json(data): Json<CreateUserDto>,
-    ) {
+    ) -> JsonResponse {
         JsonResponse::Ok().data(Combined {
             path,
             query: params,
@@ -96,8 +97,7 @@ impl ExtractorController {
     }
 
     #[get("/request")]
-    #[returns(HttpResult)]
-    async fn test_request(&self, req: Request) {
+    async fn test_request(&self, req: Request) -> HttpResult {
         let query: Option<SearchParams> = req.query()?;
         Ok(JsonResponse::Ok().data(query))
     }
@@ -107,22 +107,22 @@ impl ExtractorController {
         &self,
         PathParams(path): PathParams<UserIdPath>,
         Json(data): Json<CreateUserDto>,
-    ) {
+    ) -> JsonResponse {
         JsonResponse::Ok().data(Mixed { path, body: data })
     }
 
     #[get("/method")]
-    async fn test_method(&self, method: Method) {
+    async fn test_method(&self, method: Method) -> JsonResponse {
         JsonResponse::Ok().data(method.as_str())
     }
 
     #[get("/uri")]
-    async fn test_uri(&self, uri: Uri) {
+    async fn test_uri(&self, uri: Uri) -> JsonResponse {
         JsonResponse::Ok().data(uri.path())
     }
 
     #[get("/headers")]
-    async fn test_headers(&self, headers: Headers) {
+    async fn test_headers(&self, headers: Headers) -> JsonResponse {
         let user_agent = headers
             .get("user-agent")
             .and_then(|v| v.to_str().ok())
@@ -131,13 +131,18 @@ impl ExtractorController {
     }
 
     #[post("/bytes")]
-    async fn test_bytes(&self, bytes: Bytes) {
+    async fn test_bytes(&self, bytes: Bytes) -> JsonResponse {
         let size = bytes.len();
         JsonResponse::Ok().data(size)
     }
 
     #[get("/combined-axum")]
-    async fn test_combined_axum(&self, method: Method, uri: Uri, headers: Headers) {
+    async fn test_combined_axum(
+        &self,
+        method: Method,
+        uri: Uri,
+        headers: Headers,
+    ) -> JsonResponse {
         #[derive(Serialize)]
         struct AxumData {
             method: String,

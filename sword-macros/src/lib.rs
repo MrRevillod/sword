@@ -11,11 +11,11 @@ use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
 http_method! {
-    get,
-    post,
-    put,
-    delete,
-    patch,
+    get => "GET",
+    post => "POST",
+    put => "PUT",
+    delete => "DELETE",
+    patch => "PATCH",
 }
 
 /// This macro is alias for `#[rest_adapter]`.
@@ -66,27 +66,6 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn rest_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
     adapters::expand_controller(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-/// Implements the routes for a controller defined with the `#[rest_adapter]` macro.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[rest_adapter("/base_path")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResult {
-///        Ok(JsonResponse::Ok().message("Hello from MyController"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_controller_routes(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 

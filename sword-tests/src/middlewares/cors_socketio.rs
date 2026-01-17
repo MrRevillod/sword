@@ -120,7 +120,6 @@ async fn cors_doesnt_break_rest() {
     #[controller("/api")]
     struct ApiController;
 
-    #[routes]
     impl ApiController {
         #[get("/test")]
         async fn test(&self) -> JsonResponse {

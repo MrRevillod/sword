@@ -23,10 +23,12 @@ pub mod internal {
             Next as AxumNext, from_fn_with_state as mw_with_state,
         };
         pub use axum::response::{IntoResponse, Response as AxumResponse};
+        pub use axum::routing;
         pub use axum::routing::{
-            Router as AxumRouter, delete as delete_fn, get as get_fn,
-            patch as patch_fn, post as post_fn, put as put_fn,
-        };
+            MethodRouter, Router as AxumRouter, delete, delete as delete_fn, get,
+            get as get_fn, patch, patch as patch_fn, post, post as post_fn, put,
+            put as put_fn,
+        }; // Export routing module for macros
     }
 
     #[cfg(feature = "adapter-socketio")]
@@ -43,6 +45,10 @@ pub mod internal {
         pub use crate::adapters::{Adapter, AdapterKind};
         pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
         pub use sword_core::*;
+    }
+
+    pub mod rest {
+        pub use crate::adapters::rest::RouteRegistrar;
     }
 
     pub use inventory;

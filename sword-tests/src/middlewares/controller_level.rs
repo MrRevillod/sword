@@ -28,7 +28,6 @@ impl OnRequest for MwWithState {
 #[interceptor(ExtensionsTestMiddleware)]
 struct TestController {}
 
-#[routes]
 impl TestController {
     #[get("/extensions-test")]
     async fn extensions_test(&self, req: Request) -> JsonResponse {

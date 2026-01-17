@@ -22,6 +22,7 @@ proc-macro = true
 [dependencies]
 axum = { workspace = true }
 regex-lite = { workspace = true }
+once_cell = "1.19"
 
 syn = { version = "2", features = ["full"] }
 quote = "1"

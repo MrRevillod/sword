@@ -7,7 +7,6 @@ use tokio::time::{Duration, sleep};
 #[controller("/test")]
 struct TestController;
 
-#[routes]
 impl TestController {
     #[get("/timeout")]
     async fn timeout(&self) -> HttpResult {
