@@ -3,19 +3,33 @@ mod core;
 mod interceptor_derive;
 mod shared;
 
-#[macro_use]
-mod macros;
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
-http_method! {
-    get => "GET",
-    post => "POST",
-    put => "PUT",
-    delete => "DELETE",
-    patch => "PATCH",
+#[proc_macro_attribute]
+pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("GET", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("POST", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("PUT", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("DELETE", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("PATCH", attr, item)
 }
 
 /// This macro is alias for `#[rest_adapter]`.

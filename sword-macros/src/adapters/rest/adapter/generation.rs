@@ -43,14 +43,13 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
             }
         }
 
-        // Adapter trait impl for backward compatibility with Module::register_adapters
-        // However, routes are now auto-registered via inventory in each #[get]/#[post] macro
         impl ::sword::internal::core::Adapter for #self_name {
             fn kind() -> ::sword::internal::core::AdapterKind {
-                // Return an empty Rest adapter since routes are registered individually
-                ::sword::internal::core::AdapterKind::Rest(Box::new(|_state| {
-                    ::sword::internal::axum::AxumRouter::new()
-                }))
+                ::sword::internal::core::AdapterKind::Http
+            }
+
+            fn type_id() -> ::std::any::TypeId {
+                ::std::any::TypeId::of::<#self_name>()
             }
         }
     }

@@ -4,7 +4,6 @@ use sword::prelude::*;
 #[socketio_adapter("/socket")]
 struct TestSocketIOAdapter;
 
-#[handlers]
 impl TestSocketIOAdapter {
     #[on_connection]
     async fn on_connect(&self) {

@@ -168,7 +168,7 @@ impl ApplicationBuilder {
             InternalRouter::new(self.state.clone(), self.config.clone());
 
         let layer_stack = std::mem::take(&mut self.layer_stack);
-        let mut router = internal_router.build(&self.adapter_registry, layer_stack);
+        let mut router = internal_router.build(layer_stack, &self.adapter_registry);
 
         let app_config = self.config.get::<ApplicationConfig>()
             .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");

@@ -1,5 +1,10 @@
+use std::any::TypeId;
+use std::collections::HashMap;
+
+use crate::adapters::rest::{ControllerInfo, RouteRegistrar};
 use crate::adapters::{AdapterKind, AdapterRegistry};
 use axum::Router;
+use socketioxide::layer::SocketIoLayer;
 use sword_core::layers::*;
 use sword_core::{Config, State};
 
@@ -13,35 +18,55 @@ impl InternalRouter {
         Self { state, config }
     }
 
+    #[cfg(feature = "adapter-socketio")]
+    pub fn socketio_setup(&self) -> (Option<SocketIoLayer>, SocketIoServerConfig) {
+        let socketio_config = self.config.get_or_default::<SocketIoServerConfig>();
+
+        let layer = socketio_config.enabled.then(|| {
+            let (layer, io) = SocketIoServerLayer::new(&socketio_config);
+            self.state.insert(io);
+
+            layer
+        });
+
+        (layer, socketio_config)
+    }
+
+    #[cfg(feature = "adapter-socketio")]
+    pub fn apply_socketio_layer(
+        &self,
+        mut router: Router<State>,
+        layer: SocketIoLayer,
+        config: SocketIoServerConfig,
+    ) -> Router<State> {
+        use axum::{extract::Request, middleware::Next};
+        use sword_layers::socketio::*;
+
+        router = router.layer(layer);
+
+        // Apply parser middleware (outer - executes first)
+        // This ensures extensions are set before SocketIO handshake
+        router = router.layer(axum::middleware::from_fn(
+            move |mut req: Request, next: Next| async move {
+                req.extensions_mut().insert::<SocketIoParser>(config.parser);
+                next.run(req).await
+            },
+        ));
+
+        router
+    }
+
     pub fn build(
         self,
-        adapters: &AdapterRegistry,
         layers: LayerStack<State>,
+        adapters: &AdapterRegistry,
     ) -> Router<State> {
-        #[cfg(feature = "adapter-socketio")]
-        let socketio_layer: Option<socketioxide::layer::SocketIoLayer> = {
-            use sword_layers::socketio::*;
-
-            let socketio_config =
-                self.config.get_or_default::<SocketIoServerConfig>();
-
-            socketio_config.enabled.then(|| {
-                let (layer, io) = SocketIoServerLayer::new(&socketio_config);
-                self.state.insert(io);
-
-                layer
-            })
-        };
-
-        // Create router with state from the beginning
-        // This allows handlers to use State<S> extractor
         let mut router = Router::new();
 
-        // Register all adapters (REST controllers and SocketIO handlers)
-        // SocketIO handlers can now access SocketIo from state
-        let registered_types = adapters.registered_types();
-        router =
-            self.apply_adapters(router, &adapters.inner().read(), &registered_types);
+        #[cfg(feature = "adapter-socketio")]
+        let (socketio_layer, socketio_config) = self.socketio_setup();
+
+        router = self.apply_adapters(router, &*adapters.read());
 
         // Apply REST-only middlewares (internal to SocketIO layer)
         router = self.apply_rest_only_middlewares(router);
@@ -49,27 +74,8 @@ impl InternalRouter {
         // Apply SocketIO layer to router
         // This wraps the router but SocketIO requests bypass inner middlewares
         #[cfg(feature = "adapter-socketio")]
-        {
-            if let Some(socketio_layer) = socketio_layer {
-                use axum::{extract::Request, middleware::Next};
-                use sword_layers::socketio::*;
-
-                let socketio_config =
-                    self.config.get_or_default::<SocketIoServerConfig>();
-
-                let parsed = socketio_config.parser;
-
-                router = router.layer(socketio_layer);
-
-                // Then apply parser middleware (outer - executes first)
-                // This ensures extensions are set before SocketIO handshake
-                router = router.layer(axum::middleware::from_fn(
-                    move |mut req: Request, next: Next| async move {
-                        req.extensions_mut().insert::<SocketIoParser>(parsed);
-                        next.run(req).await
-                    },
-                ));
-            }
+        if let Some(layer) = socketio_layer {
+            router = self.apply_socketio_layer(router, layer, socketio_config);
         }
 
         // Apply shared middlewares (external to SocketIO layer - affects both)
@@ -84,111 +90,65 @@ impl InternalRouter {
     fn apply_adapters(
         &self,
         mut router: Router<State>,
-        adapters: &[AdapterKind],
-        registered_types: &[std::any::TypeId],
+        adapters: &HashMap<AdapterKind, Vec<TypeId>>,
     ) -> Router<State> {
-        // Apply SocketIO adapters (non-REST)
-        for adapter_kind in adapters.iter() {
-            match adapter_kind {
-                AdapterKind::Rest(_) => {
-                    // REST controllers are now handled via inventory
-                    // This maintains backward compatibility but the actual routing
-                    // is done through apply_auto_registered_routes
+        for (kind, adapters) in adapters.iter() {
+            match kind {
+                AdapterKind::Http => {
+                    router = self.apply_http_adapters(router, adapters);
                 }
-                AdapterKind::SocketIo(setup_fn) => {
-                    setup_fn(&self.state);
-                }
-                AdapterKind::Grpc => {
-                    // Not implemented yet
+                AdapterKind::SocketIo => {
+                    self.apply_socketio_adapters(adapters);
                 }
             }
         }
 
-        // Build REST routes from inventory, filtering by registered TypeIds
-        router = self.apply_auto_registered_routes(router, registered_types);
-
         router
     }
 
-    /// Build routers from auto-registered routes via inventory
-    ///
-    /// This iterates all RouteRegistrar entries (submitted by #[get], #[post], etc.)
-    /// and groups them by controller to build complete controller routers.
-    ///
-    /// If registered_types is not empty, only routes from those controllers are built.
-    /// If registered_types is empty, all routes from inventory are built (full auto-registration).
-    ///
-    /// Note: This is called AFTER all providers/components are registered in State,
-    /// so controllers can be built with their dependencies.
-    fn apply_auto_registered_routes(
+    fn apply_http_adapters(
         &self,
         mut router: Router<State>,
-        registered_types: &[std::any::TypeId],
+        adapters: &[TypeId],
     ) -> Router<State> {
-        use crate::adapters::rest::RouteRegistrar;
-        use axum::routing::MethodRouter;
-        use std::collections::HashMap;
+        for adapter_id in adapters {
+            let adapter_routes = inventory::iter::<RouteRegistrar>
+                .into_iter()
+                .collect::<Vec<_>>();
 
-        // Group routes by (controller_name, controller_path)
-        // Also store the interceptor function (should be the same for all routes of a controller)
-        type ControllerKey = (&'static str, &'static str);
-        type RouteInfo = (&'static str, fn(State) -> MethodRouter<State>);
-        let mut controllers: HashMap<
-            ControllerKey,
-            (Vec<RouteInfo>, fn(Router<State>, State) -> Router<State>),
-        > = HashMap::new();
+            let info = adapter_routes
+                .first()
+                .map(|reg| ControllerInfo::from(*reg))
+                .expect("Adapter must have at least one registered route");
 
-        let use_all_controllers = registered_types.is_empty();
+            let adapter_routes = adapter_routes
+                .into_iter()
+                .filter(|reg| &reg.controller_type_id == adapter_id)
+                .collect::<Vec<_>>();
 
-        for route_registrar in inventory::iter::<RouteRegistrar> {
-            // Filter: only include routes from registered controllers
-            // If no controllers registered manually, include all (full auto-registration)
-            if !use_all_controllers
-                && !registered_types.contains(&route_registrar.controller_type_id)
-            {
-                continue;
-            }
-
-            let key = (
-                route_registrar.controller_name,
-                route_registrar.controller_path,
-            );
-            let entry = controllers
-                .entry(key)
-                .or_insert_with(|| (Vec::new(), route_registrar.apply_interceptors));
-            entry
-                .0
-                .push((route_registrar.route_path, route_registrar.build_handler));
-        }
-
-        // Build a router for each controller
-        // Create routers with state so handlers can use State<S> extractor
-        for ((_controller_name, controller_path), (routes, apply_interceptors_fn)) in
-            controllers
-        {
             let mut controller_router = Router::new();
 
-            for (route_path, build_handler) in routes {
-                // Execute the build function with State to create controller and handler
-                // Handler is MethodRouter<State> - can use State<S> extractor
-                let handler = build_handler(self.state.clone());
-                controller_router = controller_router.route(route_path, handler);
+            for route in adapter_routes {
+                controller_router = controller_router
+                    .route(route.route_path, (route.handler)(self.state.clone()));
             }
 
-            // Apply controller-level interceptors (Router<State>, State) -> Router<State>
-            controller_router =
-                apply_interceptors_fn(controller_router, self.state.clone());
+            controller_router = (info.apply_controller_level_interceptors)(
+                controller_router,
+                self.state.clone(),
+            );
 
-            // Nest the controller router under its base path
-            if controller_path == "/" {
+            if info.controller_path == "/" {
                 router = router.merge(controller_router);
             } else {
-                router = router.nest(controller_path, controller_router);
+                router = router.nest(info.controller_path, controller_router);
             }
         }
 
         router
     }
+
+    fn apply_socketio_adapters(&self, _: &[TypeId]) {}
 
     /// Apply middlewares that should ONLY affect REST routes
     ///

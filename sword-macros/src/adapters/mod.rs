@@ -1,4 +1,4 @@
-mod rest;
+pub mod rest;
 pub use rest::*;
 
 #[cfg(feature = "adapter-socketio")]
