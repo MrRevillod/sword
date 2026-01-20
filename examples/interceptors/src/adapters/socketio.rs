@@ -1,9 +1,14 @@
-use crate::interceptors::LoggingInterceptor;
 use serde::{Deserialize, Serialize};
 use sword::prelude::*;
 
-/// On the Socket.IO adapter the interceptors are only supported on the
-/// connection event.
+use crate::interceptors::LoggingInterceptor;
+
+/// Socket.IO adapter example with auto-registration and interceptors.
+///
+/// The `#[interceptor]` attribute can be used on the adapter to apply interceptors
+/// to all connection events. The interceptor is applied using `.with()` from socketioxide.
+/// The connection handler method must be named `on_connect` for auto-registration.
+/// Message handlers can have any name, but each handles a specific event.
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Event {
@@ -11,35 +16,33 @@ struct Event {
 }
 
 #[socketio_adapter("/events")]
+#[interceptor(LoggingInterceptor)]
 pub struct EventsHandler;
 
-#[handlers]
 impl EventsHandler {
-    #[on_connection]
-    #[interceptor(LoggingInterceptor)] // <- Interceptor applied here
-    async fn handle_connection(&self, ctx: SocketContext) {
+    #[on("connection")]
+    async fn on_connect_method(&self, ctx: SocketContext) {
         println!("Client connected: {}", ctx.socket.id);
     }
 
-    #[on_message("eventWithAck")]
-    async fn handle_event_ack(
-        &self,
-        ack: AckSender,
-        socket: SocketRef,
-        Data(payload): Data<Event>,
-    ) {
-        println!("Received 'event' from {}: {payload:?}", socket.id);
+    #[on("event")]
+    async fn handle_message_event(&self, ctx: SocketContext) {
+        let payload: Event = ctx.try_data().expect("Failed to parse event data");
 
-        ack.send("ok").ok();
+        println!("Received 'event' from {}: {payload:?}", ctx.socket.id);
     }
 
-    #[on_message("event")]
-    async fn handle_event(&self, socket: SocketRef, Data(payload): Data<Event>) {
-        println!("Received 'event' from {}: {payload:?}", socket.id);
-    }
+    #[on("eventWithAck")]
+    async fn handle_message(&self, ctx: SocketContext) {
+        let payload: Event = ctx.try_data().expect("Failed to parse event data");
 
-    #[on_disconnection]
-    async fn handle_disconnection(&self, ctx: SocketContext) {
-        println!("Client disconnected: {}", ctx.socket.id);
+        println!(
+            "Received 'eventWithAck' from {}: {payload:?}",
+            ctx.socket.id
+        );
+
+        if ctx.has_ack() {
+            ctx.ack("ok").ok();
+        }
     }
 }

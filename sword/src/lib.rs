@@ -33,6 +33,9 @@ pub mod internal {
 
     #[cfg(feature = "adapter-socketio")]
     pub mod socketio {
+        pub use crate::adapters::socketio::{
+            HandlerRegistrar, SocketEventKind, SocketIoSetupFn,
+        };
         pub use socketioxide::SocketError;
         pub use socketioxide::handler::ConnectHandler;
         pub use socketioxide::handler::connect::FromConnectParts;

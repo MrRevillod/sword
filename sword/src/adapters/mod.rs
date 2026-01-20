@@ -1,17 +1,7 @@
 pub mod rest;
 
 #[cfg(feature = "adapter-socketio")]
-pub mod socketio {
-    mod adapter;
-    mod error;
-    mod extract;
-    mod interceptor;
-
-    pub use adapter::*;
-    pub use error::*;
-    pub use extract::*;
-    pub use interceptor::*;
-}
+pub mod socketio;
 
 use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
 use std::{any::TypeId, collections::HashMap};

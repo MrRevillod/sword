@@ -10,10 +10,7 @@ pub use socketioxide::{
     socket::DisconnectReason,
 };
 
-pub use sword_macros::{
-    handlers, on_connection, on_disconnection, on_fallback, on_message,
-    socketio_adapter,
-};
+pub use sword_macros::{on, socketio_adapter};
 
 /// Trait for providing Socket.IO adapter functionality.
 ///

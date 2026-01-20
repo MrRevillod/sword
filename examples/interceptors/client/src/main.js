@@ -18,3 +18,5 @@ socket.emit("event", { content: "Hello from the client!" });
 const sendResponse = await socket.emitWithAck("eventWithAck", {
   content: "Hello with Ack!",
 });
+
+console.log("Received acknowledgment from server:", sendResponse);

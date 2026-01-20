@@ -11,9 +11,8 @@ pub struct ChatAdapter {
     db: Arc<Database>,
 }
 
-#[handlers]
 impl ChatAdapter {
-    #[on_connection]
+    #[on("connection")]
     async fn on_connect(&self, ctx: SocketContext) {
         println!("New client connected");
 
@@ -22,7 +21,7 @@ impl ChatAdapter {
         ctx.socket.emit("messages", &messages).ok();
     }
 
-    #[on_message("message")]
+    #[on("message")]
     async fn handle_message(&self, ctx: SocketContext) {
         let Ok(data) = ctx.try_validated_data::<IncommingMessageDto>() else {
             eprintln!("Failed to validate message data");

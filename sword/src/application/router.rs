@@ -112,19 +112,18 @@ impl InternalRouter {
         adapters: &[TypeId],
     ) -> Router<State> {
         for adapter_id in adapters {
-            let adapter_routes = inventory::iter::<RouteRegistrar>
-                .into_iter()
-                .collect::<Vec<_>>();
+            let mut adapter_routes = inventory::iter::<RouteRegistrar>()
+                .filter(|reg| &reg.controller_type_id == adapter_id)
+                .peekable();
 
             let info = adapter_routes
-                .first()
+                .peek()
                 .map(|reg| ControllerInfo::from(*reg))
-                .expect("Adapter must have at least one registered route");
-
-            let adapter_routes = adapter_routes
-                .into_iter()
-                .filter(|reg| &reg.controller_type_id == adapter_id)
-                .collect::<Vec<_>>();
+                .unwrap_or_else(|| {
+                    eprintln!("ERROR: Adapter with TypeId {adapter_id:?} has no registered routes.");
+                    eprintln!("This indicates a bug in the #[controller] macro implementation.");
+                    panic!("No routes found for adapter");
+                });
 
             let mut controller_router = Router::new();
 
@@ -148,7 +147,30 @@ impl InternalRouter {
         router
     }
 
-    fn apply_socketio_adapters(&self, _: &[TypeId]) {}
+    #[cfg(feature = "adapter-socketio")]
+    fn apply_socketio_adapters(&self, adapters: &[TypeId]) {
+        use crate::adapters::socketio::{HandlerRegistrar, SocketIoSetupFn};
+
+        for adapter_id in adapters {
+            let setup_fn = inventory::iter::<SocketIoSetupFn>()
+                .find(|s| &s.adapter_type_id == adapter_id);
+
+            if let Some(setup) = setup_fn {
+                (setup.setup)(&self.state);
+            } else {
+                let has_handlers = inventory::iter::<HandlerRegistrar>()
+                    .any(|h| &h.adapter_type_id == adapter_id);
+
+                if has_handlers {
+                    eprintln!(
+                        "Warning: SocketIO adapter {:?} has handlers but no setup function. \
+                            Did you forget #[on(\"connection\")] handler?",
+                        adapter_id
+                    );
+                }
+            }
+        }
+    }
 
     /// Apply middlewares that should ONLY affect REST routes
     ///

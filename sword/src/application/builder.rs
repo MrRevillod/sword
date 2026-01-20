@@ -150,7 +150,13 @@ impl ApplicationBuilder {
     pub fn build(mut self) -> Application {
         self.container
             .build_all(&self.state)
-            .expect("Failed to build dependency injection container");
+            .unwrap_or_else(|err| {
+                eprintln!("\n[!] Failed to build dependency injection container\n");
+                eprintln!("    Error: {}\n", err);
+                eprintln!("    This usually indicates a missing dependency or circular dependency.");
+                eprintln!("    Check that all required components and providers are registered.\n");
+                panic!("DI container build failed");
+            });
 
         for InterceptorRegistrar { register } in
             inventory::iter::<InterceptorRegistrar>
