@@ -24,7 +24,6 @@ impl OnRequest for SetCookieMw {
 #[controller("/cookies")]
 struct CookieController {}
 
-#[routes]
 impl CookieController {
     #[get("/set")]
     async fn set_cookie(&self, req: Request) -> HttpResult {

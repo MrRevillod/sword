@@ -17,10 +17,10 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
                 {
                     fn __check_on_request<M: ::sword::prelude::OnRequest>(mw: &M) -> &M { mw }
 
-                    let middleware = state.borrow::<::std::sync::Arc<#path>>()
+                    let middleware = state.borrow::<#path>()
                         .expect("Failed to retrieve middleware from State");
 
-                    let _ = __check_on_request(&**middleware);
+                    let _ = __check_on_request(&*middleware);
 
                     ::sword::internal::axum::mw_with_state(
                         state.clone(),
@@ -46,10 +46,10 @@ pub fn expand_interceptor_args(args: &InterceptorArgs) -> TokenStream {
                         mw
                     }
 
-                    let middleware = state.borrow::<::std::sync::Arc<#middleware>>()
+                    let middleware = state.borrow::<#middleware>()
                         .expect("Failed to retrieve middleware from State");
 
-                    let _ = __check_on_request_with_config::<#middleware, _>(&**middleware);
+                    let _ = __check_on_request_with_config::<#middleware, _>(&*middleware);
 
                     ::sword::internal::axum::mw_with_state(
                         state.clone(),

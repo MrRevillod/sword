@@ -1,32 +1,21 @@
 pub mod rest;
 
 #[cfg(feature = "adapter-socketio")]
-pub mod socketio {
-    mod adapter;
-    mod error;
-    mod extract;
-    mod interceptor;
+pub mod socketio;
 
-    pub use adapter::*;
-    pub use error::*;
-    pub use extract::*;
-    pub use interceptor::*;
-}
-
-use axum::Router;
-use parking_lot::RwLock;
-use sword_core::{HasDeps, State};
+use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
+use std::{any::TypeId, collections::HashMap};
+use sword_core::HasDeps;
 
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
 ///
-/// - Rest: The base for RESTful APIs, Axum Router with state.
-/// - WebSocket: A socketio layer based adapter, Axum Router with state.
-/// - Grpc: Not implemented yet.
+/// - Http: The base for RESTful APIs, Multipart data handling, Axum Router with state.
+/// - SocketIo: A socketio layer based adapter, Axum Router with state.
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AdapterKind {
-    Rest(Box<dyn Fn(State) -> Router>),
-    SocketIo(Box<dyn Fn(&State)>),
-    Grpc,
+    Http,
+    SocketIo,
 }
 
 /// A trait for defining adapters in the application.
@@ -51,6 +40,7 @@ pub enum AdapterKind {
 /// ```
 pub trait Adapter: HasDeps {
     fn kind() -> AdapterKind;
+    fn type_id() -> TypeId;
 }
 
 /// Registry for managing and storing different adapter kinds.
@@ -73,17 +63,17 @@ pub trait Adapter: HasDeps {
 /// }
 /// ```
 pub struct AdapterRegistry {
-    adapters: RwLock<Vec<AdapterKind>>,
+    adapters: RwLock<HashMap<AdapterKind, Vec<TypeId>>>,
 }
 
 impl AdapterRegistry {
     pub(crate) fn new() -> Self {
         Self {
-            adapters: RwLock::new(Vec::new()),
+            adapters: RwLock::new(HashMap::new()),
         }
     }
 
-    /// Registers an adapter of type `G` by calling its `kind()` method
+    /// Registers an adapter of type `A` by calling its `kind()` method
     /// and storing the resulting `AdapterKind` in the registry.
     ///
     /// # Example
@@ -92,11 +82,24 @@ impl AdapterRegistry {
     /// adapters.register::<MyController>();
     /// ```
     pub fn register<A: Adapter>(&self) {
-        self.adapters.write().push(A::kind());
+        let mut adapter_registry_vec = self
+            .adapters
+            .read()
+            .get(&A::kind())
+            .cloned()
+            .unwrap_or_default();
+
+        adapter_registry_vec.push(A::type_id());
+
+        self.adapters
+            .write()
+            .insert(A::kind(), adapter_registry_vec);
     }
 
-    pub(crate) fn inner(&self) -> &RwLock<Vec<AdapterKind>> {
-        &self.adapters
+    pub fn read(
+        &self,
+    ) -> RwLockReadGuard<'_, RawRwLock, HashMap<AdapterKind, Vec<TypeId>>> {
+        self.adapters.read()
     }
 }
 

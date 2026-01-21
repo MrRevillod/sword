@@ -3,19 +3,33 @@ mod core;
 mod interceptor_derive;
 mod shared;
 
-#[macro_use]
-mod macros;
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
-http_method! {
-    get,
-    post,
-    put,
-    delete,
-    patch,
+#[proc_macro_attribute]
+pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("GET", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("POST", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("PUT", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("DELETE", attr, item)
+}
+
+#[proc_macro_attribute]
+pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::rest::attributes::attribute("PATCH", attr, item)
 }
 
 /// This macro is alias for `#[rest_adapter]`.
@@ -66,27 +80,6 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn rest_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
     adapters::expand_controller(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-/// Implements the routes for a controller defined with the `#[rest_adapter]` macro.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[rest_adapter("/base_path")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResult {
-///        Ok(JsonResponse::Ok().message("Hello from MyController"))
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn routes(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_controller_routes(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -573,7 +566,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 
 #[cfg(feature = "adapter-socketio")]
 /// Marks a struct as a Socket.IO adapter.
-/// This macro should be used in combination with the `#[handlers]`
+/// This macro should be used in combination with the `#[on]`
 /// macro for handler implementation.
 ///
 /// ### Usage
@@ -581,9 +574,8 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// #[socketio_adapter("/chat")]
 /// struct ChatSocket;
 ///
-/// #[handlers]
 /// impl ChatSocket {
-///     #[on_connection]
+///     #[on("connection")]
 ///     async fn on_connect(&self, socket: SocketRef) {
 ///         println!("Client connected");
 ///     }
@@ -625,101 +617,41 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     }
 /// }
 /// ```
+/// Unified handler attribute for Socket.IO events.
+///
+/// ### Event Types
+/// - `#[on("connection")]` - Called when a client connects
+/// - `#[on("disconnection")]` - Called when a client disconnects  
+/// - `#[on("fallback")]` - Called for unhandled events
+/// - `#[on("custom_event")]` - Called for custom event names
+///
+/// ### Parameters
+/// All handlers receive `&self` and `ctx: SocketContext` which provides access to:
+/// - Socket operations via `ctx.socket`
+/// - Message data via `ctx.try_data::<T>()`
+/// - Event name via `ctx.event()`
+/// - Acknowledgments via `ctx.ack()`
+///
+/// ### Usage
+/// ```rust,ignore
+/// #[socketio_adapter("/chat")]
+/// pub struct ChatAdapter { ... }
+///
+/// impl ChatAdapter {
+///     #[on("connection")]
+///     async fn on_connect(&self, ctx: SocketContext) {
+///         println!("Client connected: {}", ctx.socket.id);
+///     }
+///     
+///     #[on("message")]
+///     async fn handle_message(&self, ctx: SocketContext) {
+///         let msg: String = ctx.try_data().unwrap();
+///         println!("Received: {}", msg);
+///     }
+/// }
+/// ```
 #[proc_macro_attribute]
-pub fn handlers(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_socketio_handlers(attr, item)
+pub fn on(attr: TokenStream, item: TokenStream) -> TokenStream {
+    adapters::expand_on_handler(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-#[cfg(feature = "adapter-socketio")]
-/// Marks a method as a WebSocket connection handler.
-/// This method will be called when a client establishes a WebSocket connection.
-///
-/// ### Parameters
-/// The handler receives a `SocketRef` parameter for interacting with the connected client.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[on_connection]
-/// async fn on_connect(&self, socket: SocketRef) {
-///     println!("Client connected: {}", socket.id);
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn on_connection(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-#[cfg(feature = "adapter-socketio")]
-/// Marks a method as a WebSocket disconnection handler.
-/// This method will be called when a client disconnects from the WebSocket.
-///
-/// ### Parameters
-/// The handler receives a `SocketRef` parameter with the disconnected client's information.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[on_disconnection]
-/// async fn on_disconnect(&self, socket: SocketRef) {
-///     println!("Client disconnected: {}", socket.id);
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn on_disconnection(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-#[cfg(feature = "adapter-socketio")]
-/// Marks a method as a WebSocket message handler.
-/// This method will be called when the client emits an event with the specified message type.
-///
-/// ### Parameters
-/// - `event_name`: The name of the event to handle, e.g., `"message"`, `"chat"`, etc.
-///
-/// ### Parameters in handler
-/// - `socket: SocketRef` (optional) - The connected client's socket
-/// - `Event(name): Event` (optional) - The event name
-/// - `Data(data): Data<T>` (optional) - The message payload deserialized to type T
-/// - `ack: AckSender` (optional) - For sending acknowledgments back to the client
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[on_message("message")]
-/// async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
-///     println!("Received: {}", msg);
-/// }
-///
-/// #[on_message("request")]
-/// async fn on_request(&self, Data(req): Data<Request>, ack: AckSender) {
-///     ack.send("response").ok();
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn on_message(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
-}
-
-#[cfg(feature = "adapter-socketio")]
-/// Marks a method as a WebSocket fallback handler.
-/// This method will be called for any event that doesn't match a specific `#[subscribe_message]` handler.
-/// It's useful for debugging or handling dynamic events.
-///
-/// ### Parameters in handler
-/// - `Event(name): Event` - The event name
-/// - `Data(data): Data<T>` - The message payload
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[on_fallback]
-/// async fn on_fallback(&self, Event(event): Event, Data(data): Data<Value>) {
-///     println!("Unhandled event: {} with data: {:?}", event, data);
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn on_fallback(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let _ = attr;
-    item
 }

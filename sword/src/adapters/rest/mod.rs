@@ -8,6 +8,10 @@ pub use interceptor::*;
 pub use request::*;
 pub use response::*;
 
+pub mod extractors {
+    pub use super::request::extractors::*;
+}
+
 pub mod cookies {
     pub use sword_layers::cookies::{
         Cookies, Key as CookiesKey, PrivateCookies, SignedCookies,
@@ -20,6 +24,50 @@ pub mod cookies {
 
 #[cfg(feature = "multipart")]
 pub mod multipart {
-    pub use axum::extract::Multipart;
+    pub use axum::extract::multipart::{
+        Field, InvalidBoundary, Multipart, MultipartError, MultipartRejection,
+    };
     pub use bytes::*;
 }
+
+use axum::{Router, routing::MethodRouter};
+use std::any::TypeId;
+use sword_core::State;
+
+#[derive(Clone)]
+pub struct ControllerInfo {
+    pub controller_path: &'static str,
+    pub apply_controller_level_interceptors:
+        fn(router: Router<State>, state: State) -> Router<State>,
+}
+
+#[derive(Clone)]
+pub struct RouteRegistrar {
+    /// TypeId of the controller for filtering during registration
+    pub controller_type_id: TypeId,
+
+    /// Base path of the controller (e.g., "/api/users")
+    pub controller_path: &'static str,
+
+    /// Path of this specific route (e.g., "/:id")
+    pub route_path: &'static str,
+
+    /// Function that builds the MethodRouter for this route
+    /// The closure constructs the controller from state and calls the specific __sword_route_* method
+    pub handler: fn(State) -> MethodRouter<State>,
+
+    pub apply_controller_level_interceptors:
+        fn(router: Router<State>, state: State) -> Router<State>,
+}
+
+impl From<&RouteRegistrar> for ControllerInfo {
+    fn from(registrar: &RouteRegistrar) -> Self {
+        ControllerInfo {
+            controller_path: registrar.controller_path,
+            apply_controller_level_interceptors: registrar
+                .apply_controller_level_interceptors,
+        }
+    }
+}
+
+inventory::collect!(RouteRegistrar);

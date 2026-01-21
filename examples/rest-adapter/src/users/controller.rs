@@ -14,7 +14,6 @@ pub struct UsersController {
     users: Arc<UserRepository>,
 }
 
-#[routes]
 impl UsersController {
     #[get("/")]
     async fn get_users(&self, req: Request) -> HttpResult {

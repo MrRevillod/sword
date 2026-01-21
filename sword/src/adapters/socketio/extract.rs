@@ -2,6 +2,7 @@ use super::error::SocketError;
 
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;
+use parking_lot::RwLock;
 use serde::{Serialize, de::DeserializeOwned};
 use socketioxide::{
     ProtocolVersion, SendError, TransportType,
@@ -11,8 +12,10 @@ use socketioxide::{
     handler::{FromConnectParts, FromDisconnectParts, FromMessageParts},
     socket::{DisconnectReason, Socket},
 };
-
-use socketioxide_core::{Sid, Value, parser::ParseError};
+use socketioxide_core::{
+    Sid, Value,
+    parser::{Parse, ParseError},
+};
 use std::{convert::Infallible, sync::Arc};
 
 #[cfg(feature = "validation-validator")]
@@ -26,7 +29,7 @@ use sword_layers::socketio::SocketIoParser;
 /// and disconnect reasons depending on the handler type.
 pub struct SocketContext<A: Adapter = LocalAdapter> {
     pub socket: SocketRef<A>,
-    data: Option<Value>,
+    data: RwLock<Option<Value>>,
     ack: Option<AckSender<A>>,
     disconnect_reason: Option<DisconnectReason>,
     event: Option<Box<str>>,
@@ -36,75 +39,28 @@ impl<A> SocketContext<A>
 where
     A: Adapter,
 {
-    fn parser(&self) -> &SocketIoParser {
+    fn parser(&self) -> SocketIoParser {
         self.socket
             .req_parts()
             .extensions
             .get::<SocketIoParser>()
-            .unwrap_or(&SocketIoParser::Common)
+            .cloned()
+            .unwrap_or_default()
     }
 
     /// The `TryData<T>` extractor equivalent method.
     ///   
     /// Deserializes message data to the specified type.
     pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, SocketError> {
-        let Some(data) = &self.data else {
-            return Err(ParseError::InvalidData)?;
-        };
+        let mut data = self.data.write().take().ok_or(ParseError::InvalidData)?;
 
-        let bytes = match &data {
-            Value::Str(s, _) => s.as_ref(),
-            Value::Bytes(b) => b.as_ref(),
-        };
+        let result: T = match self.parser() {
+            SocketIoParser::Common(parser) => parser.decode_value(&mut data, true),
+            SocketIoParser::MsgPack(parser) => parser.decode_value(&mut data, true),
+        }
+        .map_err(SocketError::from)?;
 
-        let result = match self.parser() {
-            SocketIoParser::Common => {
-                let mut parsed: serde_json::Value = serde_json::from_slice(bytes)
-                    .map_err(|_| ParseError::InvalidData)?;
-
-                if let serde_json::Value::Array(mut arr) = parsed {
-                    if arr.len() > 1 {
-                        arr.remove(0);
-                        parsed = if arr.len() == 1 {
-                            arr.pop().ok_or(ParseError::InvalidData)?
-                        } else {
-                            serde_json::Value::Array(arr)
-                        };
-                    } else {
-                        return Err(ParseError::InvalidData.into());
-                    }
-                }
-
-                serde_json::from_value(parsed).map_err(|_| ParseError::InvalidData)
-            }
-            SocketIoParser::MsgPack => {
-                let mut parsed: rmpv::Value =
-                    rmpv::decode::read_value(&mut &bytes[..])
-                        .map_err(|_| ParseError::InvalidData)?;
-
-                if let rmpv::Value::Array(mut arr) = parsed {
-                    if arr.len() > 1 {
-                        arr.remove(0);
-                        parsed = if arr.len() == 1 {
-                            arr.pop().ok_or(ParseError::InvalidData)?
-                        } else {
-                            rmpv::Value::Array(arr)
-                        };
-                    } else {
-                        return Err(ParseError::InvalidData.into());
-                    }
-                }
-
-                let mut buf = Vec::new();
-
-                rmpv::encode::write_value(&mut buf, &parsed)
-                    .map_err(|_| ParseError::InvalidData)?;
-
-                rmp_serde::from_slice(&buf).map_err(|_| ParseError::InvalidData)
-            }
-        };
-
-        Ok(result?)
+        Ok(result)
     }
 
     #[cfg(feature = "validation-validator")]
@@ -154,7 +110,7 @@ where
 
     /// Checks if data is still available (not consumed by `try_data()`).
     pub fn has_data(&self) -> bool {
-        self.data.is_some()
+        self.data.read().is_some()
     }
 
     /// Returns access to the socket's extension storage.
@@ -219,7 +175,7 @@ where
 
         Ok(SocketContext {
             socket: socket_ref,
-            data: Some(data),
+            data: RwLock::new(Some(data)),
             ack,
             disconnect_reason: None,
             event,
@@ -239,7 +195,7 @@ where
     ) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_connect_parts(s, auth)?,
-            data: auth.clone(),
+            data: RwLock::new(auth.clone()),
             ack: None,
             disconnect_reason: None,
             event: None,
@@ -259,7 +215,7 @@ where
     ) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_disconnect_parts(s, reason)?,
-            data: None,
+            data: RwLock::new(None),
             ack: None,
             disconnect_reason: Some(reason),
             event: None,

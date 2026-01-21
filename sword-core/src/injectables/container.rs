@@ -2,11 +2,7 @@ use crate::{
     ComponentRegistry, DependencyInjectionError as DIError, ProviderRegistry, State,
 };
 
-use std::{
-    any::{TypeId, type_name},
-    collections::HashSet,
-    sync::Arc,
-};
+use std::{any::TypeId, collections::HashSet, sync::Arc};
 
 /// A container for managing dependencies and their builders.
 ///
@@ -62,7 +58,7 @@ impl DependencyContainer {
         let providers = &self.providers.get_providers();
 
         for (type_id, instance) in providers.read().iter() {
-            state.insert_dependency(*type_id, Arc::clone(instance));
+            state.insert_instance(*type_id, Arc::clone(instance));
             built.insert(*type_id);
         }
 
@@ -95,9 +91,7 @@ impl DependencyContainer {
         }
 
         if visiting.contains(type_id) {
-            return Err(DIError::CircularDependency {
-                type_name: type_name::<()>().to_string(),
-            });
+            return Err(DIError::CircularDependency);
         }
 
         visiting.insert(*type_id);
@@ -117,7 +111,7 @@ impl DependencyContainer {
         visiting.remove(type_id);
 
         if let Some(builder) = &self.components.get_builders().read().get(type_id) {
-            state.insert_dependency(*type_id, builder(state)?);
+            state.insert_instance(*type_id, builder(state)?);
             built.insert(*type_id);
         }
 

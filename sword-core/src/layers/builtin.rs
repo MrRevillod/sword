@@ -1,4 +1,4 @@
-use crate::{Config, ConfigError, ConfigItem, ConfigRegistrar, State};
+use crate::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
 use serde::{Deserialize, Serialize};
 use sword_layers::prelude::{
     BodyLimitConfig, CompressionConfig, CorsConfig, DisplayConfig,
@@ -14,8 +14,8 @@ pub struct MiddlewaresConfig {
     #[serde(rename = "request-timeout")]
     pub request_timeout: RequestTimeoutConfig,
 
-    pub compression: CompressionConfig,
     pub cors: CorsConfig,
+    pub compression: CompressionConfig,
 }
 
 impl DisplayConfig for MiddlewaresConfig {
@@ -32,9 +32,8 @@ impl ConfigItem for MiddlewaresConfig {
         "middlewares"
     }
 
-    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
+    fn register(state: &State, config: &Config) {
         state.insert(config.get_or_default::<Self>());
-        Ok(())
     }
 }
 
@@ -43,9 +42,8 @@ impl ConfigItem for ServeDirConfig {
         "serve-dir"
     }
 
-    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
+    fn register(state: &State, config: &Config) {
         state.insert(config.get_or_default::<Self>());
-        Ok(())
     }
 }
 
@@ -54,28 +52,19 @@ impl ConfigItem for SocketIoServerConfig {
         "socketio-server"
     }
 
-    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
+    fn register(state: &State, config: &Config) {
         state.insert(config.get_or_default::<Self>());
-        Ok(())
     }
 }
 
-const _: () = {
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            MiddlewaresConfig::register(config, state)
-        })
-    }
-
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            ServeDirConfig::register(config, state)
-        })
-    }
-
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            SocketIoServerConfig::register(config, state)
-        })
-    }
-};
+inventory_submit! {[
+    ConfigRegistrar::new(|state, config| {
+        MiddlewaresConfig::register(state, config)
+    }),
+    ConfigRegistrar::new(|state, config| {
+        ServeDirConfig::register(state, config)
+    }),
+    ConfigRegistrar::new(|state, config| {
+        SocketIoServerConfig::register(state, config)
+    }),
+]}

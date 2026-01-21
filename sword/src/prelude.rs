@@ -11,24 +11,33 @@ pub use sword_core::{
 pub use validator::Validate;
 
 pub use crate::adapters::rest::{
-    ContentDisposition, File, HttpError, HttpInterceptorResult, HttpResult,
-    JsonResponse, JsonResponseBody, Next, OnRequest, OnRequestWithConfig, Redirect,
-    Request, RequestError, controller, cookies as sword_cookies, delete, get, patch,
-    post, put, rest_adapter, routes,
+    ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
+    HttpInterceptorResult, HttpResult, JsonResponse, JsonResponseBody, Next,
+    OnRequest, OnRequestWithConfig, Redirect, Request, RequestError, controller,
+    cookies as sword_cookies, delete, get, patch, post, put, rest_adapter,
+};
+
+pub use crate::adapters::rest::extractors::{
+    Extension as RestExtension, Header, Json, PathParams, Query,
+};
+
+pub use axum::body::Bytes;
+pub use axum::http::{HeaderMap as Headers, Method, Uri};
+
+#[cfg(feature = "validation-validator")]
+pub use crate::adapters::rest::{
+    ValidatorRequestValidation,
+    extractors::{ValidatedJson, ValidatedPath, ValidatedQuery},
 };
 
 #[cfg(feature = "multipart")]
 pub use crate::adapters::rest::multipart as sword_multipart;
 
-#[cfg(feature = "validation-validator")]
-pub use crate::adapters::rest::ValidatorRequestValidation;
-
 #[cfg(feature = "adapter-socketio")]
 pub use crate::adapters::socketio::{
     AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
     LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
-    SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData,
-    handlers, on_connection, on_disconnection, on_fallback, on_message,
+    SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData, on,
     socketio_adapter,
 };
 

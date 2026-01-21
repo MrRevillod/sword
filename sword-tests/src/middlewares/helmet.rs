@@ -5,7 +5,6 @@ use sword::prelude::*;
 #[controller("/test")]
 struct HelmetTestController;
 
-#[routes]
 impl HelmetTestController {
     #[get("/")]
     async fn index(&self) -> JsonResponse {

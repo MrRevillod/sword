@@ -2,9 +2,7 @@ use super::super::Adapter;
 use axum::Router as AxumRouter;
 use sword_core::State;
 
-pub use sword_macros::{
-    controller, delete, get, patch, post, put, rest_adapter, routes,
-};
+pub use sword_macros::{controller, delete, get, patch, post, put, rest_adapter};
 
 /// Trait for controllers with automatic dependency injection and interceptors support.
 ///
@@ -36,5 +34,8 @@ pub use sword_macros::{
 /// ```
 pub trait RestAdapter: Adapter {
     fn base_path() -> &'static str;
-    fn apply_interceptors(router: AxumRouter, state: State) -> AxumRouter;
+    fn apply_interceptors(
+        router: AxumRouter<State>,
+        state: State,
+    ) -> AxumRouter<State>;
 }

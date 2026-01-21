@@ -7,6 +7,12 @@
 - New `next()` method on `Request` struct. See `Changed` section for more details.
 - Added `Module` trait for creating and registering controllers and injectables as a modules.
 
+- Added Axum-style extractors with fixed `State` type. New extractors include: `Json<T>`, `Query<T>`, `PathParams<T>`, `Extension<T>`, and direct Axum type support (`Method`, `Uri`, `HeaderMap`, `Bytes`).
+
+- Added `#[returns(Type)]` macro attribute for cleaner function signatures. Allows specifying return types without writing `-> Type`. Defaults to `JsonResponse` when no type is specified.
+
+- Added dual trait implementation for extractors. Each custom extractor implements both `FromRequest`/`FromRequestParts` (with fixed `State`) and Axum's native traits for maximum compatibility.
+
 - Added `ServeDir` middleware for serving static files from a directory. This middleware uses `tower_http::services::ServeDir` under the hood.
 
 - Added cleanup for temporary data structures used in the application build process.
@@ -25,6 +31,8 @@
 
 - Added `SocketIo` adapter for handling SocketIO connections.
 
+- Added `Interceptor` trait for creating custom interceptors that can access and modify requests and responses.
+
 ### Changed
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
@@ -40,6 +48,8 @@
 - The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
 
 - The associated type in `Module` trait is not required anymore. Use the `register_adapters` method to register rest controllers and other adapter kinds.
+
+- Removed wrapper types for Axum extractors (`Method`, `Uri`, `Headers`, `Bytes`). These types now use Axum's native types directly with `FromRequest`/`FromRequestParts` trait implementations, eliminating unnecessary encapsulation.
 
 ## [0.2.0]
 

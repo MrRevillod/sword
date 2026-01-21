@@ -1,4 +1,4 @@
-use socketioxide::SendError;
+use socketioxide::{ParserError, SendError};
 use socketioxide_core::parser::ParseError;
 use thiserror::Error;
 
@@ -16,6 +16,9 @@ pub enum SocketError {
 
     #[error("Socket IO parsing Error: {0}")]
     Parsing(#[from] ParseError),
+
+    #[error("Socket IO message parsing Error: {0}")]
+    MessageParsing(#[from] ParserError),
 
     #[error("Socket IO error: {0}")]
     Socket(#[from] socketioxide::SocketError),

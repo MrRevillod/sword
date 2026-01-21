@@ -73,7 +73,6 @@ pub struct TasksController {
     tasks: TasksService,
 }
 
-#[routes]
 impl TasksController {
     #[get("/")]
     async fn get_tasks(&self) -> JsonResponse {

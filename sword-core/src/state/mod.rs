@@ -74,7 +74,7 @@ impl State {
             .insert(TypeId::of::<T>(), Arc::new(state));
     }
 
-    pub fn insert_dependency(
+    pub fn insert_instance(
         &self,
         type_id: TypeId,
         instance: Arc<dyn Any + Send + Sync>,

@@ -10,7 +10,7 @@ parser = "common"
 transport = ["websocket", "polling"]
 
 [middlewares]
-body-limit = { max-size = "5MB", display = true }
+body-limit = { max-size = "2MB", display = true }
 request-timeout = { enabled = true, timeout = "15s", display = true }
 
 [middlewares.cors]

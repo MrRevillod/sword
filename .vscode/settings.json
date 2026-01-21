@@ -12,5 +12,9 @@
     },
     "rust-analyzer.diagnostics.enable": true,
     "rust-analyzer.imports.granularity.group": "crate",
-    "rust-analyzer.cargo.features": "all"
+    "rust-analyzer.cargo.features": "all",
+    "chat.tools.terminal.autoApprove": {
+        "cargo build": true,
+        "cargo expand": true
+    }
 }

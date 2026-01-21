@@ -1,14 +1,7 @@
 mod adapters;
-use std::sync::LazyLock;
 
 pub use adapters::CommonHttpAdapterInput;
-
-use regex_lite::Regex;
 use syn::{Fields, Ident, ItemStruct, Type};
-
-pub static PATH_KIND_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\})*(?:\/(?:[^\/{}:]+|\{[^*{}][^{}]*\}|\{\*[^{}]+\}))*$").unwrap()
-});
 
 pub struct StructFields;
 

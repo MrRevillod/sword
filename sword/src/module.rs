@@ -32,7 +32,7 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 pub trait Module {
     /// Register adapters provided by the module.
     /// A `Adapter` is a way to represent entry points into the application,
-    /// such as REST APIs, WebSocket connections, or gRPC services.
+    /// such as REST APIs, Socket.IO Handlers, or gRPC services.
     fn register_adapters(_: &AdapterRegistry) {}
 
     /// Register component structs marked with `#[injectable]`

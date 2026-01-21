@@ -5,7 +5,7 @@ mod router;
 use axum::routing::Router;
 use colored::Colorize;
 use std::path::Path;
-use sword_core::{Config, layers::*};
+use sword_core::{Config, State, layers::*};
 use tokio::net::TcpListener;
 
 pub use builder::ApplicationBuilder;
@@ -17,13 +17,14 @@ pub use config::ApplicationConfig;
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    router: Router,
+    router: Router<State>,
+    state: State,
     pub config: Config,
 }
 
 impl Application {
-    pub(crate) fn new(router: Router, config: Config) -> Self {
-        Self { router, config }
+    pub(crate) fn new(router: Router<State>, state: State, config: Config) -> Self {
+        Self { router, state, config }
     }
 
     /// Creates a new application builder for configuring the application.
@@ -58,23 +59,16 @@ impl Application {
     pub async fn run(&self) {
         if self
             .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config")
+            .get_or_panic::<ApplicationConfig>()
             .graceful_shutdown
         {
             self.run_with_graceful_shutdown(Self::graceful_signal())
                 .await;
+
+            return;
         }
 
-        let listener = self.build_listener().await;
-
-        let mut router = self.router.clone();
-
-        router = router.layer(NotFoundLayer::new());
-
-        axum::serve(listener, router)
-            .await
-            .expect("Internal 'axum::serve' error");
+        self.serve_internal(None::<std::future::Pending<()>>).await;
     }
 
     /// Runs the application server with graceful shutdown support.
@@ -90,13 +84,28 @@ impl Application {
     where
         F: Future<Output = ()> + Send + 'static,
     {
+        self.serve_internal(Some(signal)).await;
+    }
+
+    /// Internal method that handles the common server startup logic.
+    async fn serve_internal<F>(&self, signal: Option<F>)
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
         let listener = self.build_listener().await;
         let router = self.router.clone().layer(NotFoundLayer::new());
 
-        axum::serve(listener, router)
-            .with_graceful_shutdown(signal)
-            .await
-            .expect("Internal 'axum::serve' error");
+        // Convert Router<State> to Router<()> by providing the state
+        // This is the Axum pattern: build with state type, provide state to serve
+        let app = router.with_state(self.state.clone());
+
+        let serve = axum::serve(listener, app);
+
+        match signal {
+            Some(sig) => serve.with_graceful_shutdown(sig).await,
+            None => serve.await,
+        }
+        .expect("Internal 'axum::serve' error");
     }
 
     /// Returns a clone of the internal Axum router.
@@ -110,14 +119,12 @@ impl Application {
     /// A cloned `Router` instance that can be used for testing or integration
     /// with other Axum-based systems.
     pub fn router(&self) -> Router {
-        self.router.clone()
+        // For testing compatibility, return Router<()> by calling with_state
+        self.router.clone().with_state(self.state.clone())
     }
 
     async fn build_listener(&self) -> TcpListener {
-        let app_config = self
-            .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config");
+        let app_config = self.config.get_or_panic::<ApplicationConfig>();
 
         self.display();
 
@@ -159,10 +166,7 @@ impl Application {
 
 impl DisplayConfig for Application {
     fn display(&self) {
-        let app_config = self
-            .config
-            .get::<ApplicationConfig>()
-            .expect("Failed to get application config");
+        let app_config = self.config.get_or_panic::<ApplicationConfig>();
 
         app_config.display();
 

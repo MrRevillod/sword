@@ -11,7 +11,6 @@ use crate::utils::TempFile;
 #[controller("/")]
 struct TestController {}
 
-#[routes]
 impl TestController {
     #[post("/multipart")]
     async fn hello(&self, req: Request) -> HttpResult {

@@ -16,7 +16,6 @@ struct TestController {
     custom_config: MyConfig,
 }
 
-#[routes]
 impl TestController {
     #[get("/hello")]
     async fn hello(&self) -> JsonResponse {

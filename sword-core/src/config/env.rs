@@ -5,6 +5,9 @@ pub fn expand_env_variables(content: &str) -> Result<String, String> {
     let re = Regex::new(r"\$\{([A-Za-z_][A-Za-z0-9_]*):?([^}]*)\}")
         .map_err(|e| format!("Regex error: {e}"))?;
 
+    let simple_re = Regex::new(r"\$([A-Za-z_][A-Za-z0-9_]*)")
+        .map_err(|e| format!("Regex error: {e}"))?;
+
     let mut result = content.to_string();
 
     for caps in re.captures_iter(content) {
@@ -27,9 +30,6 @@ pub fn expand_env_variables(content: &str) -> Result<String, String> {
 
         result = result.replace(full_match, &replacement);
     }
-
-    let simple_re = Regex::new(r"\$([A-Za-z_][A-Za-z0-9_]*)")
-        .map_err(|e| format!("Regex error: {e}"))?;
 
     for caps in simple_re.captures_iter(&result.clone()) {
         let full_match = caps.get(0).unwrap().as_str();

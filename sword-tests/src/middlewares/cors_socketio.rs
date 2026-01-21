@@ -4,16 +4,15 @@ use sword::prelude::*;
 #[socketio_adapter("/socket")]
 struct TestSocketIOAdapter;
 
-#[handlers]
 impl TestSocketIOAdapter {
-    #[on_connection]
-    async fn on_connect(&self) {
+    #[on("connection")]
+    async fn on_connect(&self, _: SocketContext) {
         println!("Client connected via test");
     }
 
-    #[on_message("test")]
-    async fn on_test(&self, ack: AckSender) {
-        ack.send("response").ok();
+    #[on("test")]
+    async fn on_test(&self, socket: SocketContext) {
+        socket.ack("response").ok();
     }
 }
 
@@ -120,7 +119,6 @@ async fn cors_doesnt_break_rest() {
     #[controller("/api")]
     struct ApiController;
 
-    #[routes]
     impl ApiController {
         #[get("/test")]
         async fn test(&self) -> JsonResponse {

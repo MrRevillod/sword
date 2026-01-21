@@ -1,7 +1,7 @@
 use colored::Colorize;
 use console::style;
 use serde::{Deserialize, Serialize};
-use sword_core::{Config, ConfigError, ConfigItem, ConfigRegistrar, State};
+use sword_core::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
 
 /// Configuration structure for the Sword application.
 ///
@@ -81,19 +81,16 @@ impl ConfigItem for ApplicationConfig {
         "application"
     }
 
-    fn register(config: &Config, state: &State) -> Result<(), ConfigError> {
+    fn register(state: &State, config: &Config) {
         state.insert(config.get_or_default::<Self>());
-        Ok(())
     }
 }
 
-const _: () = {
-    inventory::submit! {
-        ConfigRegistrar::new(|config, state| {
-            ApplicationConfig::register(config, state)
-        })
-    }
-};
+inventory_submit! {[
+    ConfigRegistrar::new(|state, config| {
+        ApplicationConfig::register(state, config)
+    })
+]}
 
 impl Default for ApplicationConfig {
     fn default() -> Self {

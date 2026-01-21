@@ -32,14 +32,24 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
             }
 
             fn apply_interceptors(
-                router: ::sword::internal::axum::AxumRouter,
+                router: ::sword::internal::axum::AxumRouter<::sword::internal::core::State>,
                 state: ::sword::internal::core::State,
-            ) -> ::sword::internal::axum::AxumRouter {
+            ) -> ::sword::internal::axum::AxumRouter<::sword::internal::core::State> {
                 let mut result = router;
                 #(
                     result = result.layer(#processed_interceptors);
                 )*
                 result
+            }
+        }
+
+        impl ::sword::internal::core::Adapter for #self_name {
+            fn kind() -> ::sword::internal::core::AdapterKind {
+                ::sword::internal::core::AdapterKind::Http
+            }
+
+            fn type_id() -> ::std::any::TypeId {
+                ::std::any::TypeId::of::<#self_name>()
             }
         }
     }
