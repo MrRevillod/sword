@@ -26,6 +26,7 @@ pub enum SocketEventKind {
 /// This struct is used internally by Sword's auto-registration system to:
 /// 1. Discover handlers at compile-time via the `inventory` crate
 /// 2. Register them on the appropriate socket at runtime
+#[derive(Clone)]
 pub struct HandlerRegistrar {
     /// TypeId of the adapter for filtering during registration
     pub adapter_type_id: TypeId,

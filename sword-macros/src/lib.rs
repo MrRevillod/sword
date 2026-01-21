@@ -566,7 +566,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 
 #[cfg(feature = "adapter-socketio")]
 /// Marks a struct as a Socket.IO adapter.
-/// This macro should be used in combination with the `#[handlers]`
+/// This macro should be used in combination with the `#[on]`
 /// macro for handler implementation.
 ///
 /// ### Usage
@@ -574,9 +574,8 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// #[socketio_adapter("/chat")]
 /// struct ChatSocket;
 ///
-/// #[handlers]
 /// impl ChatSocket {
-///     #[on_connection]
+///     #[on("connection")]
 ///     async fn on_connect(&self, socket: SocketRef) {
 ///         println!("Client connected");
 ///     }
@@ -618,7 +617,6 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     }
 /// }
 /// ```
-#[cfg(feature = "adapter-socketio")]
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types

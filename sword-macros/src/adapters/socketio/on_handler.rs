@@ -96,8 +96,6 @@ pub fn expand_on_handler(
                 .downcast::<#adapter_ident>()
                 .unwrap_or_else(|_| {
                     eprintln!("FATAL: Failed to downcast adapter to type {}", stringify!(#adapter_ident));
-                    eprintln!("This is a bug in Sword's macro expansion.");
-                    eprintln!("The adapter TypeId doesn't match the expected type.");
                     panic!("Type mismatch in handler execution");
                 });
 

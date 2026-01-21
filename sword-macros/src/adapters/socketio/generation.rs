@@ -54,35 +54,51 @@ pub fn generate_socketio_adapter_builder(
             let io = <::sword::prelude::SocketIo as ::sword::internal::core::FromState>::from_state(state)
                 .expect("\n[!] SocketIo component not found in state. Is SocketIo correctly configured?\n\n   ↳ Ensure that the `socketio` feature is enabled in your `Cargo.toml`.\n   ↳ Also, make sure to configure the `socketio` server in your configuration file.\n   ↳ See the Sword documentation for more details: https://sword-web.github.io\n");
 
-            let base_handler = {
-                let adapter_clone = ::std::sync::Arc::clone(&adapter);
+            let adapter_type_id = ::std::any::TypeId::of::<#self_name>();
+            let mut connection_handler: ::std::option::Option<::sword::internal::socketio::HandlerRegistrar> = None;
+            let mut message_handlers = ::std::vec::Vec::new();
 
-                move |ctx: ::sword::prelude::SocketContext| -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ()> + ::std::marker::Send>> {
-                    let adapter = ::std::sync::Arc::clone(&adapter_clone);
-                    let socket = ctx.socket.clone();
-
-                    ::std::boxed::Box::pin(async move {
-                        for handler_meta in ::sword::internal::inventory::iter::<::sword::internal::socketio::HandlerRegistrar>() {
-                            if handler_meta.adapter_type_id != ::std::any::TypeId::of::<#self_name>() {
-                                continue;
-                            }
-
-                            match handler_meta.event_kind {
-                                ::sword::internal::socketio::SocketEventKind::Connection => {
-                                    let adapter_clone = ::std::sync::Arc::clone(&adapter);
-                                    (handler_meta.call_fn)(adapter_clone, ctx).await;
-                                    break;
-                                },
-                                ::sword::internal::socketio::SocketEventKind::Message(_)
-                                    | ::sword::internal::socketio::SocketEventKind::Disconnection
-                                    | ::sword::internal::socketio::SocketEventKind::Fallback => {
-                                    let adapter_clone = ::std::sync::Arc::clone(&adapter);
-                                    (handler_meta.register_fn)(adapter_clone, socket.clone());
-                                }
-                            }
-                        }
-                    })
+            for handler_meta in ::sword::internal::inventory::iter::<::sword::internal::socketio::HandlerRegistrar>() {
+                if handler_meta.adapter_type_id != adapter_type_id {
+                    continue;
                 }
+
+                match handler_meta.event_kind {
+                    ::sword::internal::socketio::SocketEventKind::Connection => {
+                        if connection_handler.is_some() {
+                            panic!(
+                                "\n[!] Multiple connection handlers found in adapter '{}'\n\n   ↳ Only one #[on(\"connection\")] handler is allowed per adapter\n",
+                                #adapter_name_str
+                            );
+                        }
+                        connection_handler = Some(handler_meta.clone());
+                    },
+                    ::sword::internal::socketio::SocketEventKind::Message(_)
+                        | ::sword::internal::socketio::SocketEventKind::Disconnection
+                        | ::sword::internal::socketio::SocketEventKind::Fallback => {
+                        message_handlers.push(handler_meta.clone());
+                    }
+                }
+            }
+
+            let message_handlers: ::std::sync::Arc<[::sword::internal::socketio::HandlerRegistrar]> =
+                ::std::sync::Arc::from(message_handlers.into_boxed_slice());
+
+            let base_handler = move |ctx: ::sword::prelude::SocketContext| -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ()> + ::std::marker::Send>> {
+                let adapter = adapter.clone();
+                let socket = ctx.socket.clone();
+                let connection_handler = connection_handler.clone();
+                let message_handlers = message_handlers.clone();
+
+                ::std::boxed::Box::pin(async move {
+                    if let Some(handler) = connection_handler {
+                        (handler.call_fn)(adapter.clone(), ctx).await;
+                    }
+
+                    for handler in message_handlers.iter() {
+                        (handler.register_fn)(adapter.clone(), socket.clone());
+                    }
+                })
             };
 
             let handler = base_handler;
