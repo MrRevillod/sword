@@ -58,31 +58,6 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Defines a REST adapter with a base path, and should be used in combination
-/// with the `#[routes]` macro for route implementation.
-///
-/// ## Parameters
-/// - `base_path`: The base path for the controller, e.g., "/api"
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[rest_adapter("/base_path")]
-/// struct MyController {}
-///
-/// #[routes]
-/// impl MyController {
-///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResult {
-///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn rest_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_controller(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
 /// Derive macro for creating interceptors.
 ///
 /// Generates implementations for the `Interceptor` trait.

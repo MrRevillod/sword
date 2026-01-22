@@ -75,16 +75,16 @@ pub fn generate_field_assignments(fields: &[(Ident, Type)]) -> TokenStream {
     }
 }
 
-/// Generates the implementation of the Build trait for a component.
+/// Generates the implementation of the `Build` trait for a component.
 ///
-/// This generator is used by (#[middleware], #[injectable], etc.) macros
-/// to create the `build()` method that constructs an instance from the State.
+/// This generator is used by (#[interceptor], #[injectable], etc.) macros
+/// to create the `build()` method that constructs an instance from the `State`.
 ///
-/// The generated code extracts each field dependency from the State using
-/// FromState/FromStateArc and assembles them into a new component instance.
+/// The generated code extracts each field dependency from the `State` using
+/// `FromState` / `FromStateArc` and assembles them into a new component instance.
 ///
-/// This differs from FromState's blanket impl which only retrieves pre-existing
-/// instances - Build actually constructs new instances from their dependencies.
+/// This differs from `FromState`'s blanket impl which only retrieves pre-existing
+/// instances - `Build` actually constructs new instances from their dependencies.
 pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let extracts = generate_field_extractions(fields);
     let assigns = generate_field_assignments(fields);

@@ -1,5 +1,5 @@
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::sync::LazyLock as Lazy;
 use std::sync::Mutex;
 
 static CMETA_STACK: Lazy<Mutex<Option<CMetaStack>>> = Lazy::new(|| Mutex::new(None));
@@ -21,7 +21,7 @@ impl CMetaStack {
 
     pub fn push(key: &str, value: &str) {
         let mut stack = CMETA_STACK.lock().unwrap();
-        let mut new_level = CMetaStack::new();
+        let mut new_level = Self::new();
 
         new_level.data.insert(key.to_string(), value.to_string());
 
@@ -52,10 +52,8 @@ impl CMetaStack {
             return Some(value.clone());
         }
 
-        if let Some(parent) = &self.parent {
-            parent.get_recursive(key)
-        } else {
-            None
-        }
+        self.parent
+            .as_ref()
+            .and_then(|parent| parent.get_recursive(key))
     }
 }

@@ -14,7 +14,7 @@ pub use crate::adapters::rest::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
     HttpInterceptorResult, HttpResult, JsonResponse, JsonResponseBody, Next,
     OnRequest, OnRequestWithConfig, Redirect, Request, RequestError, controller,
-    cookies as sword_cookies, delete, get, patch, post, put, rest_adapter,
+    cookies as sword_cookies, delete, get, patch, post, put,
 };
 
 pub use crate::adapters::rest::extractors::{

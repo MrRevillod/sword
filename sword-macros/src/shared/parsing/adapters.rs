@@ -38,7 +38,7 @@ impl CommonHttpAdapterInput {
             ));
         }
 
-        Ok(CommonHttpAdapterInput {
+        Ok(Self {
             base_path,
             struct_name: input.ident,
             fields,

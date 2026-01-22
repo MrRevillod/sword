@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use crate::adapters::rest::{ControllerInfo, RouteRegistrar};
 use crate::adapters::{AdapterKind, AdapterRegistry};
 use axum::Router;
+
+#[cfg(feature = "adapter-socketio")]
 use socketioxide::layer::SocketIoLayer;
 use sword_core::layers::*;
 use sword_core::{Config, State};
@@ -66,7 +68,7 @@ impl InternalRouter {
         #[cfg(feature = "adapter-socketio")]
         let (socketio_layer, socketio_config) = self.socketio_setup();
 
-        router = self.apply_adapters(router, &*adapters.read());
+        router = self.apply_adapters(router, &adapters.read());
 
         // Apply REST-only middlewares (internal to SocketIO layer)
         router = self.apply_rest_only_middlewares(router);
@@ -97,6 +99,7 @@ impl InternalRouter {
                 AdapterKind::Http => {
                     router = self.apply_http_adapters(router, adapters);
                 }
+                #[cfg(feature = "adapter-socketio")]
                 AdapterKind::SocketIo => {
                     self.apply_socketio_adapters(adapters);
                 }
