@@ -3,7 +3,7 @@ mod error;
 mod extract;
 mod interceptor;
 
-use std::any::TypeId;
+use std::any::{Any, TypeId};
 use std::pin::Pin;
 use std::sync::Arc;
 use sword_core::State;
@@ -20,6 +20,11 @@ pub enum SocketEventKind {
     Message(&'static str),
     Fallback,
 }
+
+type SocketCallFn = fn(
+    Arc<dyn Any + Send + Sync>,
+    SocketContext,
+) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 
 /// Metadata for a SocketIO event handler registered via the `#[on]` attribute.
 ///
@@ -41,13 +46,10 @@ pub struct HandlerRegistrar {
     pub method_name: &'static str,
 
     /// Registers the handler on the socket (used for Message/Disconnection/Fallback events).
-    pub register_fn: fn(Arc<dyn std::any::Any + Send + Sync>, SocketRef),
+    pub register_fn: fn(Arc<dyn Any + Send + Sync>, SocketRef),
 
     /// Executes the handler directly (used for Connection events).
-    pub call_fn: fn(
-        Arc<dyn std::any::Any + Send + Sync>,
-        SocketContext,
-    ) -> Pin<Box<dyn Future<Output = ()> + Send>>,
+    pub call_fn: SocketCallFn,
 }
 
 /// Setup function that initializes a SocketIO adapter at runtime.

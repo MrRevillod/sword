@@ -3047,7 +3047,6 @@ name = "sword-macros"
 version = "0.2.1"
 dependencies = [
  "axum",
- "once_cell",
  "proc-macro-error",
  "proc-macro2",
  "quote",

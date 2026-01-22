@@ -28,7 +28,7 @@ pub mod internal {
             MethodRouter, Router as AxumRouter, delete, delete as delete_fn, get,
             get as get_fn, patch, patch as patch_fn, post, post as post_fn, put,
             put as put_fn,
-        }; // Export routing module for macros
+        };
     }
 
     #[cfg(feature = "adapter-socketio")]

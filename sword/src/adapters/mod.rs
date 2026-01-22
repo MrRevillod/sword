@@ -15,6 +15,8 @@ use sword_core::HasDeps;
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AdapterKind {
     Http,
+
+    #[cfg(feature = "adapter-socketio")]
     SocketIo,
 }
 

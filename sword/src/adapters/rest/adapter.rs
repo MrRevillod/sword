@@ -2,7 +2,7 @@ use super::super::Adapter;
 use axum::Router as AxumRouter;
 use sword_core::State;
 
-pub use sword_macros::{controller, delete, get, patch, post, put, rest_adapter};
+pub use sword_macros::{controller, delete, get, patch, post, put};
 
 /// Trait for controllers with automatic dependency injection and interceptors support.
 ///

@@ -24,7 +24,11 @@ pub struct Application {
 
 impl Application {
     pub(crate) fn new(router: Router<State>, state: State, config: Config) -> Self {
-        Self { router, state, config }
+        Self {
+            router,
+            state,
+            config,
+        }
     }
 
     /// Creates a new application builder for configuring the application.

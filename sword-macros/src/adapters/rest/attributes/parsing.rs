@@ -48,7 +48,7 @@ impl ParsedRouteAttribute {
         let (controller_name, controller_path) =
             Self::get_controller_metadata(method)?;
 
-        Ok(ParsedRouteAttribute {
+        Ok(Self {
             method: method.to_string(),
             path,
             function: input_fn,

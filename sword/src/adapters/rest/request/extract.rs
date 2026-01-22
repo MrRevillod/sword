@@ -5,9 +5,8 @@ use axum::{
     RequestPartsExt,
     body::to_bytes,
     extract::{
-        FromRef, Path, Request as AxumReq,
+        FromRef, FromRequest as AxumFromRequest, Path, Request as AxumReq,
         rejection::PathRejection,
-        FromRequest as AxumFromRequest,
     },
     http::request::Parts,
     response::IntoResponse,
@@ -48,7 +47,10 @@ pub trait FromRequestParts: Sized {
 impl FromRequest for Request {
     type Rejection = JsonResponse;
 
-    async fn from_request(req: AxumReq, state: &State) -> Result<Self, Self::Rejection> {
+    async fn from_request(
+        req: AxumReq,
+        state: &State,
+    ) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
         let path_params = parts
@@ -125,7 +127,7 @@ impl TryFrom<Request> for AxumReq {
 
     fn try_from(req: Request) -> Result<Self, Self::Error> {
         use axum::body::Body;
-        
+
         let mut builder = AxumReq::builder().method(req.method).uri(req.uri);
 
         for (key, value) in &req.headers {

@@ -19,7 +19,7 @@ pub fn parse_interceptor_input(item: &ItemStruct) -> syn::Result<InterceptorInpu
 }
 
 pub fn derive_interceptor(input: TokenStream) -> syn::Result<TokenStream> {
-    let input_struct = syn::parse::<ItemStruct>(input.clone())?;
+    let input_struct = syn::parse::<ItemStruct>(input)?;
     let parsed_input = parse_interceptor_input(&input_struct)?;
     let builder = generate_interceptor_builder(&parsed_input);
 
