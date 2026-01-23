@@ -3022,7 +3022,7 @@ dependencies = [
 [[package]]
 name = "sword-layers"
 version = "0.1.4"
-source = "git+https://github.com/sword-web/sword-layers.git#ec9fd0f9cf55d2b2bfbff2539033312b11e15182"
+source = "git+https://github.com/sword-web/sword-layers.git#6582d5846bfab0c0b7a3cc197a3b7e5f7527f416"
 dependencies = [
  "axum",
  "axum-helmet",
