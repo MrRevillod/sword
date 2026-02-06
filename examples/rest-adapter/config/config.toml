@@ -1,8 +1,10 @@
 [application]
+name = "REST Adapter Example"
+graceful-shutdown = false
+
+[http]
 host = "0.0.0.0"
 port = 8081
-graceful-shutdown = false
-name = "REST Adapter Example"
 
 [middlewares]
 body-limit = { max-size = "5MB", display = true }

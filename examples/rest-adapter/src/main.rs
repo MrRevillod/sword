@@ -19,7 +19,7 @@ async fn main() {
         .with_target(false)
         .init();
 
-    sword::internal::tracing::info!("Starting Users Management example...");
+    tracing::info!("Starting Users Management example...");
 
     let app = Application::builder()
         .with_module::<SharedModule>()

@@ -1,32 +1,28 @@
 mod builder;
 mod config;
-mod router;
 
-use axum::routing::Router;
-use colored::Colorize;
 use std::path::Path;
-use sword_core::{Config, State, layers::*};
-use tokio::net::TcpListener;
+use sword_core::Config;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
 
-/// The main application struct that holds the router and configuration.
+use crate::runtimes::http::HttpRuntime;
+
+/// The main application struct that holds the runtime(s) and configuration.
 ///
 /// `Application` is the core component of the Sword framework that manages
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    router: Router<State>,
-    state: State,
+    http_runtime: HttpRuntime,
     pub config: Config,
 }
 
 impl Application {
-    pub(crate) fn new(router: Router<State>, state: State, config: Config) -> Self {
+    pub(crate) fn new(http_runtime: HttpRuntime, config: Config) -> Self {
         Self {
-            router,
-            state,
+            http_runtime,
             config,
         }
     }
@@ -55,139 +51,17 @@ impl Application {
     /// Runs the application server.
     ///
     /// This method starts the web server and begins listening for incoming
-    /// HTTP requests. It will bind to the host and port specified in the
-    /// application configuration and run until the process is terminated.
-    ///
-    /// If graceful shutdown is enabled in the configuration, it will handle
-    /// termination signals and allow ongoing requests to complete before shutting down.
+    /// requests. It will bind to the host and port specified in the
+    /// runtime configuration.
     pub async fn run(&self) {
-        if self
-            .config
-            .get_or_panic::<ApplicationConfig>()
-            .graceful_shutdown
-        {
-            self.run_with_graceful_shutdown(Self::graceful_signal())
-                .await;
-
-            return;
-        }
-
-        self.serve_internal(None::<std::future::Pending<()>>).await;
+        self.http_runtime.start().await;
     }
 
-    /// Runs the application server with graceful shutdown support.
-    /// Is similar to `run` but accepts a shutdown signal.
+    /// Returns a clone of the internal Axum router for testing purposes.
     ///
-    /// See [Axum's docs](https://docs.rs/axum/latest/axum/serve/struct.WithGracefulShutdown.html)
-    /// to learn more about graceful shutdown.
-    ///
-    /// To use this method, disable the "graceful shutdown" option on config.toml.
-    /// If this option is setted as true the application it will use the default axum's provided
-    /// Graceful shutdown signal.
-    pub async fn run_with_graceful_shutdown<F>(&self, signal: F)
-    where
-        F: Future<Output = ()> + Send + 'static,
-    {
-        self.serve_internal(Some(signal)).await;
-    }
-
-    /// Internal method that handles the common server startup logic.
-    async fn serve_internal<F>(&self, signal: Option<F>)
-    where
-        F: Future<Output = ()> + Send + 'static,
-    {
-        let listener = self.build_listener().await;
-        let router = self.router.clone().layer(NotFoundLayer::new());
-
-        // Convert Router<State> to Router<()> by providing the state
-        // This is the Axum pattern: build with state type, provide state to serve
-        let app = router.with_state(self.state.clone());
-
-        let serve = axum::serve(listener, app);
-
-        match signal {
-            Some(sig) => serve.with_graceful_shutdown(sig).await,
-            None => serve.await,
-        }
-        .expect("Internal 'axum::serve' error");
-    }
-
-    /// Returns a clone of the internal Axum router.
-    ///
-    /// This method provides access to the underlying Axum router for advanced
-    /// use cases where direct router manipulation is needed. Most applications
-    /// should not need to use this method directly.
-    ///
-    /// ### Returns
-    ///
-    /// A cloned `Router` instance that can be used for testing or integration
-    /// with other Axum-based systems.
-    pub fn router(&self) -> Router {
-        // For testing compatibility, return Router<()> by calling with_state
-        self.router.clone().with_state(self.state.clone())
-    }
-
-    async fn build_listener(&self) -> TcpListener {
-        let app_config = self.config.get_or_panic::<ApplicationConfig>();
-
-        self.display();
-
-        let ApplicationConfig { host, port, .. } = app_config;
-
-        TcpListener::bind(&format!("{host}:{port}"))
-            .await
-            .expect("Failed to bind to address")
-    }
-
-    async fn graceful_signal() {
-        let ctrl_c = async {
-            tokio::signal::ctrl_c()
-                .await
-                .expect("failed to install Ctrl+C handler");
-        };
-
-        #[cfg(unix)]
-        let terminate = async {
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-                .expect("failed to install signal handler")
-                .recv()
-                .await;
-        };
-
-        #[cfg(not(unix))]
-        let terminate = std::future::pending::<()>();
-
-        tokio::select! {
-            _ = ctrl_c => {
-                println!(" Shutdown signal received, starting graceful shutdown...");
-            },
-            _ = terminate => {
-                println!(" Shutdown signal received, starting graceful shutdown...");
-            },
-        }
-    }
-}
-
-impl DisplayConfig for Application {
-    fn display(&self) {
-        let app_config = self.config.get_or_panic::<ApplicationConfig>();
-
-        app_config.display();
-
-        if let Ok(middlewares_config) = self.config.get::<MiddlewaresConfig>() {
-            middlewares_config.display();
-        }
-
-        if let Ok(socketio_config) = self.config.get::<SocketIoServerConfig>() {
-            socketio_config.display();
-        }
-
-        if let Ok(servedir_config) = self.config.get::<ServeDirConfig>() {
-            servedir_config.display();
-        }
-
-        let banner_bot = "▪──────────────── ⚔ ───────── ⚔ ──────────────▪".white();
-
-        println!("\n{banner_bot}");
+    /// This method provides access to the underlying Axum router for integration
+    /// testing with axum-test or similar tools.
+    pub fn router(&self) -> axum::Router {
+        self.http_runtime.router()
     }
 }

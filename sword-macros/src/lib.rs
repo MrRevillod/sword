@@ -9,31 +9,31 @@ use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("GET", attr, item)
+    adapters::http::attributes::attribute("GET", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("POST", attr, item)
+    adapters::http::attributes::attribute("POST", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("PUT", attr, item)
+    adapters::http::attributes::attribute("PUT", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("DELETE", attr, item)
+    adapters::http::attributes::attribute("DELETE", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("PATCH", attr, item)
+    adapters::http::attributes::attribute("PATCH", attr, item)
 }
 
-/// This macro is alias for `#[rest_adapter]`.
-/// Defines a REST adapter with a base path, and should be used in combination
+/// This macro is an alias for defining HTTP controllers.
+/// Defines an HTTP controller with a base path, and should be used in combination
 /// with the `#[routes]` macro for route implementation.
 ///
 /// ### Parameters

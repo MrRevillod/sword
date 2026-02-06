@@ -1,33 +1,38 @@
-use std::any::TypeId;
-use std::collections::HashMap;
-
-use crate::adapters::rest::{ControllerInfo, RouteRegistrar};
+use crate::adapters::http::{ControllerMeta, RouteRegistrar};
 use crate::adapters::{AdapterKind, AdapterRegistry};
 use axum::Router;
-
-#[cfg(feature = "adapter-socketio")]
-use socketioxide::layer::SocketIoLayer;
+use std::any::TypeId;
+use std::collections::HashMap;
 use sword_core::layers::*;
 use sword_core::{Config, State};
 
-pub(super) struct InternalRouter {
+#[cfg(feature = "adapter-socketio")]
+use super::socketio_config::{
+    SocketIoParser, SocketIoServerConfig, SocketIoServerLayer,
+};
+
+pub struct HttpRouter {
     state: State,
     config: Config,
 }
 
-impl InternalRouter {
+impl HttpRouter {
     pub fn new(state: State, config: Config) -> Self {
         Self { state, config }
     }
 
     #[cfg(feature = "adapter-socketio")]
-    pub fn socketio_setup(&self) -> (Option<SocketIoLayer>, SocketIoServerConfig) {
+    fn socketio_setup(
+        &self,
+    ) -> (
+        Option<socketioxide::layer::SocketIoLayer>,
+        SocketIoServerConfig,
+    ) {
         let socketio_config = self.config.get_or_default::<SocketIoServerConfig>();
 
         let layer = socketio_config.enabled.then(|| {
             let (layer, io) = SocketIoServerLayer::new(&socketio_config);
             self.state.insert(io);
-
             layer
         });
 
@@ -35,19 +40,16 @@ impl InternalRouter {
     }
 
     #[cfg(feature = "adapter-socketio")]
-    pub fn apply_socketio_layer(
+    fn apply_socketio_layer(
         &self,
         mut router: Router<State>,
-        layer: SocketIoLayer,
+        layer: socketioxide::layer::SocketIoLayer,
         config: SocketIoServerConfig,
     ) -> Router<State> {
         use axum::{extract::Request, middleware::Next};
-        use sword_layers::socketio::*;
 
         router = router.layer(layer);
 
-        // Apply parser middleware (outer - executes first)
-        // This ensures extensions are set before SocketIO handshake
         router = router.layer(axum::middleware::from_fn(
             move |mut req: Request, next: Next| async move {
                 req.extensions_mut().insert::<SocketIoParser>(config.parser);
@@ -58,6 +60,7 @@ impl InternalRouter {
         router
     }
 
+    /// Build the complete HTTP router with all adapters and layers
     pub fn build(
         self,
         layers: LayerStack<State>,
@@ -69,26 +72,20 @@ impl InternalRouter {
         let (socketio_layer, socketio_config) = self.socketio_setup();
 
         router = self.apply_adapters(router, &adapters.read());
+        router = self.apply_http_specific_middlewares(router);
 
-        // Apply REST-only middlewares (internal to SocketIO layer)
-        router = self.apply_rest_only_middlewares(router);
-
-        // Apply SocketIO layer to router
-        // This wraps the router but SocketIO requests bypass inner middlewares
         #[cfg(feature = "adapter-socketio")]
         if let Some(layer) = socketio_layer {
             router = self.apply_socketio_layer(router, layer, socketio_config);
         }
 
-        // Apply shared middlewares (external to SocketIO layer - affects both)
-        router = self.apply_shared_middlewares(router);
-
-        // Apply custom user middlewares from layer stack
+        router = self.apply_runtime_agnostic_middlewares(router);
         router = layers.apply(router);
 
         router
     }
 
+    /// Apply all adapters based on kind
     fn apply_adapters(
         &self,
         mut router: Router<State>,
@@ -96,12 +93,12 @@ impl InternalRouter {
     ) -> Router<State> {
         for (kind, adapters) in adapters.iter() {
             match kind {
-                AdapterKind::Http => {
-                    router = self.apply_http_adapters(router, adapters);
+                AdapterKind::HttpController => {
+                    router = self.apply_http_controllers(router, adapters);
                 }
                 #[cfg(feature = "adapter-socketio")]
                 AdapterKind::SocketIo => {
-                    self.apply_socketio_adapters(adapters);
+                    self.apply_socketio_handlers(adapters);
                 }
             }
         }
@@ -109,80 +106,83 @@ impl InternalRouter {
         router
     }
 
-    fn apply_http_adapters(
+    fn apply_http_controllers(
         &self,
         mut router: Router<State>,
-        adapters: &[TypeId],
+        controllers: &[TypeId],
     ) -> Router<State> {
-        for adapter_id in adapters {
-            let mut adapter_routes = inventory::iter::<RouteRegistrar>()
-                .filter(|reg| &reg.controller_type_id == adapter_id)
+        for controller_id in controllers {
+            let mut controller_routes = inventory::iter::<RouteRegistrar>()
+                .filter(|reg| &reg.controller_id == controller_id)
                 .peekable();
 
-            let info = adapter_routes
+            let controller_meta = controller_routes
                 .peek()
-                .map(|reg| ControllerInfo::from(*reg))
+                .map(|reg| ControllerMeta::from(*reg))
                 .unwrap_or_else(|| {
-                    eprintln!("ERROR: Adapter with TypeId {adapter_id:?} has no registered routes.");
+                    eprintln!("ERROR: Controller with TypeId {controller_id:?} has no registered routes.");
                     eprintln!("This indicates a bug in the #[controller] macro implementation.");
-                    panic!("No routes found for adapter");
+                    panic!("No routes found for controller");
                 });
 
             let mut controller_router = Router::new();
 
-            for route in adapter_routes {
+            for route in controller_routes {
                 controller_router = controller_router
-                    .route(route.route_path, (route.handler)(self.state.clone()));
+                    .route(route.path, (route.handler)(self.state.clone()));
             }
 
-            controller_router = (info.apply_controller_level_interceptors)(
+            controller_router = (controller_meta.apply_top_level_interceptors)(
                 controller_router,
                 self.state.clone(),
             );
 
-            if info.controller_path == "/" {
+            if controller_meta.controller_path == "/" {
                 router = router.merge(controller_router);
             } else {
-                router = router.nest(info.controller_path, controller_router);
+                router =
+                    router.nest(controller_meta.controller_path, controller_router);
             }
         }
 
         router
     }
 
+    /// Apply SocketIO handlers by calling their setup functions
     #[cfg(feature = "adapter-socketio")]
-    fn apply_socketio_adapters(&self, adapters: &[TypeId]) {
-        use crate::adapters::socketio::{HandlerRegistrar, SocketIoSetupFn};
+    fn apply_socketio_handlers(&self, handlers: &[TypeId]) {
+        use crate::adapters::socketio::{
+            HandlerRegistrar, SocketIoHandlerRegistrar,
+        };
 
-        for adapter_id in adapters {
-            let setup_fn = inventory::iter::<SocketIoSetupFn>()
-                .find(|s| &s.adapter_type_id == adapter_id);
+        for handler_id in handlers {
+            let setup_fn = inventory::iter::<SocketIoHandlerRegistrar>()
+                .find(|s| &s.handler_type_id == handler_id);
 
             if let Some(setup) = setup_fn {
-                (setup.setup)(&self.state);
+                (setup.setup_fn)(&self.state);
             } else {
                 let has_handlers = inventory::iter::<HandlerRegistrar>()
-                    .any(|h| &h.adapter_type_id == adapter_id);
+                    .any(|h| &h.adapter_type_id == handler_id);
 
                 if has_handlers {
                     eprintln!(
                         "Warning: SocketIO adapter {:?} has handlers but no setup function. \
                             Did you forget #[on(\"connection\")] handler?",
-                        adapter_id
+                        handler_id
                     );
                 }
             }
         }
     }
 
-    /// Apply middlewares that should ONLY affect REST routes
+    /// Apply HTTP-specific layers
     ///
-    /// These are applied BEFORE the SocketIO layer, so SocketIO requests
-    /// bypass them completely.
-    ///
+    /// These are applied BEFORE the SocketIO layer, so SocketIO requests bypass them.
     /// - RequestTimeout: Can interrupt long-lived SocketIO connections
-    /// - BodyLimit: REST-specific (SocketIO uses max_payload config)
-    fn apply_rest_only_middlewares(
+    /// - RequestId: HTTP request tracking
+    /// - CookieManager: Cookie handling
+    fn apply_http_specific_middlewares(
         &self,
         mut router: Router<State>,
     ) -> Router<State> {
@@ -202,15 +202,16 @@ impl InternalRouter {
         router
     }
 
-    /// Apply middlewares that affect BOTH REST and SocketIO
+    /// Apply runtime-agnostic layers
     ///
-    /// These are applied AFTER the SocketIO layer, so they wrap everything.
-    /// SocketIO handshake requests pass through these middlewares.
-    ///
+    /// These are applied AFTER the SocketIO layer, so they affect both REST and SocketIO.
     /// - CORS: Required for cross-origin SocketIO connections
-    /// - Compression: Compresses REST responses and SocketIO handshake (but not WebSocket frames)
+    /// - Compression: Compresses REST responses and SocketIO handshake
     /// - ServeDir: Static files accessible to all
-    fn apply_shared_middlewares(&self, mut router: Router<State>) -> Router<State> {
+    fn apply_runtime_agnostic_middlewares(
+        &self,
+        mut router: Router<State>,
+    ) -> Router<State> {
         let middlewares_config = self.config.get_or_default::<MiddlewaresConfig>();
 
         if middlewares_config.cors.enabled {

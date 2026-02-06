@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
-    adapters::rest::interceptor::expand_interceptor_args,
+    adapters::http::interceptor::expand_interceptor_args,
     shared::{CommonHttpAdapterInput, gen_build, gen_clone, gen_deps},
 };
 
@@ -26,7 +26,7 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
         #deps_impl
         #clone_impl
 
-        impl ::sword::internal::core::RestAdapter for #self_name {
+        impl ::sword::internal::core::HttpController for #self_name {
             fn base_path() -> &'static str {
                 #base_path
             }
@@ -45,7 +45,7 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
 
         impl ::sword::internal::core::Adapter for #self_name {
             fn kind() -> ::sword::internal::core::AdapterKind {
-                ::sword::internal::core::AdapterKind::Http
+                ::sword::internal::core::AdapterKind::HttpController
             }
 
             fn type_id() -> ::std::any::TypeId {

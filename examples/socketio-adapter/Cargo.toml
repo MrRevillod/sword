@@ -13,6 +13,6 @@ uuid = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 validator = { workspace = true }
-serde_json = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 chrono = "0.4.42"

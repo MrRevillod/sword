@@ -1,6 +1,7 @@
 mod env;
 mod error;
 mod registrar;
+mod utils;
 
 use env::expand_env_variables;
 use serde::de::{DeserializeOwned, IntoDeserializer};
@@ -10,6 +11,7 @@ use toml::{Table, Value};
 pub use error::ConfigError;
 pub use registrar::*;
 pub use sword_macros::config;
+pub use utils::{ByteConfig, TimeConfig};
 
 const DEFAULT_CONFIG_PATH: &str = "config/config.toml";
 const CONFIG_ENV_VAR: &str = "SWORD_CONFIG_PATH";

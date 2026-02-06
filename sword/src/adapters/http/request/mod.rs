@@ -1,6 +1,7 @@
 mod error;
 mod extract;
-pub mod extractors;
+
+#[cfg(feature = "validation-validator")]
 mod validator;
 
 use super::interceptor::HttpInterceptorResult;
@@ -19,9 +20,6 @@ pub use error::*;
 
 #[allow(unused_imports)]
 pub use extract::*;
-
-#[allow(unused_imports)]
-pub use extractors::*;
 
 #[cfg(feature = "validation-validator")]
 pub use validator::ValidatorRequestValidation;
@@ -43,48 +41,22 @@ pub struct Request {
 }
 
 impl Request {
-    /// Gets the complete URI of the request as a string.
-    ///
-    /// ### Returns
-    /// A `String` containing the complete request URI including
-    /// the path and query parameters if any.
     pub fn uri(&self) -> String {
         self.uri.to_string()
     }
 
-    /// Gets the HTTP method of the request.
-    ///
-    /// ### Returns
-    /// A reference to the HTTP `Method` (GET, POST, PUT, DELETE, etc.).
     pub const fn method(&self) -> &Method {
         &self.method
     }
 
-    /// Gets the value of a specific header by name.
-    ///
-    /// ### Arguments
-    /// * `key` - The header name to get.
-    ///
-    /// ### Returns
-    /// `Some(&str)` with the header value if it exists, `None` if not found.
     pub fn header(&self, key: &str) -> Option<&str> {
         self.headers.get(key).and_then(|value| value.to_str().ok())
     }
 
-    /// Gets an immutable reference to all request headers.
-    ///
-    /// ### Returns
-    /// A reference to `HashMap<String, String>` containing all request headers
-    /// where the key is the header name and the value is its content.
     pub const fn headers(&self) -> &HeaderMap {
         &self.headers
     }
 
-    /// Gets a mutable reference to all request headers.
-    ///
-    /// ### Returns
-    /// A mutable reference to `HeaderMap` that allows modifying
-    /// existing headers or adding new headers to the request.
     pub fn headers_mut(&mut self) -> &mut HeaderMap {
         &mut self.headers
     }
@@ -359,33 +331,27 @@ impl Request {
         })
     }
 
-    /// Returns the value of `Authorization` header if present.
     pub fn authorization(&self) -> Option<&str> {
         self.header("Authorization")
     }
 
-    /// Returns the value of `User-Agent` header if present.
     pub fn user_agent(&self) -> Option<&str> {
         self.header("User-Agent")
     }
 
-    /// Returns the client's IP address from `X-Forwarded-For` header if present.
     pub fn ip(&self) -> Option<&str> {
         self.header("X-Forwarded-For")
     }
 
-    /// Returns a list of IP addresses from `X-Forwarded-For` header if present.
     pub fn ips(&self) -> Option<Vec<&str>> {
         self.header("X-Forwarded-For")
             .map(|ips| ips.split(',').map(|s| s.trim()).collect())
     }
 
-    /// Returns the protocol used in the request from `X-Forwarded-Proto` header if present.
     pub fn protocol(&self) -> &str {
         self.header("X-Forwarded-Proto").unwrap_or("http")
     }
 
-    /// Returns the content length of the request if present.
     pub fn content_length(&self) -> Option<u64> {
         self.header("Content-Length")
             .and_then(|value| value.parse::<u64>().ok())
@@ -404,7 +370,6 @@ impl Request {
         "unknown".to_string()
     }
 
-    /// Returns the value of `Content-Type` header if present.
     pub fn content_type(&self) -> Option<&str> {
         self.header("Content-Type")
     }

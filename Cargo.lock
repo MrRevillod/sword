@@ -531,15 +531,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "colored"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
-dependencies = [
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "compression-codecs"
 version = "0.4.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1568,7 +1559,6 @@ name = "interceptors"
 version = "0.1.0"
 dependencies = [
  "serde",
- "serde_json",
  "sword",
 ]
 
@@ -2283,6 +2273,7 @@ dependencies = [
  "sqlx",
  "sword",
  "thiserror",
+ "tracing",
  "tracing-subscriber",
  "uuid",
  "validator",
@@ -2627,9 +2618,9 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
- "serde_json",
  "sword",
  "tokio",
+ "tracing-subscriber",
  "uuid",
  "validator",
 ]
@@ -2975,7 +2966,6 @@ dependencies = [
  "axum",
  "axum_responses 0.5.4 (git+https://github.com/MrRevillod/AxumResponses.git)",
  "bytes",
- "colored",
  "console 0.15.11",
  "dioxus-devtools",
  "form_urlencoded",
@@ -2986,10 +2976,11 @@ dependencies = [
  "parking_lot",
  "serde",
  "serde_json",
- "serde_path_to_error",
  "serde_urlencoded",
  "socketioxide",
  "socketioxide-core",
+ "socketioxide-parser-common",
+ "socketioxide-parser-msgpack",
  "subsecond",
  "sword-core",
  "sword-layers",
@@ -3007,6 +2998,8 @@ version = "0.2.1"
 dependencies = [
  "axum",
  "axum_responses 0.5.4 (git+https://github.com/MrRevillod/AxumResponses.git)",
+ "byte-unit",
+ "duration-str",
  "inventory",
  "parking_lot",
  "regex-lite",
@@ -3049,7 +3042,6 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "regex-lite",
  "syn 2.0.114",
 ]
 

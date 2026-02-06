@@ -7,7 +7,7 @@ name = "SocketIO Adapter Example"
 [socketio-server]
 enabled = true
 parser = "common"
-transport = ["websocket", "polling"]
+transports = ["websocket", "polling"]
 
 [middlewares]
 body-limit = { max-size = "5MB", display = true }

@@ -1,4 +1,5 @@
-pub mod rest;
+#[cfg(feature = "adapter-http-controllers")]
+pub mod http;
 
 #[cfg(feature = "adapter-socketio")]
 pub mod socketio;
@@ -10,11 +11,11 @@ use sword_core::HasDeps;
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
 ///
-/// - Http: The base for RESTful APIs, Multipart data handling, Axum Router with state.
+/// - HttpController: HTTP request handlers with routing, multipart data, and Axum Router integration.
 /// - SocketIo: A socketio layer based adapter, Axum Router with state.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AdapterKind {
-    Http,
+    HttpController,
 
     #[cfg(feature = "adapter-socketio")]
     SocketIo,
@@ -23,7 +24,7 @@ pub enum AdapterKind {
 /// A trait for defining adapters in the application.
 ///
 /// Adapters represent different entry points into your application. Controllers
-/// automatically implement this trait, allowing them to be registered as REST adapters
+/// automatically implement this trait, allowing them to be registered as HTTP controllers
 /// within modules.
 ///
 /// # Example
@@ -98,7 +99,7 @@ impl AdapterRegistry {
             .insert(A::kind(), adapter_registry_vec);
     }
 
-    pub fn read(
+    pub(crate) fn read(
         &self,
     ) -> RwLockReadGuard<'_, RawRwLock, HashMap<AdapterKind, Vec<TypeId>>> {
         self.adapters.read()

@@ -130,10 +130,10 @@ fn generate_inventory_registration(
         #[doc(hidden)]
         const #registration_name: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::rest::RouteRegistrar {
-                    controller_type_id: ::std::any::TypeId::of::<#controller_ident>(),
+                ::sword::internal::http::RouteRegistrar {
+                    controller_id: ::std::any::TypeId::of::<#controller_ident>(),
                     controller_path: #controller_path,
-                    route_path: #route_path,
+                    path: #route_path,
                     handler: |state: ::sword::internal::core::State| -> ::sword::internal::axum::MethodRouter<::sword::internal::core::State> {
                         let controller = std::sync::Arc::new(
                             #controller_ident::build(&state).unwrap_or_else(|err| {
@@ -143,7 +143,7 @@ fn generate_inventory_registration(
 
                         #controller_ident::#route_fn_name(controller, state)
                     },
-                    apply_controller_level_interceptors: #controller_ident::apply_interceptors,
+                    apply_top_level_interceptors: #controller_ident::apply_interceptors,
                 }
             }
         };

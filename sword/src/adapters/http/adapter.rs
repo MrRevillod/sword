@@ -10,16 +10,16 @@ pub use sword_macros::{controller, delete, get, patch, post, put};
 /// dependencies that will be automatically resolved and injected.
 ///
 /// Controllers automatically implement the `Adapter` trait, making them registrable
-/// as REST adapters within modules via `AdapterRegistry::register::<YourController>()`.
+/// as HTTP controllers within modules via `AdapterRegistry::register::<YourController>()`.
 ///
-/// Use the `#[rest_adapter]` or `#[controller]` macro to automatically implement this trait.
+/// Use the `#[controller]` macro to automatically implement this trait.
 ///
 /// # Example
 ///
 /// ```rust,ignore
 /// use sword::prelude::*;
 ///
-/// #[rest_adapter("/api/users")]
+/// #[controller("/api/users")]
 /// struct UserController {
 ///     service: Arc<UserService>,
 /// }
@@ -32,7 +32,7 @@ pub use sword_macros::{controller, delete, get, patch, post, put};
 ///     }
 /// }
 /// ```
-pub trait RestAdapter: Adapter {
+pub trait HttpController: Adapter {
     fn base_path() -> &'static str;
     fn apply_interceptors(
         router: AxumRouter<State>,

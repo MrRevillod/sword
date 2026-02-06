@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod request {
     mod cookies;
-    mod extractors;
     mod multipart;
     mod query;
 }

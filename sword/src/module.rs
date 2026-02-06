@@ -16,7 +16,7 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 ///
 /// impl Module for MyModule {
 ///     fn register_adapters(adapters: &AdapterRegistry) {
-///         adapters.register::<MyController>();  // Register REST adapter
+///         adapters.register::<MyController>();  // Register HTTP controller
 ///     }
 ///
 ///     fn register_components(container: &DependencyContainer) {
@@ -29,15 +29,16 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 /// }
 /// ```
 #[allow(async_fn_in_trait)]
+#[allow(unused_variables)]
 pub trait Module {
     /// Register adapters provided by the module.
     /// A `Adapter` is a way to represent entry points into the application,
-    /// such as REST APIs, Socket.IO Handlers, or gRPC services.
-    fn register_adapters(_: &AdapterRegistry) {}
+    /// such as HTTP controllers, Socket.IO Handlers, or gRPC services.
+    fn register_adapters(adapters: &AdapterRegistry) {}
 
     /// Register component structs marked with `#[injectable]`
-    fn register_components(_: &ComponentRegistry) {}
+    fn register_components(components: &ComponentRegistry) {}
 
     /// Register provider structs marked with `#[injectable(provider)]`
-    async fn register_providers(_: &Config, _: &ProviderRegistry) {}
+    async fn register_providers(config: &Config, providers: &ProviderRegistry) {}
 }

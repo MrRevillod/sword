@@ -33,6 +33,14 @@ impl UsersController {
         };
 
         if self.users.find_by_username(&user.username).await?.is_some() {
+            println!(
+                "Conflict error display: {}",
+                AppError::UserConflictError {
+                    field: "username".to_string(),
+                    value: user.username.clone(),
+                }
+            );
+
             return Err(AppError::UserConflictError("username", &user.username))?;
         }
 

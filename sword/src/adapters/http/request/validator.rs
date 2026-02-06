@@ -1,4 +1,8 @@
-use crate::adapters::rest::{Request, RequestError, format_validator_errors};
+use crate::adapters::http::{Request, RequestError};
+
+#[cfg(feature = "validation-validator")]
+use crate::adapters::http::response::format_validator_errors;
+
 use serde::de::DeserializeOwned;
 use validator::Validate;
 

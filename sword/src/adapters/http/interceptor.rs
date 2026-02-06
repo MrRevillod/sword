@@ -9,7 +9,7 @@ pub type HttpInterceptorResult = Result<AxumResponse, JsonResponse>;
 
 /// Trait for interceptors that handle requests
 ///
-/// This is the standard interceptor trait for simple REST adapter request interception.
+/// This is the standard interceptor trait for HTTP controller request interception.
 /// Implement this trait to create interceptors that don't require additional
 /// configuration at the route level.
 pub trait OnRequest: Interceptor {

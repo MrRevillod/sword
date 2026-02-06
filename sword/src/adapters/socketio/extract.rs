@@ -1,5 +1,6 @@
 use super::error::SocketError;
 
+use crate::runtimes::http::SocketIoParser;
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;
 use parking_lot::RwLock;
@@ -20,8 +21,6 @@ use std::{convert::Infallible, sync::Arc};
 
 #[cfg(feature = "validation-validator")]
 use validator::Validate;
-
-use sword_layers::socketio::SocketIoParser;
 
 /// A unified extractor that combines multiple socketioxide extractors into a single context.
 ///
@@ -75,16 +74,12 @@ where
         Ok(data)
     }
 
-    /// The `Event` extractor equivalent method.
-    ///
     /// Returns the event name for message handlers.
     /// Returns `None` for connect/disconnect handlers (protocol-level events).
     pub fn event(&self) -> Option<&str> {
         self.event.as_deref()
     }
 
-    /// The `AckSender` `send` method equivalent.
-    ///
     /// Sends an acknowledgment response to the client.
     pub fn ack<D>(self, data: &D) -> Result<(), SendError>
     where
@@ -123,17 +118,14 @@ where
         &self.socket.req_parts().extensions
     }
 
-    /// Get the Socket.IO protocol version used by the client.
     pub fn protocol_version(&self) -> ProtocolVersion {
         self.socket.protocol()
     }
 
-    /// Returns the transport type used by the client (WebSocket or polling).
     pub fn transport_type(&self) -> TransportType {
         self.socket.transport_type()
     }
 
-    /// Disconnects the socket and triggers the disconnect handler.
     pub fn disconnect(self) -> Result<(), SocketError> {
         self.socket.disconnect().map_err(SocketError::from)
     }

@@ -1,4 +1,4 @@
-use crate::adapters::rest::RequestError;
+use crate::adapters::http::RequestError;
 
 pub use axum_responses::{
     ContentDisposition, File, JsonResponse, JsonResponseBody, Redirect,

@@ -21,14 +21,13 @@ proc-macro = true
 
 [dependencies]
 axum = { workspace = true }
-regex-lite = { workspace = true }
-
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
 proc-macro-error = "1.0.4"
 
 [features]
-default = []
+default = ["adapter-http-controllers"]
+adapter-http-controllers = []
 hot-reload = []
 adapter-socketio = []

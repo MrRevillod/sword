@@ -111,9 +111,10 @@ pub fn generate_socketio_adapter_builder(
     let setup_registration = quote! {
         const _: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::socketio::SocketIoSetupFn {
-                    adapter_type_id: ::std::any::TypeId::of::<#self_name>(),
-                    setup: #self_name::__socketio_setup,
+                ::sword::internal::socketio::SocketIoHandlerRegistrar {
+                    handler_type_id: ::std::any::TypeId::of::<#self_name>(),
+                    handler_type_name: stringify!(#self_name),
+                    setup_fn: #self_name::__socketio_setup,
                 }
             }
         };

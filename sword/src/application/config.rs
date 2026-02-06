@@ -1,4 +1,3 @@
-use colored::Colorize;
 use console::style;
 use serde::{Deserialize, Serialize};
 use sword_core::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
@@ -7,16 +6,15 @@ use sword_core::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
 ///
 /// This struct contains all the configuration options that can be specified
 /// in the `config/config.toml` file under the `[application]` section.
-#[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ApplicationConfig {
-    /// The hostname or IP address to bind the server to.
-    /// Defaults to "0.0.0.0" if not specified.
-    pub host: String,
+    /// Optional name of the application. Defaults `None`.
+    /// This can be used for logging or display purposes.
+    pub name: Option<String>,
 
-    /// The port number to bind the server to.
-    /// Defaults to 8000 if not specified.
-    pub port: u16,
+    /// Optional environment name (e.g., "development", "production").
+    /// This can be used to alter behavior based on the environment. Defaults `None`.
+    pub environment: Option<String>,
 
     /// Whether to enable graceful shutdown of the server.
     /// If true, the server will finish processing ongoing requests
@@ -24,28 +22,13 @@ pub struct ApplicationConfig {
     ///
     /// If you want to use a custom signal handler, you can disable this
     /// and implement your own signal with the `run_with_graceful_shutdown` method.
+    /// Defaults `false`
     #[serde(rename = "graceful-shutdown")]
     pub graceful_shutdown: bool,
-
-    /// Optional name of the application.
-    /// This can be used for logging or display purposes.
-    pub name: Option<String>,
-
-    /// Optional environment name (e.g., "development", "production").
-    /// This can be used to alter behavior based on the environment.
-    pub environment: Option<String>,
-
-    /// Optional global prefix for all routes.
-    #[serde(rename = "axum-router-prefix")]
-    pub global_prefix: Option<String>,
 }
 
 impl ApplicationConfig {
     pub fn display(&self) {
-        let banner_top = "▪──────────────── ⚔ S W O R D ⚔ ──────────────▪".white();
-
-        println!("\n{banner_top}");
-
         println!();
         if let Some(name) = &self.name {
             println!("{}", style(format!("{} Configuration:", name)).bold());
@@ -53,11 +36,8 @@ impl ApplicationConfig {
             println!("{}", style("Application Configuration:").bold());
         }
 
-        println!("  ↳  Host: {}", self.host);
-        println!("  ↳  Port: {}", self.port);
-
         if self.graceful_shutdown {
-            println!("  ↳  Graceful Shutdown");
+            println!("  ↳  Graceful Shutdown: enabled");
         } else {
             println!("  ↳  {}", style("Graceful Shutdown: disabled").red());
         }
@@ -68,15 +48,7 @@ impl ApplicationConfig {
     }
 }
 
-/// Implementation of the `ConfigItem` trait for `ApplicationConfig`.
-///
-/// This implementation allows the application configuration to be automatically
-/// loaded from TOML files using the "application" key.
 impl ConfigItem for ApplicationConfig {
-    /// Returns the TOML key used to identify this configuration section.
-    ///
-    /// For `ApplicationConfig`, this returns "application", meaning the
-    /// configuration should be under the `[application]` section in the TOML file.
     fn toml_key() -> &'static str {
         "application"
     }
@@ -91,16 +63,3 @@ inventory_submit! {[
         ApplicationConfig::register(state, config)
     })
 ]}
-
-impl Default for ApplicationConfig {
-    fn default() -> Self {
-        Self {
-            host: "0.0.0.0".to_string(),
-            port: 8000,
-            graceful_shutdown: false,
-            name: None,
-            environment: None,
-            global_prefix: None,
-        }
-    }
-}
