@@ -25,20 +25,12 @@ impl UsersController {
     #[post("/")]
     async fn create_user(&self, req: Request) -> HttpResult {
         let body = req.body_validator::<CreateUserDto>()?;
-
-        let user = User {
-            id: Uuid::new_v4(),
-            username: body.username,
-            password: self.hasher.hash(&body.password)?,
-        };
+        let user = User::new(body.username, self.hasher.hash(&body.password)?);
 
         if self.users.find_by_username(&user.username).await?.is_some() {
-            println!(
-                "Conflict error display: {}",
-                AppError::UserConflictError {
-                    field: "username".to_string(),
-                    value: user.username.clone(),
-                }
+            tracing::error!(
+                "Attempt to create user with existing username: {}",
+                user.username
             );
 
             return Err(AppError::UserConflictError("username", &user.username))?;
