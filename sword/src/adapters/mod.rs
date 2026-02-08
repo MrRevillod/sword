@@ -15,6 +15,7 @@ use sword_core::HasDeps;
 /// - SocketIo: A socketio layer based adapter, Axum Router with state.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AdapterKind {
+    #[cfg(feature = "adapter-http-controllers")]
     HttpController,
 
     #[cfg(feature = "adapter-socketio")]

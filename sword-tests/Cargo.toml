@@ -11,6 +11,8 @@ sword = { path = "../sword", features = [
     "validation-validator",
     "adapter-socketio",
 ] }
+
+sword-layers = { workspace = true, features = ["helmet"] }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

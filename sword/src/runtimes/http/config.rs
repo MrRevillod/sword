@@ -1,3 +1,4 @@
+use console::style;
 use serde::{Deserialize, Serialize};
 use sword_core::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
 use sword_layers::DisplayConfig;
@@ -17,8 +18,6 @@ pub struct HttpRuntimeConfig {
 
 impl DisplayConfig for HttpRuntimeConfig {
     fn display(&self) {
-        use console::style;
-
         println!();
         println!("{}", style("HTTP Server Configuration:").bold());
         println!("  ↳  Host: {}", self.host);

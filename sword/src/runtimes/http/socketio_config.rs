@@ -11,11 +11,6 @@ use sword_core::{
 };
 use sword_layers::DisplayConfig;
 
-// ============================================================================
-// Socket.IO Configuration
-// ============================================================================
-
-/// Configuration for the Socket.IO server
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct SocketIoServerConfig {
@@ -99,12 +94,15 @@ impl DisplayConfig for SocketIoServerConfig {
         if let Some(ack) = &self.ack_timeout {
             timeout_parts.push(format!("ack: {}", ack.raw));
         }
+
         if let Some(connect) = &self.connect_timeout {
             timeout_parts.push(format!("connect: {}", connect.raw));
         }
+
         if let Some(ping) = &self.ping_timeout {
             timeout_parts.push(format!("ping: {}", ping.raw));
         }
+
         if !timeout_parts.is_empty() {
             println!("  ↳  Timeouts: {}", timeout_parts.join(" - "));
         }
@@ -114,9 +112,11 @@ impl DisplayConfig for SocketIoServerConfig {
         if let Some(buffer) = &self.max_buffer_size {
             limit_parts.push(format!("buffer: {buffer} packets"));
         }
+
         if let Some(payload) = &self.max_payload {
             limit_parts.push(format!("payload: {}", payload.raw));
         }
+
         if !limit_parts.is_empty() {
             println!("  ↳  Limits: {}", limit_parts.join(" - "));
         }
@@ -132,6 +132,7 @@ impl DisplayConfig for SocketIoServerConfig {
         if let Some(interval) = &self.ping_interval {
             connection_parts.push(format!("ping interval: {}", interval.raw));
         }
+
         if let Some(path) = &self.req_path {
             connection_parts.push(format!("path: {path}"));
         }

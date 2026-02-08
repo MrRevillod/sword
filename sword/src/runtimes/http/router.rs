@@ -93,6 +93,7 @@ impl HttpRouter {
     ) -> Router<State> {
         for (kind, adapters) in adapters.iter() {
             match kind {
+                #[cfg(feature = "adapter-http-controllers")]
                 AdapterKind::HttpController => {
                     router = self.apply_http_controllers(router, adapters);
                 }

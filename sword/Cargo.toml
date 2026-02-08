@@ -3,14 +3,14 @@ name = "sword"
 version = "0.2.1"
 edition = "2024"
 authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
-description = "Structured Rust web framework built on top of Axum, providing powerful features for building robust web applications."
+description = "Structured web framework built on top of tokio ecosystem, providing powerful features for building robust web applications."
 repository = "https://github.com/sword-web/sword"
 homepage = "https://github.com/sword-web/sword"
 documentation = "https://docs.rs/sword"
 keywords = ["sword", "web", "framework", "axum", "microservices"]
 categories = ["web-programming", "web-programming::http-server"]
-readme = "../readme.md"
-license-file = "../license"
+readme = "../README.md"
+license-file = "../LICENSE"
 
 [package.metadata.docs.rs]
 all-features = true

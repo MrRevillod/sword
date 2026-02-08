@@ -2,16 +2,11 @@ mod adapters;
 mod application;
 mod interceptor;
 mod module;
+pub mod prelude;
 mod runtimes;
 
 pub use application::*;
-pub mod prelude;
-
 pub use sword_macros::main;
-
-pub mod layers {
-    pub use sword_layers::helmet;
-}
 
 #[doc(hidden)]
 pub mod internal {

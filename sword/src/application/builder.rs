@@ -4,14 +4,12 @@ use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
 use crate::runtimes::http::HttpRuntime;
 
-use sword_core::layers::LayerStack;
-use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State};
-
 use axum::{
     extract::Request as AxumRequest, response::IntoResponse, routing::Route,
 };
-
 use std::convert::Infallible;
+use sword_core::layers::LayerStack;
+use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State};
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {

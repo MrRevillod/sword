@@ -1,13 +1,12 @@
 mod builder;
 mod config;
 
+use crate::runtimes::http::HttpRuntime;
 use std::path::Path;
 use sword_core::Config;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
-
-use crate::runtimes::http::HttpRuntime;
 
 /// The main application struct that holds the runtime(s) and configuration.
 ///
