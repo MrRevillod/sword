@@ -24,7 +24,6 @@ axum = { workspace = true }
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
-proc-macro-error = "1.0.4"
 
 [features]
 default = ["adapter-http-controllers"]

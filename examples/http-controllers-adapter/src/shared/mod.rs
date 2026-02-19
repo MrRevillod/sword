@@ -11,7 +11,7 @@ pub struct SharedModule;
 
 impl Module for SharedModule {
     async fn register_providers(config: &Config, providers: &ProviderRegistry) {
-        let db_config = config.get_or_panic::<DatabaseConfig>();
+        let db_config = config.expect::<DatabaseConfig>();
         let hasher_config = config.get_or_default::<HasherConfig>();
 
         providers.register(

@@ -20,19 +20,14 @@ pub struct ApplicationBuilder {
     pub config: Config,
 }
 
+const DEFAULT_CONFIG_PATH: &str = "config/config.toml";
+
 impl ApplicationBuilder {
     /// Builder for constructing a Sword application with various configuration options.
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
     /// modules, add middleware layers, and set up dependency injection.
-    ///
-    /// The builder follows this configuration pattern:
-    /// 1. Create with `Application::builder()`
-    /// 2. Register modules with `with_module::<M>()`
-    /// 3. Optionally add custom layers with `with_layer()`
-    /// 4. Optionally register providers directly with `with_provider()`
-    /// 5. Build the application with `build()`
     ///
     /// # Example
     ///
@@ -46,7 +41,12 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        Self::from_config(Config::new().expect("Configuration loading error"))
+        let config = Config::builder()
+            .add_required_file(DEFAULT_CONFIG_PATH)
+            .build()
+            .expect("Configuration loading error");
+
+        Self::from_config(config)
     }
 
     /// Builder for constructing a Sword application with a provided configuration.

@@ -1,6 +1,10 @@
 use crate::adapters::http::{ControllerMeta, RouteRegistrar};
 use crate::adapters::{AdapterKind, AdapterRegistry};
-use axum::Router;
+
+use axum::{
+    Router,
+    {extract::Request, middleware::Next},
+};
 use std::any::TypeId;
 use std::collections::HashMap;
 use sword_core::layers::*;
@@ -168,9 +172,8 @@ impl HttpRouter {
 
                 if has_handlers {
                     eprintln!(
-                        "Warning: SocketIO adapter {:?} has handlers but no setup function. \
+                        "Warning: SocketIO adapter {handler_id:?} has handlers but no setup function. \
                             Did you forget #[on(\"connection\")] handler?",
-                        handler_id
                     );
                 }
             }
@@ -188,6 +191,7 @@ impl HttpRouter {
         mut router: Router<State>,
     ) -> Router<State> {
         let middlewares_config = self.config.get_or_default::<MiddlewaresConfig>();
+        let body_limit_config = middlewares_config.body_limit;
 
         if middlewares_config.request_timeout.enabled {
             let (timeout_service, response_mapper) =
@@ -196,6 +200,15 @@ impl HttpRouter {
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);
         }
+
+        router = router.layer(axum::middleware::from_fn(
+            move |mut req: Request, next: Next| async move {
+                req.extensions_mut()
+                    .insert(BodyLimitValue(body_limit_config.max_size.parsed));
+
+                next.run(req).await
+            },
+        ));
 
         router = router.layer(RequestIdLayer::new());
         router = router.layer(CookieManagerLayer::new());

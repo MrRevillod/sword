@@ -1,5 +1,5 @@
 use super::{super::JsonResponse, Request, RequestError};
-use sword_core::{State, layers::MiddlewaresConfig};
+use sword_core::{State, layers::BodyLimitValue};
 
 use axum::{
     RequestPartsExt,
@@ -47,10 +47,7 @@ pub trait FromRequestParts: Sized {
 impl FromRequest for Request {
     type Rejection = JsonResponse;
 
-    async fn from_request(
-        req: AxumReq,
-        state: &State,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: AxumReq, _: &State) -> Result<Self, Self::Rejection> {
         let (mut parts, body) = req.into_parts();
 
         let path_params = parts
@@ -68,12 +65,12 @@ impl FromRequest for Request {
                 JsonResponse::BadRequest().message(message)
             })?;
 
-        let body_limit = state
-            .get::<MiddlewaresConfig>()
+        let body_limit = parts
+            .extensions
+            .get::<BodyLimitValue>()
+            .cloned()
             .unwrap_or_default()
-            .body_limit
-            .max_size
-            .parsed;
+            .0;
 
         if let Some(content_length) = parts.headers.get("content-length") {
             let cl_str = content_length.to_str().map_err(|_| {

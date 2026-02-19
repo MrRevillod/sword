@@ -1,6 +1,6 @@
 use console::style;
 use serde::{Deserialize, Serialize};
-use sword_core::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
+use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
 use sword_layers::DisplayConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,18 +30,14 @@ impl DisplayConfig for HttpRuntimeConfig {
 }
 
 impl ConfigItem for HttpRuntimeConfig {
-    fn toml_key() -> &'static str {
+    fn key() -> &'static str {
         "http"
-    }
-
-    fn register(state: &State, config: &Config) {
-        state.insert(config.get_or_default::<Self>());
     }
 }
 
 inventory_submit! {[
     ConfigRegistrar::new(|state, config| {
-        HttpRuntimeConfig::register(state, config)
+        state.insert(config.get_or_default::<HttpRuntimeConfig>());
     })
 ]}
 

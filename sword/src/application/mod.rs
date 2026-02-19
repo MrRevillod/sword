@@ -2,6 +2,7 @@ mod builder;
 mod config;
 
 use crate::runtimes::http::HttpRuntime;
+
 use std::path::Path;
 use sword_core::Config;
 
@@ -43,7 +44,10 @@ impl Application {
 
     pub fn from_config_path<P: AsRef<Path>>(path: P) -> ApplicationBuilder {
         ApplicationBuilder::from_config(
-            Config::from_path(path).expect("Configuration loading error"),
+            Config::builder()
+                .add_required_file(path.as_ref().to_str().unwrap())
+                .build()
+                .expect("Configuration loading error"),
         )
     }
 

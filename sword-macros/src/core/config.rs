@@ -1,46 +1,49 @@
 use proc_macro::TokenStream;
-use proc_macro_error::emit_error;
 use quote::quote;
-use syn::{Expr, ItemStruct, Lit, Meta, parse_macro_input};
+use syn::{DeriveInput, Error, Expr, Lit, Meta};
 
-pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(item as ItemStruct);
-    let meta = parse_macro_input!(attr as Meta);
+pub fn expand_config_struct(
+    args: TokenStream,
+    input: &DeriveInput,
+) -> syn::Result<TokenStream> {
+    let struct_name = &input.ident;
+    let self_ty = quote! { #struct_name };
+    let meta = syn::parse::<Meta>(args)?;
 
-    let toml_key_str = match meta {
-        Meta::NameValue(nv) if nv.path.is_ident("key") => {
-            if let Expr::Lit(expr) = nv.value {
-                if let Lit::Str(lit_str) = expr.lit {
-                    lit_str.value()
-                } else {
-                    emit_error!(expr, "Expected a string literal for the toml key");
-                    return TokenStream::new();
-                }
-            } else {
-                emit_error!(nv.value, "Expected a literal for the toml key");
-                return TokenStream::new();
-            }
-        }
-        _ => {
-            emit_error!(meta, "Expected a `key = \"...\"` attribute");
-            return TokenStream::new();
-        }
+    let nv = meta.require_name_value().map_err(|_| {
+        Error::new_spanned(
+            &meta,
+            r#"expected format: #[config(key = "section_name")]"#,
+        )
+    })?;
+
+    if !nv.path.is_ident("key") {
+        return Err(Error::new_spanned(&nv.path, "expected `key` attribute"));
+    }
+
+    let Expr::Lit(expr_lit) = &nv.value else {
+        return Err(Error::new_spanned(
+            &nv.value,
+            "expected string literal for key",
+        ));
     };
 
-    let struct_name = &input.ident;
+    let Lit::Str(lit_str) = &expr_lit.lit else {
+        return Err(Error::new_spanned(
+            &expr_lit.lit,
+            "expected string literal for key",
+        ));
+    };
 
     let expanded = quote! {
         #input
 
         impl ::sword::internal::core::ConfigItem for #struct_name {
-            fn toml_key() -> &'static str {
-                #toml_key_str
+            fn key() -> &'static str {
+                #lit_str
             }
         }
 
-        // Implement TryFrom for use with #[injectable] macro
-        // Config structs are extracted from the Config object in State,
-        // not directly from State, so they use TryFrom instead of FromState.
         impl TryFrom<&::sword::internal::core::State> for #struct_name {
             type Error = ::sword::internal::core::DependencyInjectionError;
 
@@ -51,8 +54,8 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
                     })?;
 
                 config.get::<Self>()
-                    .map_err(|e| ::sword::internal::core::DependencyInjectionError::ConfigInjectionError {
-                        source: e,
+                    .ok_or_else(|| ::sword::internal::core::DependencyInjectionError::DependencyNotFound {
+                        type_name: format!("Config item '{}'", Self::key()),
                     })
             }
         }
@@ -62,12 +65,19 @@ pub fn expand_config_struct(attr: TokenStream, item: TokenStream) -> TokenStream
         // We use the full path to inventory through sword's re-export
         const _: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::core::ConfigRegistrar::new(|config, state| {
-                    <#struct_name as ::sword::internal::core::ConfigItem>::register(config, state)
+                ::sword::internal::core::ConfigRegistrar::new(|state, config| {
+                    let config_item = config.get::<#self_ty>().unwrap_or_else(|| {
+                          panic!(
+                              "Failed to load config item '{}' from the configuration file",
+                              #lit_str
+                          )
+                    });
+
+                    state.insert(config_item);
                 })
             }
         };
     };
 
-    TokenStream::from(expanded)
+    Ok(TokenStream::from(expanded))
 }

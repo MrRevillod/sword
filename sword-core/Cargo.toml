@@ -28,12 +28,9 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
-toml = "0.9.0"
 inventory = { workspace = true }
 parking_lot = { workspace = true }
-regex-lite = { workspace = true }
-byte-unit = "5.2.0"
-duration-str = "0.18.0"
+thisconfig = { version = "0.2.1", features = ["byte-unit", "time-unit"] }
 
 [features]
 default = []

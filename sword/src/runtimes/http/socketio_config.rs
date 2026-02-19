@@ -6,8 +6,7 @@ use socketioxide_parser_msgpack::MsgPackParser;
 use std::collections::HashSet;
 use std::str::FromStr;
 use sword_core::{
-    ByteConfig, Config, ConfigItem, ConfigRegistrar, State, TimeConfig,
-    inventory_submit,
+    ByteConfig, ConfigItem, ConfigRegistrar, TimeConfig, inventory_submit,
 };
 use sword_layers::DisplayConfig;
 
@@ -276,17 +275,13 @@ impl SocketIoServerLayer {
 }
 
 impl ConfigItem for SocketIoServerConfig {
-    fn toml_key() -> &'static str {
+    fn key() -> &'static str {
         "socketio-server"
-    }
-
-    fn register(state: &State, config: &Config) {
-        state.insert(config.get_or_default::<Self>());
     }
 }
 
 inventory_submit! {[
     ConfigRegistrar::new(|state, config| {
-        SocketIoServerConfig::register(state, config)
+        state.insert(config.get_or_default::<SocketIoServerConfig>());
     })
 ]}

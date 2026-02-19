@@ -44,11 +44,10 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[controller("/base_path")]
 /// struct MyController {}
 ///
-/// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
 ///     async fn my_handler(&self) -> HttpResult {
-///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
 /// ```
@@ -98,15 +97,20 @@ pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ### Usage
 ///
 /// ```rust,ignore
-/// #[derive(Deserialize)]
 /// #[config(key = "my-section")]
+/// #[derive(Debug, Deserialize)]
 /// struct MyConfig {
 ///     my_key: String,
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
-    core::config::expand_config_struct(attr, item)
+pub fn config(args: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    match core::config::expand_config_struct(args, &input) {
+        Ok(tokens) => tokens,
+        Err(err) => err.to_compile_error().into(),
+    }
 }
 
 /// Marks a struct as injectable.
@@ -596,7 +600,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Event Types
 /// - `#[on("connection")]` - Called when a client connects
-/// - `#[on("disconnection")]` - Called when a client disconnects  
+/// - `#[on("disconnection")]` - Called when a client disconnects
 /// - `#[on("fallback")]` - Called for unhandled events
 /// - `#[on("custom_event")]` - Called for custom event names
 ///
@@ -617,7 +621,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     async fn on_connect(&self, ctx: SocketContext) {
 ///         println!("Client connected: {}", ctx.socket.id);
 ///     }
-///     
+///
 ///     #[on("message")]
 ///     async fn handle_message(&self, ctx: SocketContext) {
 ///         let msg: String = ctx.try_data().unwrap();

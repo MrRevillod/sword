@@ -1,5 +1,5 @@
-use crate::ConfigError;
 use axum_responses::JsonResponse;
+use thisconfig::ConfigError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -28,18 +28,5 @@ impl From<DependencyInjectionError> for JsonResponse {
     fn from(error: DependencyInjectionError) -> Self {
         tracing::error!("Dependency injection error: {}", error);
         JsonResponse::InternalServerError()
-    }
-}
-
-impl From<ConfigError> for JsonResponse {
-    fn from(error: ConfigError) -> Self {
-        match error {
-            ConfigError::KeyNotFound { key } => {
-                tracing::error!("Configuration key not found: {key}");
-                JsonResponse::InternalServerError()
-            }
-
-            _ => JsonResponse::InternalServerError(),
-        }
     }
 }
