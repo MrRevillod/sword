@@ -1351,6 +1351,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-controllers-adapter"
+version = "0.1.0"
+dependencies = [
+ "bcrypt",
+ "dotenv",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sword",
+ "thiserror",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "http-range-header"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2290,23 +2307,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21918d6644020c6f6ef1993242989bf6d4952d2e025617744f184c02df51c356"
 dependencies = [
  "thiserror",
-]
-
-[[package]]
-name = "rest-adapter"
-version = "0.1.0"
-dependencies = [
- "bcrypt",
- "dotenv",
- "serde",
- "serde_json",
- "sqlx",
- "sword",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "validator",
 ]
 
 [[package]]
