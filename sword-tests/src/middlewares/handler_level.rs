@@ -31,7 +31,7 @@ pub enum AuthMethod {
 pub struct FileValidationMiddleware;
 
 impl OnRequestWithConfig<(&'static str, &'static str)> for FileValidationMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
@@ -69,7 +69,7 @@ impl OnRequest for MwWithState {
 struct RoleMiddleware;
 
 impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         roles: Vec<&'static str>,
         mut req: Request,
@@ -85,7 +85,7 @@ impl OnRequestWithConfig<Vec<&'static str>> for RoleMiddleware {
 struct TupleConfigMiddleware;
 
 impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: (&'static str, &'static str),
         mut req: Request,
@@ -100,7 +100,7 @@ impl OnRequestWithConfig<(&'static str, &'static str)> for TupleConfigMiddleware
 struct ArrayConfigMiddleware;
 
 impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: [i32; 3],
         mut req: Request,
@@ -115,7 +115,7 @@ impl OnRequestWithConfig<[i32; 3]> for ArrayConfigMiddleware {
 struct StringConfigMiddleware;
 
 impl OnRequestWithConfig<String> for StringConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: String,
         mut req: Request,
@@ -130,7 +130,7 @@ impl OnRequestWithConfig<String> for StringConfigMiddleware {
 struct StrConfigMiddleware;
 
 impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: &'static str,
         mut req: Request,
@@ -145,7 +145,7 @@ impl OnRequestWithConfig<&'static str> for StrConfigMiddleware {
 struct NumberConfigMiddleware;
 
 impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: i32,
         mut req: Request,
@@ -160,7 +160,7 @@ impl OnRequestWithConfig<i32> for NumberConfigMiddleware {
 struct BoolConfigMiddleware;
 
 impl OnRequestWithConfig<bool> for BoolConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: bool,
         mut req: Request,
@@ -177,7 +177,7 @@ struct ComplexConfigMiddleware;
 impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
     for ComplexConfigMiddleware
 {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: (Vec<&'static str>, i32, bool),
         mut req: Request,
@@ -202,7 +202,7 @@ impl OnRequestWithConfig<(Vec<&'static str>, i32, bool)>
 struct FunctionConfigMiddleware;
 
 impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: Vec<String>,
         mut req: Request,
@@ -217,7 +217,7 @@ impl OnRequestWithConfig<Vec<String>> for FunctionConfigMiddleware {
 struct MathConfigMiddleware;
 
 impl OnRequestWithConfig<i32> for MathConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: i32,
         mut req: Request,
@@ -232,7 +232,7 @@ impl OnRequestWithConfig<i32> for MathConfigMiddleware {
 struct ConstConfigMiddleware;
 
 impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: &'static str,
         mut req: Request,
@@ -247,7 +247,7 @@ impl OnRequestWithConfig<&'static str> for ConstConfigMiddleware {
 struct LogMiddleware;
 
 impl OnRequestWithConfig<LogLevel> for LogMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: LogLevel,
         mut req: Request,
@@ -262,7 +262,7 @@ impl OnRequestWithConfig<LogLevel> for LogMiddleware {
 struct DatabaseMiddleware;
 
 impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: DatabaseConfig,
         mut req: Request,
@@ -277,7 +277,7 @@ impl OnRequestWithConfig<DatabaseConfig> for DatabaseMiddleware {
 struct AuthMiddleware;
 
 impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: AuthMethod,
         mut req: Request,
@@ -292,7 +292,7 @@ impl OnRequestWithConfig<AuthMethod> for AuthMiddleware {
 struct EnumOptionMiddleware;
 
 impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: Option<LogLevel>,
         mut req: Request,
@@ -307,7 +307,7 @@ impl OnRequestWithConfig<Option<LogLevel>> for EnumOptionMiddleware {
 struct EnumVecMiddleware;
 
 impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
-    async fn on_request_with_config(
+    async fn on_request(
         &self,
         config: Vec<LogLevel>,
         mut req: Request,

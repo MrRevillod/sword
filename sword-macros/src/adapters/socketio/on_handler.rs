@@ -74,9 +74,17 @@ pub fn expand_on_handler(
             let adapter = adapter_any
                 .downcast::<#adapter_ident>()
                 .unwrap_or_else(|_| {
-                    panic!(
-                        "Failed to downcast adapter to {}. This is a bug in Sword's macro expansion.",
-                        stringify!(#adapter_ident)
+                    ::sword::internal::core::sword_error!(
+                        phase: ::sword::internal::core::StartupPhase::MacroInvariant,
+                        title: "Failed to downcast Socket.IO adapter type",
+                        reason: format!(
+                            "Expected adapter type {} during handler registration",
+                            stringify!(#adapter_ident)
+                        ),
+                        context: {
+                            "adapter" => stringify!(#adapter_ident),
+                        },
+                        hints: ["This indicates an internal macro invariant violation"],
                     )
                 });
 
@@ -95,8 +103,18 @@ pub fn expand_on_handler(
             let adapter = adapter_any
                 .downcast::<#adapter_ident>()
                 .unwrap_or_else(|_| {
-                    eprintln!("FATAL: Failed to downcast adapter to type {}", stringify!(#adapter_ident));
-                    panic!("Type mismatch in handler execution");
+                    ::sword::internal::core::sword_error!(
+                        phase: ::sword::internal::core::StartupPhase::MacroInvariant,
+                        title: "Failed to downcast Socket.IO adapter type",
+                        reason: format!(
+                            "Type mismatch while executing handler for {}",
+                            stringify!(#adapter_ident)
+                        ),
+                        context: {
+                            "adapter" => stringify!(#adapter_ident),
+                        },
+                        hints: ["This indicates an internal macro invariant violation"],
+                    )
                 });
 
             ::std::boxed::Box::pin(async move {

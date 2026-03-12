@@ -1,8 +1,9 @@
-use crate::{Config, ConfigItem, ConfigRegistrar, State, inventory_submit};
+use crate::{ConfigItem, ConfigRegistrar, inventory_submit};
+
 use serde::{Deserialize, Serialize};
 use sword_layers::prelude::{
     BodyLimitConfig, CompressionConfig, CorsConfig, DisplayConfig,
-    RequestTimeoutConfig, ServeDirConfig, SocketIoServerConfig,
+    RequestTimeoutConfig, ServeDirConfig,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -28,43 +29,16 @@ impl DisplayConfig for MiddlewaresConfig {
 }
 
 impl ConfigItem for MiddlewaresConfig {
-    fn toml_key() -> &'static str {
+    fn key() -> &'static str {
         "middlewares"
-    }
-
-    fn register(state: &State, config: &Config) {
-        state.insert(config.get_or_default::<Self>());
-    }
-}
-
-impl ConfigItem for ServeDirConfig {
-    fn toml_key() -> &'static str {
-        "serve-dir"
-    }
-
-    fn register(state: &State, config: &Config) {
-        state.insert(config.get_or_default::<Self>());
-    }
-}
-
-impl ConfigItem for SocketIoServerConfig {
-    fn toml_key() -> &'static str {
-        "socketio-server"
-    }
-
-    fn register(state: &State, config: &Config) {
-        state.insert(config.get_or_default::<Self>());
     }
 }
 
 inventory_submit! {[
     ConfigRegistrar::new(|state, config| {
-        MiddlewaresConfig::register(state, config)
+        state.insert(config.get_or_default::<MiddlewaresConfig>());
     }),
     ConfigRegistrar::new(|state, config| {
-        ServeDirConfig::register(state, config)
-    }),
-    ConfigRegistrar::new(|state, config| {
-        SocketIoServerConfig::register(state, config)
+        state.insert(config.get_or_default::<ServeDirConfig>());
     }),
 ]}

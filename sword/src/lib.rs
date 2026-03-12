@@ -2,15 +2,11 @@ mod adapters;
 mod application;
 mod interceptor;
 mod module;
+pub mod prelude;
+mod runtimes;
 
 pub use application::*;
-pub mod prelude;
-
 pub use sword_macros::main;
-
-pub mod layers {
-    pub use sword_layers::helmet;
-}
 
 #[doc(hidden)]
 pub mod internal {
@@ -34,7 +30,7 @@ pub mod internal {
     #[cfg(feature = "adapter-socketio")]
     pub mod socketio {
         pub use crate::adapters::socketio::{
-            HandlerRegistrar, SocketEventKind, SocketIoSetupFn,
+            HandlerRegistrar, SocketEventKind, SocketIoHandlerRegistrar,
         };
         pub use socketioxide::SocketError;
         pub use socketioxide::handler::ConnectHandler;
@@ -42,16 +38,19 @@ pub mod internal {
     }
 
     pub mod core {
-        pub use crate::adapters::rest::RestAdapter;
+        #[cfg(feature = "adapter-http-controllers")]
+        pub use crate::adapters::http::HttpController;
         #[cfg(feature = "adapter-socketio")]
         pub use crate::adapters::socketio::SocketIoAdapter;
         pub use crate::adapters::{Adapter, AdapterKind};
         pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
+        pub use sword_core::sword_error;
         pub use sword_core::*;
     }
 
-    pub mod rest {
-        pub use crate::adapters::rest::RouteRegistrar;
+    #[cfg(feature = "adapter-http-controllers")]
+    pub mod http {
+        pub use crate::adapters::http::RouteRegistrar;
     }
 
     pub use inventory;

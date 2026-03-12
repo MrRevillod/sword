@@ -9,32 +9,32 @@ use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("GET", attr, item)
+    adapters::http::attributes::attribute("GET", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("POST", attr, item)
+    adapters::http::attributes::attribute("POST", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("PUT", attr, item)
+    adapters::http::attributes::attribute("PUT", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("DELETE", attr, item)
+    adapters::http::attributes::attribute("DELETE", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::rest::attributes::attribute("PATCH", attr, item)
+    adapters::http::attributes::attribute("PATCH", attr, item)
 }
 
-/// This macro is alias for `#[rest_adapter]`.
-/// Defines a REST adapter with a base path, and should be used in combination
-/// with the `#[routes]` macro for route implementation.
+/// Defines an HTTP controller with a base path.
+/// Route handlers are declared directly inside the `impl` block using method attributes
+/// such as `#[get]`, `#[post]`, `#[put]`, `#[patch]`, and `#[delete]`.
 ///
 /// ### Parameters
 /// - `base_path`: The base path for the controller, e.g., "/api
@@ -44,11 +44,10 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// #[controller("/base_path")]
 /// struct MyController {}
 ///
-/// #[routes]
 /// impl MyController {
 ///     #[get("/sub_path")]
 ///     async fn my_handler(&self) -> HttpResult {
-///        Ok(JsonResponse::Ok().message("Hello from MyController"))    
+///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
 /// ```
@@ -98,15 +97,20 @@ pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ### Usage
 ///
 /// ```rust,ignore
-/// #[derive(Deserialize)]
 /// #[config(key = "my-section")]
+/// #[derive(Debug, Deserialize)]
 /// struct MyConfig {
 ///     my_key: String,
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn config(attr: TokenStream, item: TokenStream) -> TokenStream {
-    core::config::expand_config_struct(attr, item)
+pub fn config(args: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    match core::config::expand_config_struct(args, &input) {
+        Ok(tokens) => tokens,
+        Err(err) => err.to_compile_error().into(),
+    }
 }
 
 /// Marks a struct as injectable.
@@ -519,7 +523,16 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                 ::sword::internal::tokio_runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
-                    .expect("Failed building the Runtime")
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::Runtime,
+                            title: "Failed to build Tokio runtime",
+                            reason: err,
+                            context: {
+                                "source" => "#[sword::main]",
+                            },
+                        )
+                    })
                     .block_on(::sword::internal::dioxus_devtools::serve_subsecond(__internal_main))
             }
         };
@@ -530,7 +543,16 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                 ::sword::internal::tokio_runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
-                    .expect("Failed building the Runtime")
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::Runtime,
+                            title: "Failed to build Tokio runtime",
+                            reason: err,
+                            context: {
+                                "source" => "#[sword::main]",
+                            },
+                        )
+                    })
                     .block_on( async #fn_body )
             }
         };
@@ -551,8 +573,8 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// impl ChatSocket {
 ///     #[on("connection")]
-///     async fn on_connect(&self, socket: SocketRef) {
-///         println!("Client connected");
+///     async fn on_connect(&self, ctx: SocketContext) {
+///         println!("Client connected: {}", ctx.id());
 ///     }
 /// }
 /// ```
@@ -563,40 +585,11 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "adapter-socketio")]
-/// Defines Socket.IO handlers for its associated adapter.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[socketio_adapter]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the Socket.IO endpoint, e.g., `"/socket"`
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[socketio_adapter("/socket")]
-/// struct SocketController;
-///
-/// #[handlers]
-/// impl SocketController {
-///     #[on_connection]
-///     async fn on_connect(&self, socket: SocketRef) {
-///         println!("Client connected");
-///     }
-///
-///     #[on_message("message")]
-///     async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
-///         println!("Received: {}", msg);
-///     }
-///
-///     #[on_disconnect]
-///     async fn on_disconnect(&self, socket: SocketRef) {
-///         println!("Client disconnected");
-///     }
-/// }
-/// ```
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types
 /// - `#[on("connection")]` - Called when a client connects
-/// - `#[on("disconnection")]` - Called when a client disconnects  
+/// - `#[on("disconnection")]` - Called when a client disconnects
 /// - `#[on("fallback")]` - Called for unhandled events
 /// - `#[on("custom_event")]` - Called for custom event names
 ///
@@ -617,7 +610,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     async fn on_connect(&self, ctx: SocketContext) {
 ///         println!("Client connected: {}", ctx.socket.id);
 ///     }
-///     
+///
 ///     #[on("message")]
 ///     async fn handle_message(&self, ctx: SocketContext) {
 ///         let msg: String = ctx.try_data().unwrap();

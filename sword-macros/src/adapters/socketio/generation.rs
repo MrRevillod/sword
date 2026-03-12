@@ -21,7 +21,17 @@ pub fn generate_socketio_adapter_builder(
         quote! {
             let interceptor = ::std::sync::Arc::new(
                 state.borrow::<#interceptor_path>()
-                    .expect(&format!("\n[!] Failed to retrieve interceptor {} from State\n", stringify!(#interceptor_path)))
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
+                            title: "Failed to retrieve Socket.IO interceptor from State",
+                            reason: err,
+                            context: {
+                                "interceptor" => stringify!(#interceptor_path),
+                            },
+                            hints: ["Ensure the interceptor is registered and built before adapter setup"],
+                        )
+                    })
                     .clone()
             );
 
@@ -43,16 +53,33 @@ pub fn generate_socketio_adapter_builder(
 
             let adapter = ::std::sync::Arc::new(
                 <#self_name as ::sword::internal::core::Build>::build(state).unwrap_or_else(|err| {
-                    eprintln!("\n[!] Failed to build SocketIO adapter: {}\n", #adapter_name_str);
-                    eprintln!("    Error: {}\n", err);
-                    eprintln!("    This usually means a dependency is missing from the State.");
-                    eprintln!("    Ensure all dependencies are registered as providers or components.\n");
-                    panic!("SocketIO adapter build failed");
+                    ::sword::internal::core::sword_error!(
+                        phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
+                        title: "Failed to build Socket.IO adapter",
+                        reason: err,
+                        context: {
+                            "adapter" => #adapter_name_str,
+                        },
+                        hints: ["Ensure all adapter dependencies are registered as providers or components"],
+                    )
                 })
             );
 
             let io = <::sword::prelude::SocketIo as ::sword::internal::core::FromState>::from_state(state)
-                .expect("\n[!] SocketIo component not found in state. Is SocketIo correctly configured?\n\n   ↳ Ensure that the `socketio` feature is enabled in your `Cargo.toml`.\n   ↳ Also, make sure to configure the `socketio` server in your configuration file.\n   ↳ See the Sword documentation for more details: https://sword-web.github.io\n");
+                .unwrap_or_else(|err| {
+                    ::sword::internal::core::sword_error!(
+                        phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
+                        title: "Socket.IO component not found in application state",
+                        reason: err,
+                        context: {
+                            "adapter" => #adapter_name_str,
+                        },
+                        hints: [
+                            "Enable the `adapter-socketio` feature in Cargo.toml",
+                            "Configure the socketio server section in your configuration file",
+                        ],
+                    )
+                });
 
             let adapter_type_id = ::std::any::TypeId::of::<#self_name>();
             let mut connection_handler: ::std::option::Option<::sword::internal::socketio::HandlerRegistrar> = None;
@@ -66,9 +93,13 @@ pub fn generate_socketio_adapter_builder(
                 match handler_meta.event_kind {
                     ::sword::internal::socketio::SocketEventKind::Connection => {
                         if connection_handler.is_some() {
-                            panic!(
-                                "\n[!] Multiple connection handlers found in adapter '{}'\n\n   ↳ Only one #[on(\"connection\")] handler is allowed per adapter\n",
-                                #adapter_name_str
+                            ::sword::internal::core::sword_error!(
+                                phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
+                                title: "Multiple connection handlers found in Socket.IO adapter",
+                                reason: "Only one #[on(\"connection\")] handler is allowed per adapter",
+                                context: {
+                                    "adapter" => #adapter_name_str,
+                                },
                             );
                         }
                         connection_handler = Some(handler_meta.clone());
@@ -111,9 +142,10 @@ pub fn generate_socketio_adapter_builder(
     let setup_registration = quote! {
         const _: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::socketio::SocketIoSetupFn {
-                    adapter_type_id: ::std::any::TypeId::of::<#self_name>(),
-                    setup: #self_name::__socketio_setup,
+                ::sword::internal::socketio::SocketIoHandlerRegistrar {
+                    handler_type_id: ::std::any::TypeId::of::<#self_name>(),
+                    handler_type_name: stringify!(#self_name),
+                    setup_fn: #self_name::__socketio_setup,
                 }
             }
         };

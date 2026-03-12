@@ -7,7 +7,7 @@ name = "SocketIO Adapter Example"
 [socketio-server]
 enabled = true
 parser = "common"
-transport = ["websocket", "polling"]
+transports = ["websocket", "polling"]
 
 [middlewares]
 body-limit = { max-size = "5MB", display = true }
@@ -15,8 +15,7 @@ request-timeout = { enabled = true, timeout = "15s", display = true }
 
 [middlewares.cors]
 enabled = true
-allow-credentials = true
 display = true
 allow-headers = ["Content-Type", "Authorization"]
-allow-methods = ["GET", "POST", "PUT", "DELETE"]
+allow-methods = ["*"]
 allow-origins = ["http://localhost:5173", "https://example.com"]

@@ -7,12 +7,6 @@
 - New `next()` method on `Request` struct. See `Changed` section for more details.
 - Added `Module` trait for creating and registering controllers and injectables as a modules.
 
-- Added Axum-style extractors with fixed `State` type. New extractors include: `Json<T>`, `Query<T>`, `PathParams<T>`, `Extension<T>`, and direct Axum type support (`Method`, `Uri`, `HeaderMap`, `Bytes`).
-
-- Added `#[returns(Type)]` macro attribute for cleaner function signatures. Allows specifying return types without writing `-> Type`. Defaults to `JsonResponse` when no type is specified.
-
-- Added dual trait implementation for extractors. Each custom extractor implements both `FromRequest`/`FromRequestParts` (with fixed `State`) and Axum's native traits for maximum compatibility.
-
 - Added `ServeDir` middleware for serving static files from a directory. This middleware uses `tower_http::services::ServeDir` under the hood.
 
 - Added cleanup for temporary data structures used in the application build process.

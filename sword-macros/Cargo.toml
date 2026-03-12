@@ -1,16 +1,16 @@
 [package]
 name = "sword-macros"
 version = "0.2.1"
-edition = "2024"
+edition.workspace = true
 authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
-description = "Structured Rust web framework built on top of Axum, providing powerful features for building robust web applications."
-repository = "https://github.com/sword-web/sword"
-homepage = "https://github.com/sword-web/sword"
+description = "Structured web framework built on top of tokio ecosystem, providing powerful features for building robust web applications."
+repository.workspace = true
+homepage.workspace = true
 documentation = "https://docs.rs/sword-macros"
 keywords = ["web", "framework", "axum", "http", "async"]
 readme = "../README.md"
 license-file = "../LICENSE"
-rust-version = "1.85"
+rust-version.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true
@@ -21,14 +21,12 @@ proc-macro = true
 
 [dependencies]
 axum = { workspace = true }
-regex-lite = { workspace = true }
-
-syn = { version = "2", features = ["full"] }
-quote = "1"
-proc-macro2 = "1"
-proc-macro-error = "1.0.4"
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
 
 [features]
-default = []
+default = ["adapter-http-controllers"]
+adapter-http-controllers = []
 hot-reload = []
 adapter-socketio = []

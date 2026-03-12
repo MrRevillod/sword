@@ -1,0 +1,34 @@
+{
+	"tab_size": 4,
+	"hard_tabs": true,
+	"format_on_save": "on",
+	"formatter": "language_server",
+	"file_scan_exclusions": [
+		"**/.git/**",
+		"**/target/**",
+	],
+	"languages": {
+		"Rust": {
+			"formatter": "language_server",
+			"enable_language_server": true,
+		},
+		"TOML": {
+			"formatter": "language_server",
+		},
+	},
+	"lsp": {
+		"rust-analyzer": {
+			"initialization_options": {
+				"cargo": {
+					"features": "all",
+				},
+				"procMacro": {
+					"enable": true,
+				},
+				"diagnostics": {
+					"enable": true,
+				},
+			},
+		},
+	},
+}

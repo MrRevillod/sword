@@ -1,19 +1,20 @@
-use super::router::InternalRouter;
 use crate::adapters::AdapterRegistry;
-use crate::application::{Application, ApplicationConfig};
+use crate::application::Application;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
-
-use sword_core::layers::LayerStack;
-use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State};
+use crate::runtimes::http::HttpRuntime;
 
 use axum::{
-    extract::Request as AxumRequest,
-    response::IntoResponse,
-    routing::{Route, Router},
+    extract::Request as AxumRequest, response::IntoResponse, routing::Route,
 };
 
 use std::convert::Infallible;
+use std::path::Path;
+use sword_core::{
+    Config, ConfigRegistrar, DependencyContainer, Provider, StartupPhase, State,
+    layers::LayerStack, sword_error,
+};
+
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
@@ -24,19 +25,32 @@ pub struct ApplicationBuilder {
     pub config: Config,
 }
 
+const DEFAULT_CONFIG_PATH: &str = "config/config.toml";
+
 impl ApplicationBuilder {
+    fn load_required_config(path: &str, source: &str) -> Config {
+        Config::builder()
+            .add_required_file(Path::new(path))
+            .build()
+            .unwrap_or_else(|err| {
+                sword_error! {
+                    phase: StartupPhase::Config,
+                    title: "Failed to load required configuration file",
+                    reason: err,
+                    context: {
+                        "path" => path,
+                        "source" => source,
+                    },
+                    hints: ["Ensure the file exists and contains valid TOML"],
+                }
+            })
+    }
+
     /// Builder for constructing a Sword application with various configuration options.
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
     /// modules, add middleware layers, and set up dependency injection.
-    ///
-    /// The builder follows this configuration pattern:
-    /// 1. Create with `Application::builder()`
-    /// 2. Register modules with `with_module::<M>()`
-    /// 3. Optionally add custom layers with `with_layer()`
-    /// 4. Optionally register providers directly with `with_provider()`
-    /// 5. Build the application with `build()`
     ///
     /// # Example
     ///
@@ -50,7 +64,12 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        Self::from_config(Config::new().expect("Configuration loading error"))
+        let config = Self::load_required_config(
+            DEFAULT_CONFIG_PATH,
+            "ApplicationBuilder::new",
+        );
+
+        Self::from_config(config)
     }
 
     /// Builder for constructing a Sword application with a provided configuration.
@@ -69,7 +88,12 @@ impl ApplicationBuilder {
     /// # Example
     ///
     /// ```rust,ignore
-    /// let app = Application::from_config(Config::new().expect("Configuration loading error"))
+    /// let config = Config::builder()
+    ///     .add_required_file("config/config.toml")
+    ///     .build()
+    ///     .expect("Configuration loading error");
+    ///
+    /// let app = Application::from_config(config)
     ///     .with_module::<UsersModule>()
     ///     .with_module::<ProductsModule>()
     ///     .with_layer(custom_middleware)
@@ -148,15 +172,17 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
-        self.container
-            .build_all(&self.state)
-            .unwrap_or_else(|err| {
-                eprintln!("\n[!] Failed to build dependency injection container\n");
-                eprintln!("    Error: {}\n", err);
-                eprintln!("    This usually indicates a missing dependency or circular dependency.");
-                eprintln!("    Check that all required components and providers are registered.\n");
-                panic!("DI container build failed");
-            });
+        self.container.build_all(&self.state).unwrap_or_else(|err| {
+            sword_error! {
+                phase: StartupPhase::DI,
+                title: "Failed to build dependency injection container",
+                reason: err,
+                context: {
+                    "source" => "ApplicationBuilder::build",
+                },
+                hints: ["Check that all required components and providers are registered"],
+            }
+        });
 
         for InterceptorRegistrar { register } in
             inventory::iter::<InterceptorRegistrar>
@@ -164,26 +190,16 @@ impl ApplicationBuilder {
             register(&self.state);
         }
 
-        let (router, state) = self.build_router();
-
-        Application::new(router, state, self.config)
-    }
-
-    fn build_router(&mut self) -> (Router<State>, State) {
-        let internal_router =
-            InternalRouter::new(self.state.clone(), self.config.clone());
-
         let layer_stack = std::mem::take(&mut self.layer_stack);
-        let mut router = internal_router.build(layer_stack, &self.adapter_registry);
 
-        let app_config = self.config.get::<ApplicationConfig>()
-            .expect("Failed to get ApplicationConfig. Ensure it is present in the config file.");
+        let http_runtime = HttpRuntime::new(
+            self.state.clone(),
+            self.config.clone(),
+            layer_stack,
+            &self.adapter_registry,
+        );
 
-        if let Some(prefix) = app_config.global_prefix {
-            router = Router::new().nest(&prefix, router);
-        }
-
-        (router, self.state.clone())
+        Application::new(http_runtime, self.config)
     }
 }
 

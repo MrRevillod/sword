@@ -53,13 +53,12 @@ pub struct HandlerRegistrar {
 }
 
 /// Setup function that initializes a SocketIO adapter at runtime.
-pub struct SocketIoSetupFn {
-    /// TypeId of the adapter this setup function handles
-    pub adapter_type_id: TypeId,
+pub struct SocketIoHandlerRegistrar {
+    pub handler_type_id: TypeId,
+    pub handler_type_name: &'static str,
 
-    /// Setup function that initializes handlers for this adapter
-    pub setup: fn(&State),
+    pub setup_fn: fn(&State),
 }
 
 inventory::collect!(HandlerRegistrar);
-inventory::collect!(SocketIoSetupFn);
+inventory::collect!(SocketIoHandlerRegistrar);

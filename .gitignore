@@ -3,3 +3,6 @@ node_modules
 docs
 examples/*.md
 .vscode/mcp.json
+
+**/target
+sword-layers/

@@ -1,16 +1,17 @@
+use crate::State;
 use axum::{Router, extract::Request, response::IntoResponse, routing::Route};
 use std::convert::Infallible;
 use tower::{Layer, Service};
 
-type BoxedLayer<S> = Box<dyn Fn(Router<S>) -> Router<S> + Send + Sync>;
+type LayerFn<S> = Box<dyn Fn(Router<S>) -> Router<S> + Send + Sync>;
 
 /// A stack for managing and applying middleware layers to a router.
 ///
 /// `LayerStack` provides a way to accumulate layers and apply them to a router in the
 /// order they were added. Layers are applied via the `push()` method during configuration,
 /// and then applied to the router via `apply()` during the build phase.
-pub struct LayerStack<S = ()> {
-    layers: Vec<BoxedLayer<S>>,
+pub struct LayerStack<S = State> {
+    layers: Vec<LayerFn<S>>,
 }
 
 impl<S> LayerStack<S>
@@ -33,23 +34,19 @@ where
         <L::Service as Service<Request>>::Error: Into<Infallible> + 'static,
         <L::Service as Service<Request>>::Future: Send + 'static,
     {
-        self.layers
-            .push(Box::new(move |router| router.layer(layer.to_owned())));
+        self.layers.push(Box::new(move |router: Router<S>| {
+            router.layer(layer.clone())
+        }));
     }
 
-    /// Apply all accumulated layers to the given router in order.
+    /// Apply all layers to the given router.
     ///
-    /// Layers are applied sequentially, with each layer wrapping the result of the previous one.
-    pub fn apply(&self, mut router: Router<S>) -> Router<S> {
-        for layer_fn in &self.layers {
+    /// Layers are applied in FIFO order (first pushed = first applied = outermost).
+    pub fn apply(self, mut router: Router<S>) -> Router<S> {
+        for layer_fn in self.layers {
             router = layer_fn(router);
         }
-
         router
-    }
-
-    pub fn clear(&mut self) {
-        self.layers.clear();
     }
 }
 
