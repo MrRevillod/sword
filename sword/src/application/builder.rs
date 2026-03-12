@@ -88,7 +88,12 @@ impl ApplicationBuilder {
     /// # Example
     ///
     /// ```rust,ignore
-    /// let app = Application::from_config(Config::new().expect("Configuration loading error"))
+    /// let config = Config::builder()
+    ///     .add_required_file("config/config.toml")
+    ///     .build()
+    ///     .expect("Configuration loading error");
+    ///
+    /// let app = Application::from_config(config)
     ///     .with_module::<UsersModule>()
     ///     .with_module::<ProductsModule>()
     ///     .with_layer(custom_middleware)

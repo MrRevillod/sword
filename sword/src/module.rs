@@ -19,12 +19,12 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 ///         adapters.register::<MyController>();  // Register HTTP controller
 ///     }
 ///
-///     fn register_components(container: &DependencyContainer) {
-///         container.register_component::<MyService>();
+///     fn register_components(components: &ComponentRegistry) {
+///         components.register::<MyService>();
 ///     }
 ///
-///     async fn register_providers(config: &Config, container: &DependencyContainer) {
-///         container.register_provider(MyProvider::new().await);
+///     async fn register_providers(_: &Config, providers: &ProviderRegistry) {
+///         providers.register(MyProvider::new().await);
 ///     }
 /// }
 /// ```

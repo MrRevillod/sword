@@ -32,9 +32,9 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
     adapters::http::attributes::attribute("PATCH", attr, item)
 }
 
-/// This macro is an alias for defining HTTP controllers.
-/// Defines an HTTP controller with a base path, and should be used in combination
-/// with the `#[routes]` macro for route implementation.
+/// Defines an HTTP controller with a base path.
+/// Route handlers are declared directly inside the `impl` block using method attributes
+/// such as `#[get]`, `#[post]`, `#[put]`, `#[patch]`, and `#[delete]`.
 ///
 /// ### Parameters
 /// - `base_path`: The base path for the controller, e.g., "/api
@@ -573,8 +573,8 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// impl ChatSocket {
 ///     #[on("connection")]
-///     async fn on_connect(&self, socket: SocketRef) {
-///         println!("Client connected");
+///     async fn on_connect(&self, ctx: SocketContext) {
+///         println!("Client connected: {}", ctx.id());
 ///     }
 /// }
 /// ```
@@ -585,35 +585,6 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "adapter-socketio")]
-/// Defines Socket.IO handlers for its associated adapter.
-/// This macro should be used inside an `impl` block of a struct annotated with the `#[socketio_adapter]` macro.
-///
-/// ### Parameters
-/// - `path`: The path for the Socket.IO endpoint, e.g., `"/socket"`
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[socketio_adapter("/socket")]
-/// struct SocketController;
-///
-/// #[handlers]
-/// impl SocketController {
-///     #[on_connection]
-///     async fn on_connect(&self, socket: SocketRef) {
-///         println!("Client connected");
-///     }
-///
-///     #[on_message("message")]
-///     async fn on_message(&self, socket: SocketRef, Data(msg): Data<String>) {
-///         println!("Received: {}", msg);
-///     }
-///
-///     #[on_disconnect]
-///     async fn on_disconnect(&self, socket: SocketRef) {
-///         println!("Client disconnected");
-///     }
-/// }
-/// ```
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types

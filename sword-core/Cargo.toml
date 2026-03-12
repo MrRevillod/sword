@@ -30,7 +30,7 @@ tracing = { workspace = true }
 
 inventory = { workspace = true }
 parking_lot = { workspace = true }
-thisconfig = { version = "0.2.1", features = ["byte-unit", "time-unit"] }
+thisconfig = { version = "0.2.2", features = ["byte-unit", "time-unit"] }
 
 [features]
 default = []

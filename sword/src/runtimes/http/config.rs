@@ -1,7 +1,8 @@
 use console::style;
 use serde::{Deserialize, Serialize};
-use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
-use sword_layers::DisplayConfig;
+use sword_core::{
+    ConfigItem, ConfigRegistrar, inventory_submit, layers::DisplayConfig,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpRuntimeConfig {

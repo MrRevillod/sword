@@ -20,16 +20,15 @@ use std::fmt::Display;
 /// ```
 ///
 /// ## Applying the Interceptor
-/// To apply this interceptor use the #[interceptor] attribute under your #[on_connection] method:
+/// To apply this interceptor, use the `#[interceptor(...)]` attribute on an `#[on("connection")]` handler:
 /// ```rust,ignore
 /// use sword::prelude::*;
 ///
 /// #[socketio_adapter("/my_namespace")]
 /// pub struct MyAdapter;
 ///
-/// #[handlers]
 /// impl MyAdapter {
-///     #[on_connection]
+///     #[on("connection")]
 ///     #[interceptor(MyInterceptor)]
 ///     async fn handle_connection(&self, socket: SocketContext) {
 ///        // handle the initial connection (logging, authentication)

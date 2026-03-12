@@ -1,6 +1,6 @@
 use super::error::SocketError;
-
 use crate::runtimes::http::SocketIoParser;
+
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;
 use parking_lot::RwLock;
@@ -48,7 +48,7 @@ where
     }
 
     /// The `TryData<T>` extractor equivalent method.
-    ///   
+    ///
     /// Deserializes message data to the specified type.
     pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, SocketError> {
         let mut data = self.data.write().take().ok_or(ParseError::InvalidData)?;

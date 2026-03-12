@@ -24,7 +24,6 @@ pub use sword_macros::{controller, delete, get, patch, post, put};
 ///     service: Arc<UserService>,
 /// }
 ///
-/// #[routes]
 /// impl UserController {
 ///     #[get("/")]
 ///     async fn list(&self) -> JsonResponse {

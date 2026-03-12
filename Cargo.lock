@@ -3135,9 +3135,9 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "thisconfig"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78b0b724d6fc1f180f652ef67aff424af877b88494c102460f3389dcc34a7338"
+checksum = "75dd39d7b672d6f283382015f11994accbf75136b70d16e49e634a67fe41c45b"
 dependencies = [
  "byte-unit",
  "duration-str",
@@ -3151,9 +3151,9 @@ dependencies = [
 
 [[package]]
 name = "thisconfig-macros"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d3657b31849f858c64ac7580582a7077a3781144fcdd6c1d5ba9ab3ad935511"
+checksum = "680b0cdf9fb2ba51bec1d90a58bd45596967cc138849e5995475956a2c006cab"
 dependencies = [
  "quote",
  "syn 2.0.116",
