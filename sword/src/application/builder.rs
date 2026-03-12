@@ -7,9 +7,14 @@ use crate::runtimes::http::HttpRuntime;
 use axum::{
     extract::Request as AxumRequest, response::IntoResponse, routing::Route,
 };
+
 use std::convert::Infallible;
-use sword_core::layers::LayerStack;
-use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State};
+use std::path::Path;
+use sword_core::{
+    Config, ConfigRegistrar, DependencyContainer, Provider, StartupPhase, State,
+    layers::LayerStack, sword_error,
+};
+
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
@@ -23,6 +28,24 @@ pub struct ApplicationBuilder {
 const DEFAULT_CONFIG_PATH: &str = "config/config.toml";
 
 impl ApplicationBuilder {
+    fn load_required_config(path: &str, source: &str) -> Config {
+        Config::builder()
+            .add_required_file(Path::new(path))
+            .build()
+            .unwrap_or_else(|err| {
+                sword_error! {
+                    phase: StartupPhase::Config,
+                    title: "Failed to load required configuration file",
+                    reason: err,
+                    context: {
+                        "path" => path,
+                        "source" => source,
+                    },
+                    hints: ["Ensure the file exists and contains valid TOML"],
+                }
+            })
+    }
+
     /// Builder for constructing a Sword application with various configuration options.
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
@@ -41,10 +64,10 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        let config = Config::builder()
-            .add_required_file(DEFAULT_CONFIG_PATH)
-            .build()
-            .expect("Configuration loading error");
+        let config = Self::load_required_config(
+            DEFAULT_CONFIG_PATH,
+            "ApplicationBuilder::new",
+        );
 
         Self::from_config(config)
     }
@@ -144,14 +167,17 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
-        self.container
-            .build_all(&self.state)
-            .unwrap_or_else(|err| {
-                eprintln!("\n[!] Failed to build dependency injection container\n");
-                eprintln!("    Error: {}\n", err);
-                eprintln!("    Check that all required components and providers are registered correctly.\n");
-                panic!("DI container build failed");
-            });
+        self.container.build_all(&self.state).unwrap_or_else(|err| {
+            sword_error! {
+                phase: StartupPhase::DI,
+                title: "Failed to build dependency injection container",
+                reason: err,
+                context: {
+                    "source" => "ApplicationBuilder::build",
+                },
+                hints: ["Check that all required components and providers are registered"],
+            }
+        });
 
         for InterceptorRegistrar { register } in
             inventory::iter::<InterceptorRegistrar>

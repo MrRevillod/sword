@@ -67,11 +67,16 @@ pub fn expand_config_struct(
             ::sword::internal::inventory::submit! {
                 ::sword::internal::core::ConfigRegistrar::new(|state, config| {
                     let config_item = config.get::<#self_ty>().unwrap_or_else(|| {
-                          panic!(
-                              "Failed to load config item '{}' from the configuration file",
-                              #lit_str
-                          )
-                    });
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::Config,
+                            title: "Failed to load registered config item",
+                            reason: format!("Config item '{}' was not found", #lit_str),
+                            context: {
+                                "key" => #lit_str,
+                            },
+                            hints: ["Ensure the configuration file contains this section"],
+                        )
+                     });
 
                     state.insert(config_item);
                 })

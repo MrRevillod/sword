@@ -124,6 +124,7 @@ fn generate_inventory_registration(
     let controller_name = &parsed.controller_name;
     let controller_path = &parsed.controller_path;
     let route_path = &parsed.path;
+    let method = &parsed.method;
 
     quote! {
         #[allow(non_upper_case_globals)]
@@ -137,7 +138,16 @@ fn generate_inventory_registration(
                     handler: |state: ::sword::internal::core::State| -> ::sword::internal::axum::MethodRouter<::sword::internal::core::State> {
                         let controller = std::sync::Arc::new(
                             #controller_ident::build(&state).unwrap_or_else(|err| {
-                                panic!("\n[!] Failed to build controller '{}'\n\n{}\n", #controller_name, err)
+                                ::sword::internal::core::sword_error!(
+                                    phase: ::sword::internal::core::StartupPhase::HttpAdapter,
+                                    title: "Failed to build HTTP controller",
+                                    reason: err,
+                                    context: {
+                                        "controller" => #controller_name,
+                                        "route" => format!("{} {}", #method, #route_path),
+                                    },
+                                    hints: ["Ensure all controller dependencies are registered in the DI container"],
+                                )
                             })
                         );
 

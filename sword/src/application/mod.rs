@@ -4,7 +4,7 @@ mod config;
 use crate::runtimes::http::HttpRuntime;
 
 use std::path::Path;
-use sword_core::Config;
+use sword_core::{Config, StartupPhase, sword_error};
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
@@ -43,11 +43,24 @@ impl Application {
     }
 
     pub fn from_config_path<P: AsRef<Path>>(path: P) -> ApplicationBuilder {
+        let config_path = path.as_ref().display().to_string();
+
         ApplicationBuilder::from_config(
             Config::builder()
-                .add_required_file(path.as_ref().to_str().unwrap())
+                .add_required_file(path.as_ref())
                 .build()
-                .expect("Configuration loading error"),
+                .unwrap_or_else(|err| {
+                    sword_error! {
+                        phase: StartupPhase::Config,
+                        title: "Failed to load configuration from custom path",
+                        reason: err,
+                        context: {
+                            "path" => config_path,
+                            "source" => "Application::from_config_path",
+                        },
+                        hints: ["Ensure the file exists and contains valid TOML"],
+                    }
+                }),
         )
     }
 

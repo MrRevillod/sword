@@ -5,10 +5,11 @@ use axum::{
     Router,
     {extract::Request, middleware::Next},
 };
+
 use std::any::TypeId;
 use std::collections::HashMap;
 use sword_core::layers::*;
-use sword_core::{Config, State};
+use sword_core::{Config, StartupPhase, State, sword_error};
 
 #[cfg(feature = "adapter-socketio")]
 use super::socketio_config::{
@@ -101,6 +102,7 @@ impl HttpRouter {
                 AdapterKind::HttpController => {
                     router = self.apply_http_controllers(router, adapters);
                 }
+
                 #[cfg(feature = "adapter-socketio")]
                 AdapterKind::SocketIo => {
                     self.apply_socketio_handlers(adapters);
@@ -125,9 +127,16 @@ impl HttpRouter {
                 .peek()
                 .map(|reg| ControllerMeta::from(*reg))
                 .unwrap_or_else(|| {
-                    eprintln!("ERROR: Controller with TypeId {controller_id:?} has no registered routes.");
-                    eprintln!("This indicates a bug in the #[controller] macro implementation.");
-                    panic!("No routes found for controller");
+                    sword_error! {
+                        phase: StartupPhase::HttpAdapter,
+                        title: "Controller has no registered routes",
+                        reason: "No RouteRegistrar entries were found for controller",
+                        context: {
+                            "controller_id" => format!("{controller_id:?}"),
+                            "source" => "HttpRouter::apply_http_controllers",
+                        },
+                        hints: ["This usually indicates a controller macro expansion issue"],
+                    }
                 });
 
             let mut controller_router = Router::new();
@@ -171,10 +180,16 @@ impl HttpRouter {
                     .any(|h| &h.adapter_type_id == handler_id);
 
                 if has_handlers {
-                    eprintln!(
-                        "Warning: SocketIO adapter {handler_id:?} has handlers but no setup function. \
-                            Did you forget #[on(\"connection\")] handler?",
-                    );
+                    sword_error! {
+                        phase: StartupPhase::SocketIoAdapter,
+                        title: "Adapter has handlers but no setup function",
+                        reason: "SocketIoHandlerRegistrar is missing for adapter",
+                        context: {
+                            "handler_id" => format!("{handler_id:?}"),
+                            "source" => "HttpRouter::apply_socketio_handlers",
+                        },
+                        hints: ["Verify #[socketio_adapter] and #[on(...)] annotations are applied correctly"],
+                    };
                 }
             }
         }

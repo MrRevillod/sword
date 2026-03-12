@@ -7,10 +7,10 @@ mod socketio_config;
 use crate::{ApplicationConfig, adapters::AdapterRegistry};
 use axum::Router;
 use sword_core::{
-    Config, State,
-    layers::{LayerStack, NotFoundLayer},
+    Config, StartupPhase, State,
+    layers::{DisplayConfig, LayerStack, NotFoundLayer},
+    sword_error,
 };
-use sword_layers::DisplayConfig;
 use tokio::net::TcpListener;
 
 pub use config::HttpRuntimeConfig;
@@ -57,7 +57,17 @@ impl HttpRuntime {
         let router = self
             .router
             .as_ref()
-            .expect("Router not initialized")
+            .unwrap_or_else(|| {
+                sword_error! {
+                    phase: StartupPhase::Runtime,
+                    title: "HTTP router is not initialized",
+                    reason: "Router is missing from HttpRuntime state",
+                    context: {
+                        "source" => "HttpRuntime::start",
+                    },
+                    hints: ["This indicates an internal startup bug, report it with a reproduction"],
+                }
+            })
             .clone();
 
         let app = router.with_state(self.state.clone());
@@ -69,27 +79,68 @@ impl HttpRuntime {
             self.runtime_config.host, self.runtime_config.port
         ))
         .await
-        .expect("Failed to bind to address");
+        .unwrap_or_else(|err| {
+            sword_error! {
+                phase: StartupPhase::Runtime,
+                title: "Failed to bind HTTP listener",
+                reason: err,
+                context: {
+                    "host" => self.runtime_config.host.clone(),
+                    "port" => self.runtime_config.port.to_string(),
+                },
+                hints: ["Ensure the host/port is available and not already in use"],
+            }
+        });
 
         if self.app_config.graceful_shutdown {
             axum::serve(listener, app)
                 .with_graceful_shutdown(Self::graceful_signal())
                 .await
-                .expect("Internal 'axum::serve' error");
+                .unwrap_or_else(|err| {
+                    sword_error! {
+                        phase: StartupPhase::Runtime,
+                        title: "HTTP server stopped with an internal error",
+                        reason: err,
+                        context: {
+                            "mode" => "graceful_shutdown",
+                            "host" => self.runtime_config.host.clone(),
+                            "port" => self.runtime_config.port.to_string(),
+                        },
+                    }
+                });
 
             return;
         }
 
-        axum::serve(listener, app)
-            .await
-            .expect("Internal 'axum::serve' error");
+        axum::serve(listener, app).await.unwrap_or_else(|err| {
+            sword_error! {
+                phase: StartupPhase::Runtime,
+                title: "HTTP server stopped with an internal error",
+                reason: err,
+                context: {
+                    "mode" => "normal",
+                    "host" => self.runtime_config.host.clone(),
+                    "port" => self.runtime_config.port.to_string(),
+                },
+            }
+        });
     }
 
     pub fn router(&self) -> axum::Router {
         let router = self
             .router
             .as_ref()
-            .expect("Router not initialized")
+            .unwrap_or_else(|| {
+                sword_error! {
+                    phase: StartupPhase::Runtime,
+                    title: "HTTP router is not initialized",
+                    reason: "Router is missing from HttpRuntime state",
+                    context: {
+                        "source" => "HttpRuntime::router",
+                    },
+                    hints: ["This indicates an internal startup bug, report it with a reproduction"],
+                }
+            })
             .clone();
 
         router.with_state(self.state.clone())
@@ -122,15 +173,32 @@ impl HttpRuntime {
 
     async fn graceful_signal() {
         let ctrl_c = async {
-            tokio::signal::ctrl_c()
-                .await
-                .expect("failed to install Ctrl+C handler");
+            tokio::signal::ctrl_c().await.unwrap_or_else(|err| {
+                sword_error! {
+                    phase: StartupPhase::Runtime,
+                    title: "Failed to install Ctrl+C handler",
+                    reason: err,
+                    context: {
+                        "source" => "HttpRuntime::graceful_signal",
+                    },
+                }
+            });
         };
 
         #[cfg(unix)]
         let terminate = async {
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-                .expect("failed to install signal handler")
+                .unwrap_or_else(|err| {
+                    sword_error! {
+                        phase: StartupPhase::Runtime,
+                        title: "Failed to install SIGTERM handler",
+                        reason: err,
+                        context: {
+                            "signal" => "SIGTERM",
+                            "source" => "HttpRuntime::graceful_signal",
+                        },
+                    }
+                })
                 .recv()
                 .await;
         };

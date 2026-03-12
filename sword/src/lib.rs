@@ -44,6 +44,7 @@ pub mod internal {
         pub use crate::adapters::socketio::SocketIoAdapter;
         pub use crate::adapters::{Adapter, AdapterKind};
         pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
+        pub use sword_core::sword_error;
         pub use sword_core::*;
     }
 

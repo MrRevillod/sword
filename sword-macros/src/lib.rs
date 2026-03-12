@@ -523,7 +523,16 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                 ::sword::internal::tokio_runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
-                    .expect("Failed building the Runtime")
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::Runtime,
+                            title: "Failed to build Tokio runtime",
+                            reason: err,
+                            context: {
+                                "source" => "#[sword::main]",
+                            },
+                        )
+                    })
                     .block_on(::sword::internal::dioxus_devtools::serve_subsecond(__internal_main))
             }
         };
@@ -534,7 +543,16 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                 ::sword::internal::tokio_runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
-                    .expect("Failed building the Runtime")
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            phase: ::sword::internal::core::StartupPhase::Runtime,
+                            title: "Failed to build Tokio runtime",
+                            reason: err,
+                            context: {
+                                "source" => "#[sword::main]",
+                            },
+                        )
+                    })
                     .block_on( async #fn_body )
             }
         };
