@@ -2,6 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::{
+    adapters::http::attributes::RequestMode,
     adapters::http::interceptor::expand_interceptor_args,
     shared::{CommonHttpAdapterInput, gen_build, gen_clone, gen_deps},
 };
@@ -14,7 +15,9 @@ pub fn generate_controller_builder(input: &CommonHttpAdapterInput) -> TokenStrea
 
     let processed_interceptors: Vec<TokenStream> = controller_interceptors
         .iter()
-        .map(expand_interceptor_args)
+        .map(|interceptor| {
+            expand_interceptor_args(interceptor, RequestMode::Buffered)
+        })
         .collect();
 
     let deps_impl = gen_deps(self_name, self_fields);

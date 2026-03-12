@@ -33,7 +33,7 @@ pub enum RequestError {
     #[error("Invalid header name: {0}")]
     InvalidHeaderName(String),
 
-    #[error("Invalid header value: {0}")]
+    #[error("Invalid header value for '{0}'")]
     InvalidHeaderValue(String),
 
     #[cfg(feature = "multipart")]
@@ -78,5 +78,9 @@ impl RequestError {
             error,
             source,
         }
+    }
+
+    pub fn invalid_header_value(name: impl Into<String>) -> Self {
+        RequestError::InvalidHeaderValue(name.into())
     }
 }

@@ -48,9 +48,7 @@ impl From<RequestError> for JsonResponse {
                 tracing::error!(header = %name, "Invalid header value");
                 JsonResponse::BadRequest()
                     .message("Invalid header value")
-                    .error(format!(
-                        "Value for header '{name}' contains invalid characters",
-                    ))
+                    .error(format!("Header '{name}' contains an invalid value",))
             }
             #[cfg(feature = "multipart")]
             RequestError::MultipartError(err) => {

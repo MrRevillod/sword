@@ -86,18 +86,11 @@ impl AdapterRegistry {
     /// adapters.register::<MyController>();
     /// ```
     pub fn register<A: Adapter>(&self) {
-        let mut adapter_registry_vec = self
-            .adapters
-            .read()
-            .get(&A::kind())
-            .cloned()
-            .unwrap_or_default();
-
-        adapter_registry_vec.push(A::type_id());
-
         self.adapters
             .write()
-            .insert(A::kind(), adapter_registry_vec);
+            .entry(A::kind())
+            .or_default()
+            .push(A::type_id());
     }
 
     pub(crate) fn read(

@@ -1,11 +1,13 @@
 mod error;
 mod extract;
+mod parts;
 
 #[cfg(feature = "validation-validator")]
 mod validator;
 
 use super::interceptor::HttpInterceptorResult;
 use axum::{
+    body::Body as AxumBody,
     body::Bytes as BodyBytes,
     http::{Extensions, HeaderMap, HeaderName, HeaderValue, Method, Uri},
     middleware::Next,
@@ -36,6 +38,20 @@ pub struct Request {
     headers: HeaderMap,
     uri: Uri,
     next: Option<Next>,
+    /// Axum extensions for additional request metadata.
+    pub extensions: Extensions,
+}
+
+/// Streaming variant of request extractor that keeps the HTTP body unbuffered.
+#[derive(Debug)]
+pub struct StreamRequest {
+    params: HashMap<String, String>,
+    body: AxumBody,
+    method: Method,
+    headers: HeaderMap,
+    uri: Uri,
+    next: Option<Next>,
+    body_limit: usize,
     /// Axum extensions for additional request metadata.
     pub extensions: Extensions,
 }
@@ -74,15 +90,17 @@ impl Request {
         name: impl Into<String>,
         value: impl Into<String>,
     ) -> Result<(), RequestError> {
-        let header_name = name.into();
-        let header_value = value.into();
+        let header_name_raw = name.into();
+        let header_value_raw = value.into();
 
-        let header_name = header_name
+        let header_name = header_name_raw
             .parse::<HeaderName>()
-            .map_err(|_| RequestError::InvalidHeaderName(header_name))?;
+            .map_err(|_| RequestError::InvalidHeaderName(header_name_raw.clone()))?;
 
-        let header_value = HeaderValue::from_str(&header_value)
-            .map_err(|_| RequestError::InvalidHeaderValue(header_value))?;
+        let header_value =
+            HeaderValue::from_str(&header_value_raw).map_err(|_| {
+                RequestError::invalid_header_value(header_name_raw.clone())
+            })?;
 
         self.headers.insert(header_name, header_value);
 
@@ -439,6 +457,103 @@ impl Request {
         let Some(next) = self.next.take() else {
             tracing::error!(
                 "Attempted to call `next()` on Request in a context that is not a `OnRequest` `Interceptor`"
+            );
+            return Err(JsonResponse::InternalServerError());
+        };
+
+        Ok(next.run(self.try_into()?).await)
+    }
+}
+
+impl StreamRequest {
+    pub fn uri(&self) -> String {
+        self.uri.to_string()
+    }
+
+    pub const fn method(&self) -> &Method {
+        &self.method
+    }
+
+    pub fn header(&self, key: &str) -> Option<&str> {
+        self.headers.get(key).and_then(|value| value.to_str().ok())
+    }
+
+    pub const fn headers(&self) -> &HeaderMap {
+        &self.headers
+    }
+
+    pub fn param<T>(&self, key: &str) -> Result<T, RequestError>
+    where
+        T: FromStr,
+        T::Err: Display,
+    {
+        if let Some(value) = self.params.get(key) {
+            return value.parse::<T>().map_err(|e| {
+                RequestError::parse_error(
+                    format!("Invalid parameter format for '{key}'"),
+                    format!("Parse  Error: {e}"),
+                )
+            });
+        }
+
+        Err(RequestError::parse_error(
+            "Parameter not found",
+            format!("Parameter '{key}' not found in request parameters"),
+        ))
+    }
+
+    pub fn authorization(&self) -> Option<&str> {
+        self.header("Authorization")
+    }
+
+    pub fn user_agent(&self) -> Option<&str> {
+        self.header("User-Agent")
+    }
+
+    pub fn ip(&self) -> Option<&str> {
+        self.header("X-Forwarded-For")
+    }
+
+    pub fn ips(&self) -> Option<Vec<&str>> {
+        self.header("X-Forwarded-For")
+            .map(|ips| ips.split(',').map(|s| s.trim()).collect())
+    }
+
+    pub fn protocol(&self) -> &str {
+        self.header("X-Forwarded-Proto").unwrap_or("http")
+    }
+
+    pub fn content_length(&self) -> Option<u64> {
+        self.header("Content-Length")
+            .and_then(|value| value.parse::<u64>().ok())
+    }
+
+    pub fn content_type(&self) -> Option<&str> {
+        self.header("Content-Type")
+    }
+
+    pub fn body_limit(&self) -> usize {
+        self.body_limit
+    }
+
+    pub fn into_body(self) -> AxumBody {
+        self.body
+    }
+
+    #[doc(hidden)]
+    pub fn clear_next(&mut self) {
+        self.next = None;
+    }
+
+    #[doc(hidden)]
+    pub fn set_next(&mut self, next: Next) {
+        self.next = Some(next);
+    }
+
+    pub async fn next(mut self) -> HttpInterceptorResult {
+        let Some(next) = self.next.take() else {
+            tracing::error!(
+                "Attempted to call `next()` on StreamRequest in a context that is not a `OnRequestStream` `Interceptor`"
             );
             return Err(JsonResponse::InternalServerError());
         };

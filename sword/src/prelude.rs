@@ -14,7 +14,8 @@ pub use validator::Validate;
 pub use crate::adapters::http::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
     HttpInterceptorResult, HttpResult, JsonResponse, JsonResponseBody, Next,
-    OnRequest, OnRequestWithConfig, Redirect, Request, RequestError, controller,
+    OnRequest, OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig,
+    Redirect, Request, RequestError, StreamRequest, controller,
     cookies as sword_cookies, delete, get, patch, post, put,
 };
 

@@ -3,6 +3,7 @@ mod request {
     mod cookies;
     mod multipart;
     mod query;
+    mod stream;
 }
 
 #[cfg(test)]

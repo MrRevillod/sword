@@ -1,4 +1,4 @@
-use super::{JsonResponse, Request};
+use super::{JsonResponse, Request, StreamRequest};
 use crate::interceptor::Interceptor;
 
 pub use axum::middleware::Next;
@@ -35,9 +35,29 @@ pub trait OnRequestWithConfig<C>: Interceptor {
     /// This method receives configuration, the request, and the next interceptor.
     /// The configuration is passed from the route definition and can be used to
     /// customize the interceptor behavior per route.
-    fn on_request_with_config(
+    fn on_request(
         &self,
         config: C,
         req: Request,
+    ) -> impl Future<Output = HttpInterceptorResult>;
+}
+
+/// Trait for interceptors that handle streaming requests.
+///
+/// This variant is intended for handlers that use `StreamRequest`, where the
+/// request body is not eagerly buffered in memory.
+pub trait OnRequestStream: Interceptor {
+    fn on_request(
+        &self,
+        req: StreamRequest,
+    ) -> impl Future<Output = HttpInterceptorResult>;
+}
+
+/// Trait for interceptors that handle streaming requests with route-specific configuration.
+pub trait OnRequestStreamWithConfig<C>: Interceptor {
+    fn on_request(
+        &self,
+        config: C,
+        req: StreamRequest,
     ) -> impl Future<Output = HttpInterceptorResult>;
 }

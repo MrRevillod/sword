@@ -1,7 +1,15 @@
 use crate::{adapters::InterceptorArgs, shared::CMetaStack};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use syn::{Attribute, ItemFn, LitStr};
+use syn::spanned::Spanned;
+use syn::{Attribute, ItemFn, LitStr, Type};
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum RequestMode {
+    None,
+    Buffered,
+    Streaming,
+}
 
 /// Parsed data from a route attribute
 pub struct ParsedRouteAttribute {
@@ -16,6 +24,9 @@ pub struct ParsedRouteAttribute {
 
     /// Parsed interceptor arguments
     pub interceptors: Vec<InterceptorArgs>,
+
+    /// Request extraction mode inferred from function signature.
+    pub request_mode: RequestMode,
 
     /// Controller metadata from CMetaStack
     pub controller_name: String,
@@ -41,9 +52,12 @@ impl ParsedRouteAttribute {
         };
 
         let mut input_fn = syn::parse::<ItemFn>(item)?;
+        let request_mode = Self::detect_request_mode(&input_fn)?;
 
         let (interceptors, retained_attrs) = Self::extract_interceptors(&input_fn)?;
         input_fn.attrs = retained_attrs;
+
+        Self::validate_controller_level_interceptor_compatibility(request_mode)?;
 
         let (controller_name, controller_path) =
             Self::get_controller_metadata(method)?;
@@ -53,6 +67,7 @@ impl ParsedRouteAttribute {
             path,
             function: input_fn,
             interceptors,
+            request_mode,
             controller_name,
             controller_path,
         })
@@ -93,5 +108,74 @@ impl ParsedRouteAttribute {
         let controller_path = CMetaStack::get("controller_path").unwrap_or_default();
 
         Ok((controller_name, controller_path))
+    }
+
+    fn detect_request_mode(input_fn: &ItemFn) -> syn::Result<RequestMode> {
+        let mut mode = RequestMode::None;
+
+        for arg in &input_fn.sig.inputs {
+            let syn::FnArg::Typed(pat_type) = arg else {
+                continue;
+            };
+
+            let arg_mode = Self::request_mode_from_type(&pat_type.ty);
+
+            if arg_mode == RequestMode::None {
+                continue;
+            }
+
+            if mode != RequestMode::None && mode != arg_mode {
+                return Err(syn::Error::new(
+                    pat_type.ty.span(),
+                    "A route handler cannot use both `Request` and `StreamRequest` in the same signature",
+                ));
+            }
+
+            mode = arg_mode;
+        }
+
+        Ok(mode)
+    }
+
+    fn request_mode_from_type(ty: &Type) -> RequestMode {
+        let Type::Path(type_path) = ty else {
+            return RequestMode::None;
+        };
+
+        let Some(last_segment) = type_path.path.segments.last() else {
+            return RequestMode::None;
+        };
+
+        if last_segment.ident == "Request" {
+            return RequestMode::Buffered;
+        }
+
+        if last_segment.ident == "StreamRequest" {
+            return RequestMode::Streaming;
+        }
+
+        RequestMode::None
+    }
+
+    fn validate_controller_level_interceptor_compatibility(
+        request_mode: RequestMode,
+    ) -> syn::Result<()> {
+        if request_mode != RequestMode::Streaming {
+            return Ok(());
+        }
+
+        let has_controller_sword_interceptors =
+            CMetaStack::get("controller_has_sword_interceptors")
+                .as_deref()
+                .is_some_and(|value| value == "true");
+
+        if has_controller_sword_interceptors {
+            return Err(syn::Error::new(
+                Span::call_site(),
+                "`StreamRequest` routes cannot be used with controller-level Sword `#[interceptor(...)]` attributes. Move to expression-based layers or use `Request`.",
+            ));
+        }
+
+        Ok(())
     }
 }

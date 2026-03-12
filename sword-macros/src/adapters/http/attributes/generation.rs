@@ -1,4 +1,4 @@
-use super::parsing::ParsedRouteAttribute;
+use super::parsing::{ParsedRouteAttribute, RequestMode};
 use crate::adapters::expand_interceptor_args;
 
 use proc_macro::TokenStream as TokenStream1;
@@ -11,7 +11,8 @@ pub fn generate_route(parsed: ParsedRouteAttribute) -> TokenStream1 {
     let route_fn_name = format_ident!("__sword_route_{}", fn_name);
 
     let handler = generate_handler(&parsed);
-    let handler_with_interceptors = apply_interceptors(handler, &parsed);
+    let handler_with_interceptors =
+        apply_interceptors(handler, parsed.request_mode, &parsed);
     let inventory_registration =
         generate_inventory_registration(&parsed, &controller_ident, &route_fn_name);
 
@@ -98,10 +99,12 @@ fn generate_handler(parsed: &ParsedRouteAttribute) -> TokenStream {
 
 fn apply_interceptors(
     mut handler: TokenStream,
+    request_mode: RequestMode,
     parsed: &ParsedRouteAttribute,
 ) -> TokenStream {
     for interceptor in parsed.interceptors.iter().rev() {
-        let generated_interceptor = expand_interceptor_args(interceptor);
+        let generated_interceptor =
+            expand_interceptor_args(interceptor, request_mode);
         handler = quote! {
             #handler.layer(#generated_interceptor)
         };
