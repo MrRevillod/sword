@@ -1,4 +1,4 @@
-use sword_core::{Build, StartupPhase, State, sword_error};
+use sword_core::{Build, State, sword_error};
 
 /// Base trait for all interceptors in Sword.
 /// Implement this trait to create interceptors that can be automatically
@@ -10,7 +10,6 @@ pub trait Interceptor: Build {
     fn register(state: &State) {
         let interceptor = Self::build(state).unwrap_or_else(|err| {
             sword_error! {
-                phase: StartupPhase::Interceptor,
                 title: "Failed to build interceptor",
                 reason: err,
                 context: {

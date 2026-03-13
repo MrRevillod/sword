@@ -7,7 +7,7 @@ mod socketio_config;
 use crate::{ApplicationConfig, adapters::AdapterRegistry};
 use axum::Router;
 use sword_core::{
-    Config, StartupPhase, State,
+    Config, State,
     layers::{DisplayConfig, LayerStack, NotFoundLayer},
     sword_error,
 };
@@ -59,8 +59,7 @@ impl WebRuntime {
             .as_ref()
             .unwrap_or_else(|| {
                 sword_error! {
-                    phase: StartupPhase::Runtime,
-                    title: "HTTP router is not initialized",
+                    title: "Axum HTTP router is not initialized",
                     reason: "Router is missing from WebRuntime state",
                     context: {
                         "source" => "WebRuntime::start",
@@ -81,7 +80,6 @@ impl WebRuntime {
         .await
         .unwrap_or_else(|err| {
             sword_error! {
-                phase: StartupPhase::Runtime,
                 title: "Failed to bind HTTP listener",
                 reason: err,
                 context: {
@@ -98,7 +96,6 @@ impl WebRuntime {
                 .await
                 .unwrap_or_else(|err| {
                     sword_error! {
-                        phase: StartupPhase::Runtime,
                         title: "HTTP server stopped with an internal error",
                         reason: err,
                         context: {
@@ -114,7 +111,6 @@ impl WebRuntime {
 
         axum::serve(listener, app).await.unwrap_or_else(|err| {
             sword_error! {
-                phase: StartupPhase::Runtime,
                 title: "HTTP server stopped with an internal error",
                 reason: err,
                 context: {
@@ -132,7 +128,6 @@ impl WebRuntime {
             .as_ref()
             .unwrap_or_else(|| {
                 sword_error! {
-                    phase: StartupPhase::Runtime,
                     title: "HTTP router is not initialized",
                     reason: "Router is missing from WebRuntime state",
                     context: {
@@ -169,7 +164,6 @@ impl WebRuntime {
         let ctrl_c = async {
             tokio::signal::ctrl_c().await.unwrap_or_else(|err| {
                 sword_error! {
-                    phase: StartupPhase::Runtime,
                     title: "Failed to install Ctrl+C handler",
                     reason: err,
                     context: {
@@ -184,7 +178,6 @@ impl WebRuntime {
             tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
                 .unwrap_or_else(|err| {
                     sword_error! {
-                        phase: StartupPhase::Runtime,
                         title: "Failed to install SIGTERM handler",
                         reason: err,
                         context: {

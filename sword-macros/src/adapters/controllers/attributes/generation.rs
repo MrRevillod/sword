@@ -142,7 +142,6 @@ fn generate_inventory_registration(
                         let controller = std::sync::Arc::new(
                             #controller_ident::build(&state).unwrap_or_else(|err| {
                                 ::sword::internal::core::sword_error!(
-                                    phase: ::sword::internal::core::StartupPhase::HttpAdapter,
                                     title: "Failed to build HTTP controller",
                                     reason: err,
                                     context: {

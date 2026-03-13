@@ -11,7 +11,7 @@ use axum::{
 use std::convert::Infallible;
 use std::path::Path;
 use sword_core::{
-    Config, ConfigRegistrar, DependencyContainer, Provider, StartupPhase, State,
+    Config, ConfigRegistrar, DependencyContainer, Provider, State,
     layers::LayerStack, sword_error,
 };
 
@@ -34,7 +34,6 @@ impl ApplicationBuilder {
             .build()
             .unwrap_or_else(|err| {
                 sword_error! {
-                    phase: StartupPhase::Config,
                     title: "Failed to load required configuration file",
                     reason: err,
                     context: {
@@ -174,7 +173,6 @@ impl ApplicationBuilder {
     pub fn build(mut self) -> Application {
         if cfg!(all(feature = "runtime-web", feature = "runtime-grpc")) {
             sword_error! {
-                phase: StartupPhase::Runtime,
                 title: "Multiple primary runtimes enabled",
                 reason: "`runtime-web` and `runtime-grpc` are both enabled",
                 hints: [
@@ -186,7 +184,6 @@ impl ApplicationBuilder {
 
         self.container.build_all(&self.state).unwrap_or_else(|err| {
             sword_error! {
-                phase: StartupPhase::DI,
                 title: "Failed to build dependency injection container",
                 reason: err,
                 context: {

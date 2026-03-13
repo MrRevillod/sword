@@ -1,3 +1,4 @@
+use super::WebRuntimeConfig;
 use crate::adapters::controllers::{ControllerMeta, RouteRegistrar};
 use crate::adapters::{AdapterKind, AdapterRegistry};
 
@@ -8,10 +9,7 @@ use axum::{
 
 use std::any::TypeId;
 use std::collections::HashMap;
-use sword_core::layers::*;
-use sword_core::{Config, StartupPhase, State, sword_error};
-
-use super::WebRuntimeConfig;
+use sword_core::{Config, State, layers::*, sword_error};
 
 #[cfg(feature = "web-adapter-socketio")]
 use super::socketio_config::{
@@ -129,7 +127,6 @@ impl WebRouter {
                 .map(|reg| ControllerMeta::from(*reg))
                 .unwrap_or_else(|| {
                     sword_error! {
-                        phase: StartupPhase::HttpAdapter,
                         title: "Controller has no registered routes",
                         reason: "No RouteRegistrar entries were found for controller",
                         context: {
@@ -182,7 +179,6 @@ impl WebRouter {
 
                 if has_handlers {
                     sword_error! {
-                        phase: StartupPhase::SocketIoAdapter,
                         title: "Adapter has handlers but no setup function",
                         reason: "SocketIoHandlerRegistrar is missing for adapter",
                         context: {

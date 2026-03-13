@@ -75,7 +75,6 @@ pub fn expand_on_handler(
                 .downcast::<#adapter_ident>()
                 .unwrap_or_else(|_| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::MacroInvariant,
                         title: "Failed to downcast Socket.IO adapter type",
                         reason: format!(
                             "Expected adapter type {} during handler registration",
@@ -104,7 +103,6 @@ pub fn expand_on_handler(
                 .downcast::<#adapter_ident>()
                 .unwrap_or_else(|_| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::MacroInvariant,
                         title: "Failed to downcast Socket.IO adapter type",
                         reason: format!(
                             "Type mismatch while executing handler for {}",

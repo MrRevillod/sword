@@ -4,7 +4,7 @@ mod config;
 use crate::runtimes::web::WebRuntime;
 
 use std::path::Path;
-use sword_core::{Config, StartupPhase, sword_error};
+use sword_core::{Config, sword_error};
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
@@ -51,7 +51,6 @@ impl Application {
                 .build()
                 .unwrap_or_else(|err| {
                     sword_error! {
-                        phase: StartupPhase::Config,
                         title: "Failed to load configuration from custom path",
                         reason: err,
                         context: {

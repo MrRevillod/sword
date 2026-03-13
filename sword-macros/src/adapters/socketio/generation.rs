@@ -23,7 +23,6 @@ pub fn generate_socketio_adapter_builder(
                 state.borrow::<#interceptor_path>()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
-                            phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
                             title: "Failed to retrieve Socket.IO interceptor from State",
                             reason: err,
                             context: {
@@ -54,7 +53,6 @@ pub fn generate_socketio_adapter_builder(
             let adapter = ::std::sync::Arc::new(
                 <#self_name as ::sword::internal::core::Build>::build(state).unwrap_or_else(|err| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
                         title: "Failed to build Socket.IO adapter",
                         reason: err,
                         context: {
@@ -68,7 +66,6 @@ pub fn generate_socketio_adapter_builder(
             let io = <::sword::prelude::SocketIo as ::sword::internal::core::FromState>::from_state(state)
                 .unwrap_or_else(|err| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
                         title: "Socket.IO component not found in application state",
                         reason: err,
                         context: {
@@ -94,7 +91,6 @@ pub fn generate_socketio_adapter_builder(
                     ::sword::internal::socketio::SocketEventKind::Connection => {
                         if connection_handler.is_some() {
                             ::sword::internal::core::sword_error!(
-                                phase: ::sword::internal::core::StartupPhase::SocketIoAdapter,
                                 title: "Multiple connection handlers found in Socket.IO adapter",
                                 reason: "Only one #[on(\"connection\")] handler is allowed per adapter",
                                 context: {

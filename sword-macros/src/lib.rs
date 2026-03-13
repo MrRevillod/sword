@@ -526,7 +526,6 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                     .build()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
-                            phase: ::sword::internal::core::StartupPhase::Runtime,
                             title: "Failed to build Tokio runtime",
                             reason: err,
                             context: {
@@ -546,7 +545,6 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                     .build()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
-                            phase: ::sword::internal::core::StartupPhase::Runtime,
                             title: "Failed to build Tokio runtime",
                             reason: err,
                             context: {

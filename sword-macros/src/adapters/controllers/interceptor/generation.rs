@@ -61,7 +61,6 @@ fn generate_sword_simple(path: &syn::Path, mode: &ModeTokens) -> TokenStream {
             let middleware = state.borrow::<#path>()
                 .unwrap_or_else(|err| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::Interceptor,
                         title: "Failed to retrieve HTTP interceptor from State",
                         reason: err,
                         context: {
@@ -108,7 +107,6 @@ fn generate_sword_configured(
             let middleware = state.borrow::<#middleware_ty>()
                 .unwrap_or_else(|err| {
                     ::sword::internal::core::sword_error!(
-                        phase: ::sword::internal::core::StartupPhase::Interceptor,
                         title: "Failed to retrieve HTTP interceptor from State",
                         reason: err,
                         context: {
