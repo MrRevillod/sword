@@ -1,4 +1,4 @@
-use crate::adapters::http::RequestError;
+use crate::adapters::controllers::RequestError;
 
 pub use axum_responses::{
     ContentDisposition, File, JsonResponse, JsonResponseBody, Redirect,
@@ -6,7 +6,7 @@ pub use axum_responses::{
 
 pub use sword_macros::HttpError;
 
-pub type HttpResult<T = JsonResponse> = Result<T, JsonResponse>;
+pub type Result<T = JsonResponse, E = JsonResponse> = std::result::Result<T, E>;
 
 impl From<RequestError> for JsonResponse {
     fn from(error: RequestError) -> JsonResponse {

@@ -2,7 +2,7 @@ use crate::adapters::AdapterRegistry;
 use crate::application::Application;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
-use crate::runtimes::http::HttpRuntime;
+use crate::runtimes::web::WebRuntime;
 
 use axum::{
     extract::Request as AxumRequest, response::IntoResponse, routing::Route,
@@ -172,6 +172,18 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
+        if cfg!(all(feature = "runtime-web", feature = "runtime-grpc")) {
+            sword_error! {
+                phase: StartupPhase::Runtime,
+                title: "Multiple primary runtimes enabled",
+                reason: "`runtime-web` and `runtime-grpc` are both enabled",
+                hints: [
+                    "Enable only one primary runtime feature in Cargo.toml",
+                    "Use `runtime-pubsub` alongside a single primary runtime when needed",
+                ],
+            }
+        }
+
         self.container.build_all(&self.state).unwrap_or_else(|err| {
             sword_error! {
                 phase: StartupPhase::DI,
@@ -192,14 +204,14 @@ impl ApplicationBuilder {
 
         let layer_stack = std::mem::take(&mut self.layer_stack);
 
-        let http_runtime = HttpRuntime::new(
+        let web_runtime = WebRuntime::new(
             self.state.clone(),
             self.config.clone(),
             layer_stack,
             &self.adapter_registry,
         );
 
-        Application::new(http_runtime, self.config)
+        Application::new(web_runtime, self.config)
     }
 }
 

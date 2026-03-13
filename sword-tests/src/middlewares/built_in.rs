@@ -1,6 +1,7 @@
 use axum_test::{TestServer, multipart::MultipartForm};
 use serde_json::Value;
 use sword::prelude::*;
+use sword_layers::prelude::{CompressionConfig, CompressionLayer};
 use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
 
@@ -9,53 +10,53 @@ struct TestController;
 
 impl TestController {
     #[get("/timeout")]
-    async fn timeout(&self) -> HttpResult {
+    async fn timeout(&self) -> Result {
         sleep(Duration::from_secs(3)).await;
         Ok(JsonResponse::Ok().message("This should not be reached"))
     }
 
     #[get("/timeout-boundary")]
-    async fn timeout_boundary(&self) -> HttpResult {
+    async fn timeout_boundary(&self) -> Result {
         sleep(Duration::from_millis(2000)).await;
         Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/timeout-just-under")]
-    async fn timeout_just_under(&self) -> HttpResult {
+    async fn timeout_just_under(&self) -> Result {
         sleep(Duration::from_millis(1900)).await;
         Ok(JsonResponse::Ok().message("This should complete"))
     }
 
     #[get("/timeout-just-over")]
-    async fn timeout_just_over(&self) -> HttpResult {
+    async fn timeout_just_over(&self) -> Result {
         sleep(Duration::from_millis(2100)).await;
         Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/no-timeout")]
-    async fn no_timeout(&self) -> HttpResult {
+    async fn no_timeout(&self) -> Result {
         Ok(JsonResponse::Ok().message("Quick response"))
     }
 
     #[post("/content-type-json")]
-    async fn content_type_json(&self, req: Request) -> HttpResult {
+    async fn content_type_json(&self, req: Request) -> Result {
         let _body: Value = req.body()?;
         Ok(JsonResponse::Ok().message("JSON received"))
     }
 
     #[post("/content-type-form")]
-    async fn content_type_form(&self) -> HttpResult {
+    async fn content_type_form(&self) -> Result {
         Ok(JsonResponse::Ok().message("Form data received"))
     }
 
     #[post("/content-type-any")]
-    async fn content_type_any(&self, req: Request) -> HttpResult {
+    async fn content_type_any(&self, req: Request) -> Result {
         let _body: String = req.body()?;
         Ok(JsonResponse::Ok().message("Any content type"))
     }
 
     #[get("/no-body")]
-    async fn no_body(&self) -> HttpResult {
+    async fn no_body(&self) -> Result {
         Ok(JsonResponse::Ok().message("No body required"))
     }
 }
@@ -71,6 +72,16 @@ impl Module for V1UsersModule {
 fn test_server() -> TestServer {
     let app = Application::builder()
         .with_module::<V1UsersModule>()
+        .with_layer(CompressionLayer::new(&CompressionConfig {
+            enabled: true,
+            display: false,
+            algorithms: vec![
+                "gzip".to_string(),
+                "deflate".to_string(),
+                "brotli".to_string(),
+                "zstd".to_string(),
+            ],
+        }))
         .build();
 
     TestServer::new(app.router()).unwrap()

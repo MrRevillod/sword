@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 use super::InterceptorArgs;
-use crate::adapters::http::attributes::RequestMode;
+use crate::adapters::controllers::attributes::RequestMode;
 
 /// Expands interceptor arguments into the appropriate runtime code.
 ///

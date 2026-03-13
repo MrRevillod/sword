@@ -33,7 +33,7 @@ struct StreamController;
 impl StreamController {
     #[post("/echo")]
     #[interceptor(StreamTagInterceptor)]
-    async fn echo(&self, req: StreamRequest) -> HttpResult {
+    async fn echo(&self, req: StreamRequest) -> Result {
         let tag = req.extensions.get::<String>().cloned().unwrap_or_default();
         let body_limit = req.body_limit();
 
@@ -49,7 +49,7 @@ impl StreamController {
 
     #[post("/echo-with-config")]
     #[interceptor(StreamConfigInterceptor, config = "stream-config")]
-    async fn echo_with_config(&self, req: StreamRequest) -> HttpResult {
+    async fn echo_with_config(&self, req: StreamRequest) -> Result {
         let tag = req.extensions.get::<String>().cloned().unwrap_or_default();
         let body_limit = req.body_limit();
 

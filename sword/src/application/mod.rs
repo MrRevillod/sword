@@ -1,7 +1,7 @@
 mod builder;
 mod config;
 
-use crate::runtimes::http::HttpRuntime;
+use crate::runtimes::web::WebRuntime;
 
 use std::path::Path;
 use sword_core::{Config, StartupPhase, sword_error};
@@ -15,14 +15,14 @@ pub use config::ApplicationConfig;
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    http_runtime: HttpRuntime,
+    web_runtime: WebRuntime,
     pub config: Config,
 }
 
 impl Application {
-    pub(crate) fn new(http_runtime: HttpRuntime, config: Config) -> Self {
+    pub(crate) fn new(web_runtime: WebRuntime, config: Config) -> Self {
         Self {
-            http_runtime,
+            web_runtime,
             config,
         }
     }
@@ -70,7 +70,7 @@ impl Application {
     /// requests. It will bind to the host and port specified in the
     /// runtime configuration.
     pub async fn run(&self) {
-        self.http_runtime.start().await;
+        self.web_runtime.start().await;
     }
 
     /// Returns a clone of the internal Axum router for testing purposes.
@@ -78,6 +78,6 @@ impl Application {
     /// This method provides access to the underlying Axum router for integration
     /// testing with axum-test or similar tools.
     pub fn router(&self) -> axum::Router {
-        self.http_runtime.router()
+        self.web_runtime.router()
     }
 }

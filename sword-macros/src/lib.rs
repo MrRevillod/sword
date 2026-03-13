@@ -9,27 +9,27 @@ use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("GET", attr, item)
+    adapters::controllers::attributes::attribute("GET", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("POST", attr, item)
+    adapters::controllers::attributes::attribute("POST", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("PUT", attr, item)
+    adapters::controllers::attributes::attribute("PUT", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("DELETE", attr, item)
+    adapters::controllers::attributes::attribute("DELETE", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("PATCH", attr, item)
+    adapters::controllers::attributes::attribute("PATCH", attr, item)
 }
 
 /// Defines an HTTP controller with a base path.
@@ -46,7 +46,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResult {
+///     async fn my_handler(&self) -> Result {
 ///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
@@ -70,15 +70,16 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// // then implement some Interceptor trait variants
 /// // depending on the adapter type (e. g. OnRequest, OnConnect.)
+/// ```
 #[proc_macro_derive(Interceptor)]
 pub fn derive_interceptor(input: TokenStream) -> TokenStream {
     interceptor_derive::derive_interceptor(input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Applies the interceptor to the current scope.
+/// Marks a route or adapter with one or more interceptors.
 /// This macro can be used to apply an `Interceptor` to different `Adapter` types,
-/// such as REST controllers or Socket.IO adapters.
+/// such as controllers or Socket.IO adapters.
 #[proc_macro_attribute]
 pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
@@ -561,7 +562,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 /// Marks a struct as a Socket.IO adapter.
 /// This macro should be used in combination with the `#[on]`
 /// macro for handler implementation.
@@ -584,7 +585,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types
@@ -595,7 +596,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Parameters
 /// All handlers receive `&self` and `ctx: SocketContext` which provides access to:
-/// - Socket operations via `ctx.socket`
+/// - Socket operations via `ctx`
 /// - Message data via `ctx.try_data::<T>()`
 /// - Event name via `ctx.event()`
 /// - Acknowledgments via `ctx.ack()`
@@ -608,7 +609,7 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// impl ChatAdapter {
 ///     #[on("connection")]
 ///     async fn on_connect(&self, ctx: SocketContext) {
-///         println!("Client connected: {}", ctx.socket.id);
+///         println!("Client connected: {}", ctx.id());
 ///     }
 ///
 ///     #[on("message")]

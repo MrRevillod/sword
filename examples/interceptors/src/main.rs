@@ -1,10 +1,10 @@
 mod interceptors;
 mod adapters {
-    pub mod http;
+    pub mod controllers;
     pub mod socketio;
 }
 
-use adapters::http::ExampleRestController;
+use adapters::controllers::ExampleRestController;
 use adapters::socketio::EventsHandler;
 use sword::prelude::*;
 

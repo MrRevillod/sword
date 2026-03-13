@@ -1,7 +1,7 @@
 mod config;
 mod router;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 mod socketio_config;
 
 use crate::{ApplicationConfig, adapters::AdapterRegistry};
@@ -13,20 +13,20 @@ use sword_core::{
 };
 use tokio::net::TcpListener;
 
-pub use config::HttpRuntimeConfig;
-pub use router::HttpRouter;
+pub use config::WebRuntimeConfig;
+pub use router::WebRouter;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 pub use socketio_config::{SocketIoParser, SocketIoServerConfig};
 
-pub struct HttpRuntime {
+pub struct WebRuntime {
     state: State,
     app_config: ApplicationConfig,
-    runtime_config: HttpRuntimeConfig,
+    runtime_config: WebRuntimeConfig,
     router: Option<Router<State>>,
 }
 
-impl HttpRuntime {
+impl WebRuntime {
     pub fn new(
         state: State,
         config: Config,
@@ -34,12 +34,12 @@ impl HttpRuntime {
         adapter_registry: &AdapterRegistry,
     ) -> Self {
         let app_config = config.get_or_default::<ApplicationConfig>();
-        let runtime_config = config.get_or_default::<HttpRuntimeConfig>();
+        let runtime_config = config.get_or_default::<WebRuntimeConfig>();
 
-        let http_router = HttpRouter::new(state.clone(), config.clone());
+        let http_router = WebRouter::new(state.clone(), config.clone());
         let mut router = http_router.build(layer_stack, adapter_registry);
 
-        if let Some(prefix) = &runtime_config.http_router_prefix {
+        if let Some(prefix) = &runtime_config.web_router_prefix {
             router = Router::new().nest(prefix, router);
         }
 
@@ -61,9 +61,9 @@ impl HttpRuntime {
                 sword_error! {
                     phase: StartupPhase::Runtime,
                     title: "HTTP router is not initialized",
-                    reason: "Router is missing from HttpRuntime state",
+                    reason: "Router is missing from WebRuntime state",
                     context: {
-                        "source" => "HttpRuntime::start",
+                        "source" => "WebRuntime::start",
                     },
                     hints: ["This indicates an internal startup bug, report it with a reproduction"],
                 }
@@ -134,9 +134,9 @@ impl HttpRuntime {
                 sword_error! {
                     phase: StartupPhase::Runtime,
                     title: "HTTP router is not initialized",
-                    reason: "Router is missing from HttpRuntime state",
+                    reason: "Router is missing from WebRuntime state",
                     context: {
-                        "source" => "HttpRuntime::router",
+                        "source" => "WebRuntime::router",
                     },
                     hints: ["This indicates an internal startup bug, report it with a reproduction"],
                 }
@@ -157,13 +157,7 @@ impl HttpRuntime {
 
         self.runtime_config.display();
 
-        if let Ok(middlewares) =
-            self.state.get::<sword_core::layers::MiddlewaresConfig>()
-        {
-            middlewares.display();
-        }
-
-        #[cfg(feature = "adapter-socketio")]
+        #[cfg(feature = "web-adapter-socketio")]
         if let Ok(socketio_config) = self.state.get::<SocketIoServerConfig>() {
             socketio_config.display();
         }
@@ -179,7 +173,7 @@ impl HttpRuntime {
                     title: "Failed to install Ctrl+C handler",
                     reason: err,
                     context: {
-                        "source" => "HttpRuntime::graceful_signal",
+                        "source" => "WebRuntime::graceful_signal",
                     },
                 }
             });
@@ -195,7 +189,7 @@ impl HttpRuntime {
                         reason: err,
                         context: {
                             "signal" => "SIGTERM",
-                            "source" => "HttpRuntime::graceful_signal",
+                            "source" => "WebRuntime::graceful_signal",
                         },
                     }
                 })

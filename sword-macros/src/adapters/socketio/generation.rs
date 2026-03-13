@@ -75,7 +75,7 @@ pub fn generate_socketio_adapter_builder(
                             "adapter" => #adapter_name_str,
                         },
                         hints: [
-                            "Enable the `adapter-socketio` feature in Cargo.toml",
+                            "Enable the `web-adapter-socketio` feature in Cargo.toml",
                             "Configure the socketio server section in your configuration file",
                         ],
                     )

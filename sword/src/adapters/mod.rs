@@ -1,7 +1,7 @@
-#[cfg(feature = "adapter-http-controllers")]
-pub mod http;
+#[cfg(feature = "web-adapter-controllers")]
+pub mod controllers;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 pub mod socketio;
 
 use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
@@ -11,14 +11,14 @@ use sword_core::HasDeps;
 /// Represents the different kinds of adapters that can be registered.
 /// Each variant may hold specific builder functions.
 ///
-/// - HttpController: HTTP request handlers with routing, multipart data, and Axum Router integration.
+/// - Controllers: Web request handlers with routing, multipart data, and Axum Router integration.
 /// - SocketIo: A socketio layer based adapter, Axum Router with state.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum AdapterKind {
-    #[cfg(feature = "adapter-http-controllers")]
-    HttpController,
+    #[cfg(feature = "web-adapter-controllers")]
+    Controllers,
 
-    #[cfg(feature = "adapter-socketio")]
+    #[cfg(feature = "web-adapter-socketio")]
     SocketIo,
 }
 

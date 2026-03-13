@@ -1,5 +1,21 @@
 use axum_test::TestServer;
 use sword::prelude::*;
+use sword_layers::prelude::{CorsConfig, CorsLayer};
+
+fn cors_layer() -> tower_http::cors::CorsLayer {
+    CorsLayer::new(&CorsConfig {
+        enabled: true,
+        allow_origins: Some(vec!["http://localhost:3000".to_string()]),
+        allow_methods: Some(vec!["GET".to_string(), "POST".to_string()]),
+        allow_headers: Some(vec![
+            "Content-Type".to_string(),
+            "Authorization".to_string(),
+        ]),
+        allow_credentials: Some(true),
+        max_age: None,
+        display: false,
+    })
+}
 
 #[socketio_adapter("/socket")]
 struct TestSocketIOAdapter;
@@ -25,7 +41,10 @@ impl Module for TestModule {
 }
 
 fn test_server() -> TestServer {
-    let app = Application::builder().with_module::<TestModule>().build();
+    let app = Application::builder()
+        .with_module::<TestModule>()
+        .with_layer(cors_layer())
+        .build();
 
     TestServer::new(app.router()).unwrap()
 }
@@ -137,6 +156,7 @@ async fn cors_doesnt_break_rest() {
 
     let app = Application::builder()
         .with_module::<TestModuleWithRest>()
+        .with_layer(cors_layer())
         .build();
 
     let test = TestServer::new(app.router()).unwrap();

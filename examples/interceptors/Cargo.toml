@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sword = { workspace = true, features = ["adapter-socketio"] }
+sword = { workspace = true, features = ["web-adapter-socketio"] }
 serde = { workspace = true }

@@ -1,6 +1,7 @@
 use axum_test::TestServer;
 use sword::prelude::*;
 use sword_cookies::*;
+use sword_layers::cookies::CookieManagerLayer;
 
 #[derive(Interceptor)]
 struct SetCookieMw {}
@@ -26,7 +27,7 @@ struct CookieController {}
 
 impl CookieController {
     #[get("/set")]
-    async fn set_cookie(&self, req: Request) -> HttpResult {
+    async fn set_cookie(&self, req: Request) -> Result {
         let cookies = req.cookies()?;
 
         let cookie = CookieBuilder::new("username", "sword_user")
@@ -42,7 +43,7 @@ impl CookieController {
 
     #[get("/with_middleware")]
     #[interceptor(SetCookieMw)]
-    async fn with_middleware(&self, req: Request) -> HttpResult {
+    async fn with_middleware(&self, req: Request) -> Result {
         let cookies = req.cookies()?;
 
         let session_cookie = cookies.get("session_id").ok_or(
@@ -62,9 +63,16 @@ impl Module for CookieModule {
     }
 }
 
+fn test_app() -> Application {
+    Application::builder()
+        .with_module::<CookieModule>()
+        .with_layer(CookieManagerLayer::new())
+        .build()
+}
+
 #[tokio::test]
 async fn test_set_cookie() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder().with_module::<CookieModule>().build();
+    let app = test_app();
 
     let server = TestServer::new(app.router())?;
 
@@ -89,7 +97,7 @@ async fn test_set_cookie() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_with_middleware() -> Result<(), Box<dyn std::error::Error>> {
-    let app = Application::builder().with_module::<CookieModule>().build();
+    let app = test_app();
 
     let server = TestServer::new(app.router())?;
 

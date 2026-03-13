@@ -134,7 +134,7 @@ fn generate_inventory_registration(
         #[doc(hidden)]
         const #registration_name: () = {
             ::sword::internal::inventory::submit! {
-                ::sword::internal::http::RouteRegistrar {
+                ::sword::internal::controllers::RouteRegistrar {
                     controller_id: ::std::any::TypeId::of::<#controller_ident>(),
                     controller_path: #controller_path,
                     path: #route_path,

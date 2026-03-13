@@ -1,6 +1,6 @@
 # socketio-adapter
 
-This example demonstrates a real-time chat application using Sword's SocketIO adapter. Clients can connect and send messages that are broadcasted to all connected clients.
+This example demonstrates a real-time chat application using Sword's Socket.IO adapter on the web runtime. Clients can connect and send messages that are broadcasted to all connected clients.
 
 ## Running the Example
 

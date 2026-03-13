@@ -42,7 +42,7 @@ impl TestController {
 
     #[get("/middleware-state")]
     #[interceptor(MwWithState)]
-    async fn middleware_state(&self, req: Request) -> HttpResult {
+    async fn middleware_state(&self, req: Request) -> Result {
         let port = req.extensions.get::<u16>().cloned().unwrap_or(0);
         let message = req.extensions.get::<String>().cloned().unwrap_or_default();
 

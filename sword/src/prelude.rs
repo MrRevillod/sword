@@ -10,12 +10,12 @@ pub use sword_core::{
 #[cfg(feature = "validation-validator")]
 pub use validator::Validate;
 
-#[cfg(feature = "adapter-http-controllers")]
-pub use crate::adapters::http::{
+#[cfg(feature = "web-adapter-controllers")]
+pub use crate::adapters::controllers::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
-    HttpInterceptorResult, HttpResult, JsonResponse, JsonResponseBody, Next,
-    OnRequest, OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig,
-    Redirect, Request, RequestError, StreamRequest, controller,
+    HttpInterceptorResult, JsonResponse, JsonResponseBody, Next, OnRequest,
+    OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig, Redirect,
+    Request, RequestError, Result, StreamRequest, controller,
     cookies as sword_cookies, delete, get, patch, post, put,
 };
 
@@ -24,14 +24,14 @@ pub use axum::http::{HeaderMap as Headers, Method, Uri};
 
 #[cfg(all(
     feature = "validation-validator",
-    feature = "adapter-http-controllers"
+    feature = "web-adapter-controllers"
 ))]
-pub use crate::adapters::http::ValidatorRequestValidation;
+pub use crate::adapters::controllers::ValidatorRequestValidation;
 
-#[cfg(all(feature = "multipart", feature = "adapter-http-controllers"))]
-pub use crate::adapters::http::multipart as sword_multipart;
+#[cfg(all(feature = "multipart", feature = "web-adapter-controllers"))]
+pub use crate::adapters::controllers::multipart as sword_multipart;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 pub use crate::adapters::socketio::{
     AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
     LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
@@ -39,8 +39,8 @@ pub use crate::adapters::socketio::{
     socketio_adapter,
 };
 
-#[cfg(feature = "adapter-socketio")]
-pub use crate::runtimes::http::SocketIoParser;
+#[cfg(feature = "web-adapter-socketio")]
+pub use crate::runtimes::web::SocketIoParser;
 
 #[doc(hidden)]
 pub use sword_core::{
@@ -51,9 +51,9 @@ pub use sword_core::{
 pub use crate::{adapters::Adapter, interceptor::Interceptor};
 
 #[doc(hidden)]
-#[cfg(feature = "adapter-http-controllers")]
-pub use crate::adapters::http::HttpController;
+#[cfg(feature = "web-adapter-controllers")]
+pub use crate::adapters::controllers::HttpController;
 
 #[doc(hidden)]
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 pub use crate::adapters::socketio::SocketIoAdapter;

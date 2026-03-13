@@ -1,6 +1,6 @@
 # http-controllers-adapter
 
-This example demonstrates a REST API for user management using Sword's HTTP controller adapter. It includes CRUD operations for users, with features like JSON validation and PostgreSQL integration.
+This example demonstrates a user management API using Sword's controllers adapter on the web runtime. It includes CRUD operations for users, request validation, and PostgreSQL integration.
 
 ## Running the Example
 

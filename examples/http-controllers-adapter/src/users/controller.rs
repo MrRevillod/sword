@@ -16,14 +16,14 @@ pub struct UsersController {
 
 impl UsersController {
     #[get("/")]
-    async fn get_users(&self, req: Request) -> HttpResult {
+    async fn get_users(&self, req: Request) -> Result<JsonResponse> {
         let data = self.users.find_all().await?;
 
         Ok(JsonResponse::Ok().data(data).request_id(req.id()))
     }
 
     #[post("/")]
-    async fn create_user(&self, req: Request) -> HttpResult {
+    async fn create_user(&self, req: Request) -> Result {
         let body = req.body_validator::<CreateUserDto>()?;
         let user = User::new(body.username, self.hasher.hash(&body.password)?);
 
@@ -42,7 +42,7 @@ impl UsersController {
     }
 
     #[put("/{id}")]
-    async fn update_user(&self, req: Request) -> HttpResult {
+    async fn update_user(&self, req: Request) -> Result {
         let id = req.param::<Uuid>("id")?;
         let body = req.body_validator::<UpdateUserDto>()?;
 
@@ -69,7 +69,7 @@ impl UsersController {
     }
 
     #[delete("/{id}")]
-    async fn delete_user(&self, req: Request) -> HttpResult {
+    async fn delete_user(&self, req: Request) -> Result {
         let id = req.param::<Uuid>("id")?;
 
         let Some(_) = self.users.find_by_id(&id).await? else {
@@ -82,7 +82,7 @@ impl UsersController {
     }
 
     #[get("/test-compression")]
-    async fn test_compression(&self) -> HttpResult {
+    async fn test_compression(&self) -> Result {
         let repeated_data = "x".repeat(5000); // 5KB de 'x'
         let large_json = json!({
             "size_kb": 5,

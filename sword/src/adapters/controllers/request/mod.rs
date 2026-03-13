@@ -140,7 +140,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/users/{id}/posts/{post_id}")]
-    /// async fn get_user_post(&self, req: Request) -> HttpResult {
+    /// async fn get_user_post(&self, req: Request) -> Result {
     ///     let user_id: u32 = req.param("id")?;
     ///     let post_id: u64 = req.param("post_id")?;
     ///
@@ -213,7 +213,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[post("/users")]
-    /// async fn create_user(&self, req: Request) -> HttpResult {
+    /// async fn create_user(&self, req: Request) -> Result {
     ///     let user_data: CreateUserRequest = req.body()?;
     ///     
     ///     // Process user creation...
@@ -280,7 +280,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/search")]
-    /// async fn search(&self, req: Request) -> HttpResult {
+    /// async fn search(&self, req: Request) -> Result {
     ///     let query: SearchQuery = req.query()?.unwrap_or_default();
     ///     
     ///     let search_term = query.q.unwrap_or("".into());
@@ -331,7 +331,7 @@ impl Request {
     /// ... asuming controller struct ...
     ///
     /// #[get("/show-cookies")]
-    /// async fn show_cookies(&self, req: Request) -> HttpResult {
+    /// async fn show_cookies(&self, req: Request) -> Result {
     ///     let cookies = ctx.cookies()?;
     ///     let session_cookie = cookies.get("session_id");
     ///
@@ -405,7 +405,7 @@ impl Request {
     /// ... asuming a controller struct ...
     ///
     /// #[post("/upload")]
-    /// async fn upload(&self, req: Request) -> HttpResult {
+    /// async fn upload(&self, req: Request) -> Result {
     ///     let mut multipart = req.multipart().await?;
     ///     let mut field_names = Vec::new();
     ///

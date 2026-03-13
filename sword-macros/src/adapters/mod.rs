@@ -1,11 +1,11 @@
-#[cfg(feature = "adapter-http-controllers")]
-pub mod http;
+#[cfg(feature = "web-adapter-controllers")]
+pub mod controllers;
 
-#[cfg(feature = "adapter-http-controllers")]
-pub use http::*;
+#[cfg(feature = "web-adapter-controllers")]
+pub use controllers::*;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 mod socketio;
 
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "web-adapter-socketio")]
 pub use socketio::*;

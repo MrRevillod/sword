@@ -1,7 +1,7 @@
-use crate::adapters::http::{Request, RequestError};
+use crate::adapters::controllers::{Request, RequestError};
 
 #[cfg(feature = "validation-validator")]
-use crate::adapters::http::response::format_validator_errors;
+use crate::adapters::controllers::response::format_validator_errors;
 
 use serde::de::DeserializeOwned;
 use validator::Validate;
@@ -65,7 +65,7 @@ impl ValidatorRequestValidation for Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[post("/users")]
-    /// async fn create_user(&self, req: Request) -> HttpResult {
+    /// async fn create_user(&self, req: Request) -> Result {
     ///     let user_data: CreateUserRequest = req.body_validator()?;
     ///     
     ///     // now data is guaranteed to be valid
@@ -137,7 +137,7 @@ impl ValidatorRequestValidation for Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/search")]
-    /// async fn search(&self, req: Request) -> HttpResult {
+    /// async fn search(&self, req: Request) -> Result {
     ///     let query: SearchQuery = req.query_validator()?.unwrap_or_default();
     ///     
     ///     Ok(JsonResponse::Ok().data(query))

@@ -1,6 +1,6 @@
 # interceptors
 
-This example demonstrates the use of interceptors in Sword for both HTTP and SocketIO adapters. It shows logging interceptors that log incoming requests and connections.
+This example demonstrates interceptors in Sword for both controllers and Socket.IO adapters on the web runtime. It shows logging interceptors for incoming requests and socket connections.
 
 ## Running the Example
 

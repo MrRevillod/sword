@@ -4,6 +4,9 @@
 
 ### Added
 
+- Added `StreamRequest` extractor and stream interceptor traits (`OnRequestStream`, `OnRequestStreamWithConfig`) for non-buffered request handling.
+- Added runtime feature naming foundation: `runtime-web`, `runtime-grpc`, and `runtime-pubsub`.
+
 - New `next()` method on `Request` struct. See `Changed` section for more details.
 - Added `Module` trait for creating and registering controllers and injectables as a modules.
 
@@ -28,6 +31,12 @@
 - Added `Interceptor` trait for creating custom interceptors that can access and modify requests and responses.
 
 ### Changed
+
+- Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary runtime module is now `web`.
+- Refactored server config to use `[server]` with `web-router-prefix`, `body-limit`, and `request-timeout`.
+- Runtime now applies only mandatory built-ins by default (`not_found`, `body_limit`, `request_timeout`); optional layers are explicit via `.with_layer(...)`.
+- Replaced `HttpResult` usage with `Result` alias (`Result<T = JsonResponse, E = JsonResponse>`) in controller APIs.
+- Updated macros/docs/examples to match new naming and APIs, including workspace/metadata consistency fixes.
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
 

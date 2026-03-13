@@ -13,7 +13,7 @@ struct TestController {}
 
 impl TestController {
     #[post("/multipart")]
-    async fn hello(&self, req: Request) -> HttpResult {
+    async fn hello(&self, req: Request) -> Result {
         let mut fields = vec![];
         let mut multipart = req.multipart().await?;
 
