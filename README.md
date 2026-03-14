@@ -73,9 +73,9 @@ impl UsersController {
 
 ## Application Type Features
 
-- `web` (default): enables the web application type
-- `grpc`: enables the gRPC application type
-- `socketio`: enables Socket.IO controllers for web applications
+- `web-controllers` (default): enables the web application type
+- `grpc-controllers`: enables the gRPC application type
+- `socketio-controllers`: enables Socket.IO controllers for web applications
 - `multipart`: enables multipart request extraction
 - `validation-validator`: enables `validator` integration
 

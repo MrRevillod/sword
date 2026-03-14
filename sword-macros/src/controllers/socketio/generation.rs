@@ -72,7 +72,7 @@ pub fn generate_socketio_controller_builder(
                             "controller" => #controller_name_str,
                         },
                         hints: [
-                            "Enable the `socketio` feature in Cargo.toml",
+                            "Enable the `socketio-controllers` feature in Cargo.toml",
                             "Configure the socketio server section in your configuration file",
                         ],
                     )

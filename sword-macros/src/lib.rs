@@ -560,7 +560,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types

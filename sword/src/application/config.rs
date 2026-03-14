@@ -1,3 +1,4 @@
+use super::engines::web::WebApplicationConfig;
 use console::style;
 use serde::{Deserialize, Serialize};
 use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
@@ -25,6 +26,13 @@ pub struct ApplicationConfig {
     /// Defaults `false`
     #[serde(rename = "graceful-shutdown")]
     pub graceful_shutdown: bool,
+
+    /// Web server settings flattened into `[application]`.
+    ///
+    /// This keeps the TOML ergonomic while still using a dedicated struct
+    /// for web-specific configuration.
+    #[serde(flatten)]
+    pub web: WebApplicationConfig,
 }
 
 impl ApplicationConfig {

@@ -1,11 +1,11 @@
 mod builder;
 mod config;
-pub mod web;
-
-use self::web::WebApplication;
+pub mod engines;
 
 use std::path::Path;
 use sword_core::{Config, sword_error};
+
+use self::engines::ApplicationEngine;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;
@@ -16,16 +16,13 @@ pub use config::ApplicationConfig;
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    web_application: WebApplication,
+    engine: ApplicationEngine,
     pub config: Config,
 }
 
 impl Application {
-    pub(crate) fn new(web_application: WebApplication, config: Config) -> Self {
-        Self {
-            web_application,
-            config,
-        }
+    pub(crate) fn new(engine: ApplicationEngine, config: Config) -> Self {
+        Self { engine, config }
     }
 
     /// Creates a new application builder for configuring the application.
@@ -76,15 +73,27 @@ impl Application {
     /// requests. It will bind to the host and port specified in the
     /// server configuration.
     pub async fn run(&self) {
-        self.web_application.start().await;
+        match &self.engine {
+            #[cfg(any(
+                feature = "web-controllers",
+                feature = "socketio-controllers"
+            ))]
+            ApplicationEngine::Web(app) => app.start().await,
+        }
     }
 
-    #[cfg(feature = "web")]
+    #[cfg(feature = "web-controllers")]
     /// Returns a clone of the internal Axum router for testing purposes.
     ///
     /// This method provides access to the underlying Axum router for integration
     /// testing with axum-test or similar tools.
     pub fn router(&self) -> axum::Router {
-        self.web_application.router()
+        match &self.engine {
+            #[cfg(any(
+                feature = "web-controllers",
+                feature = "socketio-controllers"
+            ))]
+            ApplicationEngine::Web(app) => app.router(),
+        }
     }
 }

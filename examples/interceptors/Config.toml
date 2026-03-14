@@ -1,8 +1,6 @@
 [application]
 graceful-shutdown = false
 name = "Interceptors Example"
-
-[server]
 host = "0.0.0.0"
 port = 8081
 body-limit = { max-size = "2MB", display = true }

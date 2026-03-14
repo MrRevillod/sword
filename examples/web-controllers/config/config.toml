@@ -1,12 +1,17 @@
 [application]
 name = "REST Adapter Example"
-graceful-shutdown = false
-
-[server]
 host = "0.0.0.0"
 port = 8081
-request-timeout = { enabled = true, timeout = "15s", display = true }
-body-limit = { max-size = "5MB", display = true }
+graceful-shutdown = false
+
+[application.request-timeout]
+enabled = true
+timeout = "15s"
+display = true
+
+[application.body-limit]
+max-size = "5MB"
+display = true
 
 [database]
 uri = "${POSTGRES_DATABASE_URL}"

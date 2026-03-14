@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::ItemStruct;
 
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 use crate::controllers::socketio::generate_socketio_controller_builder;
 use crate::shared::{CMetaStack, CommonControllerInput, ParsedControllerKind};
 use generation::generate_controller_builder;
@@ -47,15 +47,15 @@ pub fn expand_controller(
             generate_controller_builder(&parsed_input)
         }
         ParsedControllerKind::SocketIo => {
-            #[cfg(not(feature = "socketio"))]
+            #[cfg(not(feature = "socketio-controllers"))]
             {
                 return Err(syn::Error::new(
                     input.ident.span(),
-                    "Controller::SocketIo requires enabling the `socketio` feature",
+                    "Controller::SocketIo requires enabling the `socketio-controllers` feature",
                 ));
             }
 
-            #[cfg(feature = "socketio")]
+            #[cfg(feature = "socketio-controllers")]
             {
                 CMetaStack::push("controller_name", &struct_name);
                 CMetaStack::push("controller_path", mount_path);

@@ -1,5 +1,5 @@
-use crate::application::Application;
-use crate::application::web::WebApplication;
+use crate::application::engines::web::WebApplication;
+use crate::application::{Application, ApplicationEngine};
 use crate::controllers::ControllerRegistry;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
@@ -171,12 +171,15 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
-        if cfg!(all(feature = "web", feature = "grpc")) {
+        if cfg!(all(
+            feature = "web-controllers",
+            feature = "grpc-controllers"
+        )) {
             sword_error! {
                 title: "Multiple application types enabled",
                 reason: "Only one app type feature can be enabled at a time",
                 hints: [
-                    "Enable only one of `web` or `grpc`",
+                    "Enable only one of `web-controllers` or `grpc-controllers`",
                     "Use controller features that match the selected app type",
                 ],
             }
@@ -203,12 +206,12 @@ impl ApplicationBuilder {
 
         let web_application = WebApplication::new(
             self.state.clone(),
-            self.config.clone(),
+            &self.config,
             layer_stack,
             &self.controller_registry,
         );
 
-        Application::new(web_application, self.config)
+        Application::new(ApplicationEngine::Web(web_application), self.config)
     }
 }
 

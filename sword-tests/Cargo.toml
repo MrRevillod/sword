@@ -12,7 +12,7 @@ publish = false
 sword = { workspace = true, features = [
     "multipart",
     "validation-validator",
-    "socketio",
+    "socketio-controllers",
 ] }
 
 sword-layers = { workspace = true, features = ["helmet"] }

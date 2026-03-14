@@ -1,8 +1,6 @@
 use console::style;
 use serde::{Deserialize, Serialize};
-use sword_core::{
-    ConfigItem, ConfigRegistrar, inventory_submit, layers::DisplayConfig,
-};
+use sword_core::layers::DisplayConfig;
 use sword_layers::prelude::{BodyLimitConfig, RequestTimeoutConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,18 +39,6 @@ impl DisplayConfig for WebApplicationConfig {
         self.request_timeout.display();
     }
 }
-
-impl ConfigItem for WebApplicationConfig {
-    fn key() -> &'static str {
-        "server"
-    }
-}
-
-inventory_submit! {[
-    ConfigRegistrar::new(|state, config| {
-        state.insert(config.get_or_default::<WebApplicationConfig>());
-    })
-]}
 
 impl Default for WebApplicationConfig {
     fn default() -> Self {

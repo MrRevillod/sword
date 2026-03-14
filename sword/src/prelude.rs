@@ -11,7 +11,7 @@ pub use sword_core::{
 #[cfg(feature = "validation-validator")]
 pub use validator::Validate;
 
-#[cfg(feature = "web")]
+#[cfg(feature = "web-controllers")]
 pub use crate::controllers::web::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
     HttpInterceptorResult, JsonResponse, JsonResponseBody, Next, OnRequest,
@@ -23,20 +23,20 @@ pub use crate::controllers::web::{
 pub use axum::body::Bytes;
 pub use axum::http::{HeaderMap as Headers, Method, Uri};
 
-#[cfg(all(feature = "validation-validator", feature = "web"))]
+#[cfg(all(feature = "validation-validator", feature = "web-controllers"))]
 pub use crate::controllers::web::ValidatorRequestValidation;
 
-#[cfg(all(feature = "multipart", feature = "web"))]
+#[cfg(all(feature = "multipart", feature = "web-controllers"))]
 pub use crate::controllers::web::multipart as sword_multipart;
 
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 pub use crate::controllers::socketio::{
     AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
     LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
     SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData, on,
 };
 
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 pub use crate::controllers::socketio::SocketIoParser;
 
 #[doc(hidden)]
@@ -48,9 +48,9 @@ pub use sword_core::{
 pub use crate::{controllers::ControllerSpec, interceptor::Interceptor};
 
 #[doc(hidden)]
-#[cfg(feature = "web")]
+#[cfg(feature = "web-controllers")]
 pub use crate::controllers::web::WebController;
 
 #[doc(hidden)]
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 pub use crate::controllers::socketio::SocketIoController;

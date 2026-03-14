@@ -1,13 +1,17 @@
 mod config;
 mod router;
 
-use crate::{ApplicationConfig, controllers::ControllerRegistry};
+#[cfg(feature = "socketio-controllers")]
+use crate::controllers::socketio::SocketIoServerConfig;
+use crate::{application::ApplicationConfig, controllers::ControllerRegistry};
+
 use axum::Router;
 use sword_core::{
     Config, State,
-    layers::{DisplayConfig, LayerStack, NotFoundLayer},
+    layers::{LayerStack, NotFoundLayer},
     sword_error,
 };
+
 use tokio::net::TcpListener;
 
 pub use config::WebApplicationConfig;
@@ -15,25 +19,30 @@ pub use router::WebRouter;
 
 pub struct WebApplication {
     state: State,
+    router: Router<State>,
+
     app_config: ApplicationConfig,
-    web_config: WebApplicationConfig,
-    router: Option<Router<State>>,
 }
 
 impl WebApplication {
     pub fn new(
         state: State,
-        config: Config,
+        config: &Config,
         layer_stack: LayerStack<State>,
         controller_registry: &ControllerRegistry,
     ) -> Self {
         let app_config = config.get_or_default::<ApplicationConfig>();
-        let web_config = config.get_or_default::<WebApplicationConfig>();
+        let socketio_config = config.get_or_default::<SocketIoServerConfig>();
 
-        let http_router = WebRouter::new(state.clone(), config.clone());
+        let http_router = WebRouter::new(
+            state.clone(),
+            app_config.clone(),
+            #[cfg(feature = "socketio-controllers")]
+            socketio_config.clone(),
+        );
         let mut router = http_router.build(layer_stack, controller_registry);
 
-        if let Some(prefix) = &web_config.web_router_prefix {
+        if let Some(prefix) = &app_config.web.web_router_prefix {
             router = Router::new().nest(prefix, router);
         }
 
@@ -41,35 +50,18 @@ impl WebApplication {
 
         Self {
             state,
-            web_config,
             app_config,
-            router: Some(router),
+            router,
         }
     }
 
     pub async fn start(&self) {
-        let router = self
-            .router
-            .as_ref()
-            .unwrap_or_else(|| {
-                sword_error! {
-                    title: "Axum HTTP router is not initialized",
-                    reason: "Router is missing from WebApplication state",
-                    context: {
-                        "source" => "WebApplication::start",
-                    },
-                    hints: ["This indicates an internal startup bug, report it with a reproduction"],
-                }
-            })
-            .clone();
-
-        let app = router.with_state(self.state.clone());
-
-        self.display_config();
+        let app = self.router.clone().with_state(self.state.clone());
+        println!("Starting Sword application...");
 
         let listener = TcpListener::bind(&format!(
             "{}:{}",
-            self.web_config.host, self.web_config.port
+            self.app_config.web.host, self.app_config.web.port
         ))
         .await
         .unwrap_or_else(|err| {
@@ -77,8 +69,8 @@ impl WebApplication {
                 title: "Failed to bind HTTP listener",
                 reason: err,
                 context: {
-                    "host" => self.web_config.host.clone(),
-                    "port" => self.web_config.port.to_string(),
+                    "host" => self.app_config.web.host.clone(),
+                    "port" => self.app_config.web.port.to_string(),
                 },
                 hints: ["Ensure the host/port is available and not already in use"],
             }
@@ -94,8 +86,8 @@ impl WebApplication {
                         reason: err,
                         context: {
                             "mode" => "graceful_shutdown",
-                            "host" => self.web_config.host.clone(),
-                            "port" => self.web_config.port.to_string(),
+                            "host" => self.app_config.web.host.clone(),
+                            "port" => self.app_config.web.port.to_string(),
                         },
                     }
                 });
@@ -109,52 +101,15 @@ impl WebApplication {
                 reason: err,
                 context: {
                     "mode" => "normal",
-                    "host" => self.web_config.host.clone(),
-                    "port" => self.web_config.port.to_string(),
+                    "host" => self.app_config.web.host.clone(),
+                    "port" => self.app_config.web.port.to_string(),
                 },
             }
         });
     }
 
     pub fn router(&self) -> axum::Router {
-        let router = self
-            .router
-            .as_ref()
-            .unwrap_or_else(|| {
-                sword_error! {
-                    title: "HTTP router is not initialized",
-                    reason: "Router is missing from WebApplication state",
-                    context: {
-                        "source" => "WebApplication::router",
-                    },
-                    hints: ["This indicates an internal startup bug, report it with a reproduction"],
-                }
-            })
-            .clone();
-
-        router.with_state(self.state.clone())
-    }
-
-    fn display_config(&self) {
-        println!("\n▪──────────────── ⚔ S W O R D ⚔ ──────────────▪");
-
-        if let Ok(app_config) =
-            self.state.get::<crate::application::ApplicationConfig>()
-        {
-            app_config.display();
-        }
-
-        self.web_config.display();
-
-        #[cfg(feature = "socketio")]
-        if let Ok(socketio_config) =
-            self.state
-                .get::<crate::controllers::socketio::SocketIoServerConfig>()
-        {
-            socketio_config.display();
-        }
-
-        println!("\n▪──────────────── ⚔ ───────── ⚔ ──────────────▪\n");
+        self.router.clone().with_state(self.state.clone())
     }
 
     async fn graceful_signal() {

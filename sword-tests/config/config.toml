@@ -1,7 +1,5 @@
 [application]
 graceful-shutdown = false
-
-[server]
 host = "0.0.0.0"
 port = 8080
 body-limit = { max-size = "1MB", display = true }

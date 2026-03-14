@@ -1,7 +1,7 @@
-#[cfg(feature = "web")]
+#[cfg(feature = "web-controllers")]
 pub mod web;
 
-#[cfg(feature = "socketio")]
+#[cfg(feature = "socketio-controllers")]
 pub mod socketio;
 
 use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
@@ -11,13 +11,13 @@ use sword_core::HasDeps;
 /// Controller enum used by `#[controller(...)]` attributes and runtime internals.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Controller {
-    #[cfg(feature = "web")]
+    #[cfg(feature = "web-controllers")]
     Web,
 
-    #[cfg(feature = "socketio")]
+    #[cfg(feature = "socketio-controllers")]
     SocketIo,
 
-    #[cfg(feature = "grpc")]
+    #[cfg(feature = "grpc-controllers")]
     Grpc,
 }
 

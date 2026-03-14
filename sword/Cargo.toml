@@ -58,16 +58,16 @@ subsecond = { workspace = true, optional = true }
 dioxus-devtools = { workspace = true, optional = true }
 
 [features]
-default = ["web"]
+default = ["web-controllers"]
 
-web = ["sword-macros/web"]
-grpc = []
+web-controllers = ["sword-macros/web-controllers"]
+grpc-controllers = []
 
 multipart = ["axum/multipart", "axum_responses/multipart"]
 validation-validator = ["dep:validator"]
-socketio = [
-    "web",
-    "sword-macros/socketio",
+socketio-controllers = [
+    "web-controllers",
+    "sword-macros/socketio-controllers",
     "dep:socketioxide",
     "dep:socketioxide-core",
     "dep:socketioxide-parser-common",

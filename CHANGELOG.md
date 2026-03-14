@@ -5,7 +5,7 @@
 ### Added
 
 - Added `StreamRequest` extractor and stream interceptor traits (`OnRequestStream`, `OnRequestStreamWithConfig`) for non-buffered request handling.
-- Added app type feature naming foundation: `web` and `grpc`.
+- Added app type feature naming foundation: `web-controllers` and `grpc-controllers`.
 
 - New `next()` method on `Request` struct. See `Changed` section for more details.
 - Added `Module` trait for creating and registering controllers and injectables as a modules.
@@ -32,7 +32,7 @@
 
 ### Changed
 
-- Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary runtime module is now `web`.
+- Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary application module is now `application::web`.
 - Refactored server config to use `[server]` with `web-router-prefix`, `body-limit`, and `request-timeout`.
 - Runtime now applies only mandatory built-ins by default (`not_found`, `body_limit`, `request_timeout`); optional layers are explicit via `.with_layer(...)`.
 - Replaced `HttpResult` usage with `Result` alias (`Result<T = JsonResponse, E = JsonResponse>`) in controller APIs.
