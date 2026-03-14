@@ -6,12 +6,12 @@ use crate::{
     database::Database,
 };
 
-#[socketio_adapter("/chat")]
-pub struct ChatAdapter {
+#[controller(kind = Controller::SocketIo, namespace = "/chat")]
+pub struct ChatController {
     db: Arc<Database>,
 }
 
-impl ChatAdapter {
+impl ChatController {
     #[on("connection")]
     async fn on_connect(&self, ctx: SocketContext) {
         println!("New client connected");

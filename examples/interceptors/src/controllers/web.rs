@@ -1,7 +1,7 @@
 use crate::interceptors::LoggingInterceptor;
 use sword::prelude::*;
 
-#[controller("/")]
+#[controller(kind = Controller::Web, path = "/")]
 #[interceptor(LoggingInterceptor)]
 pub struct ExampleRestController;
 

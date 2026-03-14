@@ -18,7 +18,7 @@ impl Module for UsersModule {
         components.register::<UserRepository>();
     }
 
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<UsersController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<UsersController>();
     }
 }

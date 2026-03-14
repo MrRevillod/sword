@@ -1351,23 +1351,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http-controllers-adapter"
-version = "0.1.0"
-dependencies = [
- "bcrypt",
- "dotenv",
- "serde",
- "serde_json",
- "sqlx",
- "sword",
- "thiserror",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "validator",
-]
-
-[[package]]
 name = "http-range-header"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2649,7 +2632,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "socketio-adapter"
+name = "socketio-controllers-example"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -3837,6 +3820,23 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "semver",
+]
+
+[[package]]
+name = "web-controllers-example"
+version = "0.1.0"
+dependencies = [
+ "bcrypt",
+ "dotenv",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sword",
+ "thiserror",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
 ]
 
 [[package]]

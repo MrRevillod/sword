@@ -1,4 +1,4 @@
-# socketio-adapter client
+# socketio-controllers client
 
 Minimal Svelte client used by the Sword Socket.IO example server.
 

@@ -1,12 +1,12 @@
 [package]
-name = "socketio-adapter"
+name = "socketio-controllers-example"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 sword = { workspace = true, features = [
     "validation-validator",
-    "web-adapter-socketio",
+    "socketio",
 ] }
 
 uuid = { workspace = true }

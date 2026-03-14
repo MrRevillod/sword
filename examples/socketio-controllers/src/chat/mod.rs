@@ -1,8 +1,8 @@
-mod adapter;
+mod controller;
 mod dtos;
 mod entity;
 
-use adapter::ChatAdapter;
+use controller::ChatController;
 
 pub use dtos::IncommingMessageDto;
 pub use entity::Message;
@@ -12,7 +12,7 @@ use sword::prelude::*;
 pub struct ChatModule;
 
 impl Module for ChatModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<ChatAdapter>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<ChatController>();
     }
 }

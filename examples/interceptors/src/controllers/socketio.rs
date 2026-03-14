@@ -3,9 +3,9 @@ use sword::prelude::*;
 
 use crate::interceptors::LoggingInterceptor;
 
-/// Socket.IO adapter example with auto-registration and interceptors.
+/// Socket.IO controller example with auto-registration and interceptors.
 ///
-/// The `#[interceptor]` attribute can be used on the adapter to apply interceptors
+/// The `#[interceptor]` attribute can be used on the controller to apply interceptors
 /// to all connection events. The interceptor is applied using `.with()` from socketioxide.
 /// The connection handler method must be named `on_connect` for auto-registration.
 /// Message handlers can have any name, but each handles a specific event.
@@ -15,11 +15,11 @@ struct Event {
     pub content: String,
 }
 
-#[socketio_adapter("/events")]
+#[controller(kind = Controller::SocketIo, namespace = "/events")]
 #[interceptor(LoggingInterceptor)]
-pub struct EventsHandler;
+pub struct EventsController;
 
-impl EventsHandler {
+impl EventsController {
     #[on("connection")]
     async fn on_connect_method(&self, ctx: SocketContext) {
         println!("Client connected: {}", ctx.id());

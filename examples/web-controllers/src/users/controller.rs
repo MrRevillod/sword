@@ -8,7 +8,7 @@ use crate::{
     users::*,
 };
 
-#[controller("/users")]
+#[controller(kind = Controller::Web, path = "/users")]
 pub struct UsersController {
     hasher: Arc<Hasher>,
     users: Arc<UserRepository>,

@@ -10,7 +10,7 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 
 ## Features
 
-- **Web Runtime** - Axum-based runtime with controller and Socket.IO adapters
+- **Web Application Type** - Axum-based application stack with web and Socket.IO controllers
 - **Macro-based routing** - Clean and intuitive route definitions
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` crate and extensible validation system
@@ -21,16 +21,16 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 
 ## Coming Soon
 
-- **GraphQL Adapter** - Support for GraphQL APIs on the web runtime
-- **gRPC Runtime** - Support for gRPC services with Tonic
+- **GraphQL Controller** - Support for GraphQL endpoints on the web application type
+- **gRPC Application Type** - Support for gRPC services with Tonic
 - **RabbitMQ Integration** - Built-in support for RabbitMQ messaging
 
-## Controller Adapter Example
+## Controller Example
 
 ```rust
 use sword::prelude::*;
 
-#[controller("/users")]
+#[controller(kind = Controller::Web, path = "/users")]
 pub struct UsersController {
     hasher: Arc<Hasher>,
     users: Arc<UserRepository>,
@@ -67,15 +67,15 @@ impl UsersController {
 
 ## Full Examples
 
-- [Controllers API](./examples/http-controllers-adapter)
-- [SocketIO Adapter Chat](./examples/socketio-adapter)
-- [Interceptors (Both adapters)](./examples/interceptors)
+- [Controllers API](./examples/web-controllers)
+- [SocketIO Controllers Chat](./examples/socketio-controllers)
+- [Interceptors (Web + Socket.IO controllers)](./examples/interceptors)
 
-## Runtime Features
+## Application Type Features
 
-- `runtime-web` (default): enables the web runtime
-- `web-adapter-controllers` (default): enables controller adapters
-- `web-adapter-socketio`: enables Socket.IO adapters
+- `web` (default): enables the web application type
+- `grpc`: enables the gRPC application type
+- `socketio`: enables Socket.IO controllers for web applications
 - `multipart`: enables multipart request extraction
 - `validation-validator`: enables `validator` integration
 

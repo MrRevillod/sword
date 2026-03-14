@@ -1,19 +1,19 @@
 mod interceptors;
-mod adapters {
-    pub mod controllers;
+mod controllers {
     pub mod socketio;
+    pub mod web;
 }
 
-use adapters::controllers::ExampleRestController;
-use adapters::socketio::EventsHandler;
+use controllers::socketio::EventsController;
+use controllers::web::ExampleRestController;
 use sword::prelude::*;
 
 pub struct ExampleModule;
 
 impl Module for ExampleModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<EventsHandler>();
-        adapters.register::<ExampleRestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<EventsController>();
+        controllers.register::<ExampleRestController>();
     }
 }
 
