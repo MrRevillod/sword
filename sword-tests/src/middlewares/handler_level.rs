@@ -318,7 +318,7 @@ impl OnRequestWithConfig<Vec<LogLevel>> for EnumVecMiddleware {
     }
 }
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 struct TestController {}
 
 impl TestController {
@@ -469,8 +469,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

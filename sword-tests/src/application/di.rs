@@ -68,7 +68,7 @@ impl TaskRepository {
     }
 }
 
-#[controller("/tasks")]
+#[controller(kind = Controller::Web, path = "/tasks")]
 pub struct TasksController {
     tasks: TasksService,
 }
@@ -104,8 +104,8 @@ impl Module for TasksModule {
         components.register::<TasksService>();
     }
 
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TasksController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TasksController>();
     }
 }
 

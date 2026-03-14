@@ -8,7 +8,7 @@ use sword::prelude::*;
 
 use crate::utils::TempFile;
 
-#[controller("/")]
+#[controller(kind = Controller::Web, path = "/")]
 struct TestController {}
 
 impl TestController {
@@ -46,8 +46,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

@@ -24,7 +24,7 @@ impl OnRequest for MwWithState {
     }
 }
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 #[interceptor(ExtensionsTestMiddleware)]
 struct TestController {}
 
@@ -60,8 +60,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

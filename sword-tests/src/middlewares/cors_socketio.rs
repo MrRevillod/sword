@@ -17,10 +17,10 @@ fn cors_layer() -> tower_http::cors::CorsLayer {
     })
 }
 
-#[socketio_adapter("/socket")]
-struct TestSocketIOAdapter;
+#[controller(kind = Controller::SocketIo, namespace = "/socket")]
+struct TestSocketIoController;
 
-impl TestSocketIOAdapter {
+impl TestSocketIoController {
     #[on("connection")]
     async fn on_connect(&self, _: SocketContext) {
         println!("Client connected via test");
@@ -35,8 +35,8 @@ impl TestSocketIOAdapter {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestSocketIOAdapter>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestSocketIoController>();
     }
 }
 
@@ -135,7 +135,7 @@ async fn socketio_handshake_without_cors() {
 #[tokio::test]
 async fn cors_doesnt_break_rest() {
     // Add a simple REST controller
-    #[controller("/api")]
+    #[controller(kind = Controller::Web, path = "/api")]
     struct ApiController;
 
     impl ApiController {
@@ -148,9 +148,9 @@ async fn cors_doesnt_break_rest() {
     struct TestModuleWithRest;
 
     impl Module for TestModuleWithRest {
-        fn register_adapters(adapters: &AdapterRegistry) {
-            adapters.register::<TestSocketIOAdapter>();
-            adapters.register::<ApiController>();
+        fn register_controllers(controllers: &ControllerRegistry) {
+            controllers.register::<TestSocketIoController>();
+            controllers.register::<ApiController>();
         }
     }
 

@@ -5,7 +5,7 @@ use sword_layers::prelude::{CompressionConfig, CompressionLayer};
 use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 struct TestController;
 
 impl TestController {
@@ -64,8 +64,8 @@ impl TestController {
 struct V1UsersModule;
 
 impl Module for V1UsersModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

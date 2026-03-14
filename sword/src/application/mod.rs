@@ -1,7 +1,8 @@
 mod builder;
 mod config;
+pub mod web;
 
-use crate::runtimes::web::WebRuntime;
+use self::web::WebApplication;
 
 use std::path::Path;
 use sword_core::{Config, sword_error};
@@ -15,14 +16,14 @@ pub use config::ApplicationConfig;
 /// the web server, routing, and application configuration. It provides a
 /// builder pattern for configuration and methods to run the application.
 pub struct Application {
-    web_runtime: WebRuntime,
+    web_application: WebApplication,
     pub config: Config,
 }
 
 impl Application {
-    pub(crate) fn new(web_runtime: WebRuntime, config: Config) -> Self {
+    pub(crate) fn new(web_application: WebApplication, config: Config) -> Self {
         Self {
-            web_runtime,
+            web_application,
             config,
         }
     }
@@ -42,6 +43,12 @@ impl Application {
         ApplicationBuilder::new()
     }
 
+    /// Creates a new application builder from an existing configuration.
+    pub fn from_config(config: Config) -> ApplicationBuilder {
+        ApplicationBuilder::from_config(config)
+    }
+
+    /// Creates a new application builder by loading configuration from a custom path.
     pub fn from_config_path<P: AsRef<Path>>(path: P) -> ApplicationBuilder {
         let config_path = path.as_ref().display().to_string();
 
@@ -67,16 +74,17 @@ impl Application {
     ///
     /// This method starts the web server and begins listening for incoming
     /// requests. It will bind to the host and port specified in the
-    /// runtime configuration.
+    /// server configuration.
     pub async fn run(&self) {
-        self.web_runtime.start().await;
+        self.web_application.start().await;
     }
 
+    #[cfg(feature = "web")]
     /// Returns a clone of the internal Axum router for testing purposes.
     ///
     /// This method provides access to the underlying Axum router for integration
     /// testing with axum-test or similar tools.
     pub fn router(&self) -> axum::Router {
-        self.web_runtime.router()
+        self.web_application.router()
     }
 }

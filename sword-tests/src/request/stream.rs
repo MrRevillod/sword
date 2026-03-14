@@ -27,7 +27,7 @@ impl OnRequestStreamWithConfig<&'static str> for StreamConfigInterceptor {
     }
 }
 
-#[controller("/stream")]
+#[controller(kind = Controller::Web, path = "/stream")]
 struct StreamController;
 
 impl StreamController {
@@ -67,8 +67,8 @@ impl StreamController {
 struct StreamModule;
 
 impl Module for StreamModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<StreamController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<StreamController>();
     }
 }
 

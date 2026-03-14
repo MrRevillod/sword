@@ -58,21 +58,19 @@ subsecond = { workspace = true, optional = true }
 dioxus-devtools = { workspace = true, optional = true }
 
 [features]
-default = ["runtime-web", "web-adapter-controllers"]
+default = ["web"]
 
-runtime-web = []
-runtime-grpc = []
-runtime-pubsub = []
+web = ["sword-macros/web"]
+grpc = []
 
 multipart = ["axum/multipart", "axum_responses/multipart"]
 validation-validator = ["dep:validator"]
-web-adapter-socketio = [
-    "runtime-web",
-    "sword-macros/web-adapter-socketio",
+socketio = [
+    "web",
+    "sword-macros/socketio",
     "dep:socketioxide",
     "dep:socketioxide-core",
     "dep:socketioxide-parser-common",
     "dep:socketioxide-parser-msgpack",
 ]
-web-adapter-controllers = ["runtime-web", "sword-macros/web-adapter-controllers"]
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]

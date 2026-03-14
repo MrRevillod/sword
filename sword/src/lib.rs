@@ -1,9 +1,8 @@
-mod adapters;
 mod application;
+mod controllers;
 mod interceptor;
 mod module;
 pub mod prelude;
-mod runtimes;
 
 pub use application::*;
 pub use sword_macros::main;
@@ -27,9 +26,9 @@ pub mod internal {
         };
     }
 
-    #[cfg(feature = "web-adapter-socketio")]
+    #[cfg(feature = "socketio")]
     pub mod socketio {
-        pub use crate::adapters::socketio::{
+        pub use crate::controllers::socketio::{
             HandlerRegistrar, SocketEventKind, SocketIoHandlerRegistrar,
         };
         pub use socketioxide::SocketError;
@@ -38,19 +37,20 @@ pub mod internal {
     }
 
     pub mod core {
-        #[cfg(feature = "web-adapter-controllers")]
-        pub use crate::adapters::controllers::HttpController;
-        #[cfg(feature = "web-adapter-socketio")]
-        pub use crate::adapters::socketio::SocketIoAdapter;
-        pub use crate::adapters::{Adapter, AdapterKind};
+        #[cfg(feature = "socketio")]
+        pub use crate::controllers::socketio::SocketIoController;
+        #[cfg(feature = "web")]
+        pub use crate::controllers::web::WebController;
+        pub use crate::controllers::{Controller, ControllerSpec};
         pub use crate::interceptor::{Interceptor, InterceptorRegistrar};
+        #[doc(hidden)]
         pub use sword_core::sword_error;
         pub use sword_core::*;
     }
 
-    #[cfg(feature = "web-adapter-controllers")]
+    #[cfg(feature = "web")]
     pub mod controllers {
-        pub use crate::adapters::controllers::RouteRegistrar;
+        pub use crate::controllers::web::RouteRegistrar;
     }
 
     pub use inventory;

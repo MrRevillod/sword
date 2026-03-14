@@ -2,7 +2,7 @@ use axum_test::TestServer;
 use sword::prelude::*;
 use sword_layers::helmet::*;
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 struct HelmetTestController;
 
 impl HelmetTestController {
@@ -15,8 +15,8 @@ impl HelmetTestController {
 struct HelmetTestModule;
 
 impl Module for HelmetTestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<HelmetTestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<HelmetTestController>();
     }
 }
 

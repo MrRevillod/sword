@@ -69,7 +69,7 @@ struct ComplexQueryData {
     email_filter: Option<String>,
 }
 
-#[controller("/users")]
+#[controller(kind = Controller::Web, path = "/users")]
 pub struct UserController {}
 
 impl UserController {
@@ -138,8 +138,8 @@ impl UserController {
 struct UserModule;
 
 impl Module for UserModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<UserController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<UserController>();
     }
 }
 

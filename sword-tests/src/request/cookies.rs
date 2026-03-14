@@ -22,7 +22,7 @@ impl OnRequest for SetCookieMw {
     }
 }
 
-#[controller("/cookies")]
+#[controller(kind = Controller::Web, path = "/cookies")]
 struct CookieController {}
 
 impl CookieController {
@@ -58,8 +58,8 @@ impl CookieController {
 struct CookieModule;
 
 impl Module for CookieModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<CookieController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<CookieController>();
     }
 }
 

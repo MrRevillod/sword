@@ -1,8 +1,8 @@
-use crate::adapters::AdapterRegistry;
 use crate::application::Application;
+use crate::application::web::WebApplication;
+use crate::controllers::ControllerRegistry;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
-use crate::runtimes::web::WebRuntime;
 
 use axum::{
     extract::Request as AxumRequest, response::IntoResponse, routing::Route,
@@ -20,7 +20,7 @@ use tower::{Layer, Service};
 pub struct ApplicationBuilder {
     state: State,
     container: DependencyContainer,
-    adapter_registry: AdapterRegistry,
+    controller_registry: ControllerRegistry,
     layer_stack: LayerStack<State>,
     pub config: Config,
 }
@@ -112,7 +112,7 @@ impl ApplicationBuilder {
             state,
             config,
             container: DependencyContainer::new(),
-            adapter_registry: AdapterRegistry::new(),
+            controller_registry: ControllerRegistry::new(),
             layer_stack: LayerStack::new(),
         }
     }
@@ -129,7 +129,7 @@ impl ApplicationBuilder {
         ));
 
         M::register_components(self.container.component_registry());
-        M::register_adapters(&self.adapter_registry);
+        M::register_controllers(&self.controller_registry);
 
         self
     }
@@ -171,13 +171,13 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
-        if cfg!(all(feature = "runtime-web", feature = "runtime-grpc")) {
+        if cfg!(all(feature = "web", feature = "grpc")) {
             sword_error! {
-                title: "Multiple primary runtimes enabled",
-                reason: "`runtime-web` and `runtime-grpc` are both enabled",
+                title: "Multiple application types enabled",
+                reason: "Only one app type feature can be enabled at a time",
                 hints: [
-                    "Enable only one primary runtime feature in Cargo.toml",
-                    "Use `runtime-pubsub` alongside a single primary runtime when needed",
+                    "Enable only one of `web` or `grpc`",
+                    "Use controller features that match the selected app type",
                 ],
             }
         }
@@ -201,14 +201,14 @@ impl ApplicationBuilder {
 
         let layer_stack = std::mem::take(&mut self.layer_stack);
 
-        let web_runtime = WebRuntime::new(
+        let web_application = WebApplication::new(
             self.state.clone(),
             self.config.clone(),
             layer_stack,
-            &self.adapter_registry,
+            &self.controller_registry,
         );
 
-        Application::new(web_runtime, self.config)
+        Application::new(web_application, self.config)
     }
 }
 
