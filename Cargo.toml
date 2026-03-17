@@ -13,7 +13,7 @@ rust-version = "1.85"
 sword = { path = "sword" }
 sword-core = { path = "sword-core", version = "0.2.1" }
 sword-macros = { path = "sword-macros", version = "0.2.1", default-features = false }
-sword-layers = { path = "../sword-layers" }
+sword-layers = { git = "https://github.com/sword-web/sword-layers" }
 axum_responses = { version = "0.5.5" }
 
 tokio = { version = "^1.0", features = ["full"] }
