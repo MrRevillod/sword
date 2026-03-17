@@ -1,5 +1,4 @@
 use super::engines::web::WebApplicationConfig;
-use console::style;
 use serde::{Deserialize, Serialize};
 use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
 
@@ -33,27 +32,6 @@ pub struct ApplicationConfig {
     /// for web-specific configuration.
     #[serde(flatten)]
     pub web: WebApplicationConfig,
-}
-
-impl ApplicationConfig {
-    pub fn display(&self) {
-        println!();
-        if let Some(name) = &self.name {
-            println!("{}", style(format!("{} Configuration:", name)).bold());
-        } else {
-            println!("{}", style("Application Configuration:").bold());
-        }
-
-        if self.graceful_shutdown {
-            println!("  ↳  Graceful Shutdown: enabled");
-        } else {
-            println!("  ↳  {}", style("Graceful Shutdown: disabled").red());
-        }
-
-        if let Some(env) = &self.environment {
-            println!("  ↳  Environment: {}", env);
-        }
-    }
 }
 
 impl ConfigItem for ApplicationConfig {

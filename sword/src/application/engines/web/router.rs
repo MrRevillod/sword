@@ -1,6 +1,6 @@
-use crate::application::ApplicationConfig;
 use crate::controllers::web::{ControllerMeta, RouteRegistrar};
 use crate::controllers::{Controller, ControllerRegistry};
+use crate::engines::web::WebApplicationConfig;
 
 use axum::{
     Router,
@@ -18,7 +18,8 @@ use crate::controllers::socketio::{
 
 pub struct WebRouter {
     state: State,
-    app_config: ApplicationConfig,
+    web_config: WebApplicationConfig,
+
     #[cfg(feature = "socketio-controllers")]
     socketio_config: SocketIoServerConfig,
 }
@@ -26,13 +27,14 @@ pub struct WebRouter {
 impl WebRouter {
     pub fn new(
         state: State,
-        app_config: ApplicationConfig,
+        web_config: WebApplicationConfig,
         #[cfg(feature = "socketio-controllers")]
         socketio_config: SocketIoServerConfig,
     ) -> Self {
         Self {
             state,
-            app_config,
+            web_config,
+
             #[cfg(feature = "socketio-controllers")]
             socketio_config,
         }
@@ -89,7 +91,7 @@ impl WebRouter {
         let (socketio_layer, socketio_config) = self.socketio_setup();
 
         router = self.apply_controllers(router, &controllers.read());
-        router = self.apply_web_mandatory_layers(router);
+        router = self.apply_web_layers(router);
 
         #[cfg(feature = "socketio-controllers")]
         if let Some(layer) = socketio_layer {
@@ -120,9 +122,7 @@ impl WebRouter {
                 }
 
                 #[cfg(feature = "grpc-controllers")]
-                Controller::Grpc => {
-                    // gRPC controllers are not handled by the web router.
-                }
+                Controller::Grpc => {}
             }
         }
 
@@ -213,11 +213,8 @@ impl WebRouter {
     ///
     /// These are applied BEFORE the SocketIO layer, so SocketIO traffic bypasses
     /// HTTP controller timeout semantics.
-    fn apply_web_mandatory_layers(
-        &self,
-        mut router: Router<State>,
-    ) -> Router<State> {
-        let server_config = self.app_config.web.clone();
+    fn apply_web_layers(&self, mut router: Router<State>) -> Router<State> {
+        let server_config = self.web_config.clone();
         let body_limit_config = server_config.body_limit;
 
         if server_config.request_timeout.enabled {

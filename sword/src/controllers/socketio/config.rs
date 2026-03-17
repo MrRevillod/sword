@@ -1,4 +1,3 @@
-use console::style;
 use serde::{Deserialize, Serialize};
 use socketioxide::{ParserConfig, SocketIo, TransportType, layer::SocketIoLayer};
 use socketioxide_parser_common::CommonParser;
@@ -8,7 +7,6 @@ use std::str::FromStr;
 use sword_core::{
     ByteConfig, ConfigItem, ConfigRegistrar, TimeConfig, inventory_submit,
 };
-use sword_layers::DisplayConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
@@ -77,73 +75,6 @@ pub struct SocketIoServerConfig {
 
     /// Whether to display the configuration on startup.
     pub display: bool,
-}
-
-impl DisplayConfig for SocketIoServerConfig {
-    fn display(&self) {
-        if !self.enabled {
-            return;
-        }
-
-        println!("\n{}", style("Socket.IO Server Configuration:").bold());
-        println!("  ↳  Enabled: {}", self.enabled);
-
-        let mut timeout_parts = Vec::new();
-
-        if let Some(ack) = &self.ack_timeout {
-            timeout_parts.push(format!("ack: {}", ack.raw));
-        }
-
-        if let Some(connect) = &self.connect_timeout {
-            timeout_parts.push(format!("connect: {}", connect.raw));
-        }
-
-        if let Some(ping) = &self.ping_timeout {
-            timeout_parts.push(format!("ping: {}", ping.raw));
-        }
-
-        if !timeout_parts.is_empty() {
-            println!("  ↳  Timeouts: {}", timeout_parts.join(" - "));
-        }
-
-        let mut limit_parts = Vec::new();
-
-        if let Some(buffer) = &self.max_buffer_size {
-            limit_parts.push(format!("buffer: {buffer} packets"));
-        }
-
-        if let Some(payload) = &self.max_payload {
-            limit_parts.push(format!("payload: {}", payload.raw));
-        }
-
-        if !limit_parts.is_empty() {
-            println!("  ↳  Limits: {}", limit_parts.join(" - "));
-        }
-
-        let mut connection_parts = Vec::new();
-
-        if let Some(transports) = &self.transports {
-            connection_parts.push(format!("transports: {}", transports.join(", ")));
-        }
-
-        connection_parts.push(format!("parser: {}", self.parser));
-
-        if let Some(interval) = &self.ping_interval {
-            connection_parts.push(format!("ping interval: {}", interval.raw));
-        }
-
-        if let Some(path) = &self.req_path {
-            connection_parts.push(format!("path: {path}"));
-        }
-
-        if !connection_parts.is_empty() {
-            println!("  ↳  Connection: {}", connection_parts.join(" - "));
-        }
-
-        if let Some(ws_size) = &self.ws_read_buffer_size {
-            println!("  ↳  WebSocket: read buffer {ws_size} bytes");
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -276,7 +207,7 @@ impl SocketIoServerLayer {
 
 impl ConfigItem for SocketIoServerConfig {
     fn key() -> &'static str {
-        "socketio-server"
+        "socketio"
     }
 }
 

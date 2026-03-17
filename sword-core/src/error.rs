@@ -100,6 +100,18 @@ impl Display for StartupDiagnostic {
 }
 
 pub fn emit_fatal(diagnostic: StartupDiagnostic) -> ! {
-    eprintln!("{diagnostic}");
+    if tracing::dispatcher::has_been_set() {
+        tracing::error!(
+            target: "sword.startup.error",
+            title = %diagnostic.title,
+            reason = %diagnostic.reason,
+            context = ?diagnostic.context,
+            hints = ?diagnostic.hints,
+            "{diagnostic}"
+        );
+    } else {
+        eprintln!("{diagnostic}");
+    }
+
     std::process::exit(1);
 }

@@ -23,7 +23,7 @@ axum = { workspace = true }
 axum_responses = { workspace = true }
 
 sword-core = { workspace = true }
-sword-layers = { workspace = true }
+sword-layers = { workspace = true, features = ["tracing"] }
 sword-macros = { workspace = true }
 
 serde = { workspace = true }
@@ -50,8 +50,6 @@ tower = { workspace = true }
 tracing = { workspace = true }
 inventory = { workspace = true }
 parking_lot = { workspace = true }
-
-console = { workspace = true }
 futures-lite = { workspace = true }
 
 subsecond = { workspace = true, optional = true }
@@ -60,11 +58,16 @@ dioxus-devtools = { workspace = true, optional = true }
 [features]
 default = ["web-controllers"]
 
-web-controllers = ["sword-macros/web-controllers"]
-grpc-controllers = []
+web-controllers = [
+	"sword-macros/web-controllers",
+	"sword-layers/not-found",
+	"sword-layers/request-id",
+	"sword-layers/cors",
+	"sword-layers/cookies",
+	"sword-layers/req-timeout",
+	"sword-layers/body-limit",
+]
 
-multipart = ["axum/multipart", "axum_responses/multipart"]
-validation-validator = ["dep:validator"]
 socketio-controllers = [
     "web-controllers",
     "sword-macros/socketio-controllers",
@@ -72,5 +75,14 @@ socketio-controllers = [
     "dep:socketioxide-core",
     "dep:socketioxide-parser-common",
     "dep:socketioxide-parser-msgpack",
+    "sword-layers/cookies",
+    "sword-layers/request-id",
+    "sword-layers/cors",
 ]
+
+grpc-controllers = []
+
+multipart = ["axum/multipart", "axum_responses/multipart"]
+validation-validator = ["dep:validator"]
+
 hot-reload = ["dep:subsecond", "dep:dioxus-devtools", "sword-macros/hot-reload"]

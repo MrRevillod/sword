@@ -1,6 +1,4 @@
-use console::style;
 use serde::{Deserialize, Serialize};
-use sword_core::layers::DisplayConfig;
 use sword_layers::prelude::{BodyLimitConfig, RequestTimeoutConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,22 +20,6 @@ pub struct WebApplicationConfig {
     /// Request timeout policy applied to web controllers.
     #[serde(rename = "request-timeout")]
     pub request_timeout: RequestTimeoutConfig,
-}
-
-impl DisplayConfig for WebApplicationConfig {
-    fn display(&self) {
-        println!();
-        println!("{}", style("HTTP Server Configuration:").bold());
-        println!("  ↳  Host: {}", self.host);
-        println!("  ↳  Port: {}", self.port);
-
-        if let Some(prefix) = &self.web_router_prefix {
-            println!("  ↳  Web Router Prefix: {prefix}");
-        }
-
-        self.body_limit.display();
-        self.request_timeout.display();
-    }
 }
 
 impl Default for WebApplicationConfig {

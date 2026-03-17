@@ -5,7 +5,7 @@ port = 8080
 body-limit = { max-size = "1MB", display = true }
 request-timeout = { enabled = true, timeout = "2s", display = true }
 
-[socketio-server]
+[socketio]
 enabled = true
 ping-timeout = "20s"
 ping-interval = "25s"

@@ -1,20 +1,16 @@
 {
-    "files.exclude": {
-        "**/.git": true,
-        "target": true
-    },
-    "errorLens.enabled": true,
-    "[rust]": {
-        "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    },
-    "[toml]": {
-        "editor.defaultFormatter": "tamasfe.even-better-toml"
-    },
-    "rust-analyzer.diagnostics.enable": true,
-    "rust-analyzer.imports.granularity.group": "crate",
-    "rust-analyzer.cargo.features": "all",
-    "chat.tools.terminal.autoApprove": {
-        "cargo build": true,
-        "cargo expand": true
-    }
+	"files.exclude": {
+		"**/.git": true,
+		"target": true
+	},
+	"errorLens.enabled": true,
+	"[rust]": {
+		"editor.defaultFormatter": "rust-lang.rust-analyzer",
+	},
+	"[toml]": {
+		"editor.defaultFormatter": "tamasfe.even-better-toml"
+	},
+	"rust-analyzer.diagnostics.enable": true,
+	"rust-analyzer.imports.granularity.group": "crate",
+	"rust-analyzer.cargo.features": "all",
 }

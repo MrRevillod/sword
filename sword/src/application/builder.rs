@@ -14,6 +14,7 @@ use sword_core::{
     Config, ConfigRegistrar, DependencyContainer, Provider, State,
     layers::LayerStack, sword_error,
 };
+use sword_layers::tracing::{TracingConfig, TracingSubscriber};
 
 use tower::{Layer, Service};
 
@@ -103,6 +104,10 @@ impl ApplicationBuilder {
     pub fn from_config(config: Config) -> Self {
         let state = State::new();
         state.insert(config.clone());
+
+        let tracing_config = config.get_or_default::<TracingConfig>();
+        let tracing_status = TracingSubscriber::init_once(tracing_config.clone());
+        TracingSubscriber::emit_init_status_log(tracing_status, &tracing_config);
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&state, &config)

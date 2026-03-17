@@ -82,17 +82,9 @@ impl Application {
         }
     }
 
-    #[cfg(feature = "web-controllers")]
-    /// Returns a clone of the internal Axum router for testing purposes.
-    ///
-    /// This method provides access to the underlying Axum router for integration
-    /// testing with axum-test or similar tools.
+    #[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
     pub fn router(&self) -> axum::Router {
         match &self.engine {
-            #[cfg(any(
-                feature = "web-controllers",
-                feature = "socketio-controllers"
-            ))]
             ApplicationEngine::Web(app) => app.router(),
         }
     }

@@ -1,5 +1,5 @@
+use super::config::SocketIoParser;
 use super::error::SocketError;
-use crate::controllers::socketio::SocketIoParser;
 
 use axum::http::Extensions as HttpExtensions;
 use bytes::Bytes;

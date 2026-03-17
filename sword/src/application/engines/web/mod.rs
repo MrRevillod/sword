@@ -20,7 +20,6 @@ pub use router::WebRouter;
 pub struct WebApplication {
     state: State,
     router: Router<State>,
-
     app_config: ApplicationConfig,
 }
 
@@ -32,17 +31,20 @@ impl WebApplication {
         controller_registry: &ControllerRegistry,
     ) -> Self {
         let app_config = config.get_or_default::<ApplicationConfig>();
+        let web_config = app_config.web.clone();
+        #[cfg(feature = "socketio-controllers")]
         let socketio_config = config.get_or_default::<SocketIoServerConfig>();
 
         let http_router = WebRouter::new(
             state.clone(),
-            app_config.clone(),
+            app_config.web.clone(),
             #[cfg(feature = "socketio-controllers")]
             socketio_config.clone(),
         );
+
         let mut router = http_router.build(layer_stack, controller_registry);
 
-        if let Some(prefix) = &app_config.web.web_router_prefix {
+        if let Some(prefix) = &web_config.web_router_prefix {
             router = Router::new().nest(prefix, router);
         }
 
@@ -57,7 +59,6 @@ impl WebApplication {
 
     pub async fn start(&self) {
         let app = self.router.clone().with_state(self.state.clone());
-        println!("Starting Sword application...");
 
         let listener = TcpListener::bind(&format!(
             "{}:{}",
@@ -116,11 +117,11 @@ impl WebApplication {
         let ctrl_c = async {
             tokio::signal::ctrl_c().await.unwrap_or_else(|err| {
                 sword_error! {
-                        title: "Failed to install Ctrl+C handler",
-                        reason: err,
-                        context: {
-                            "source" => "WebApplication::graceful_signal",
-                        },
+                    title: "Failed to install Ctrl+C handler",
+                    reason: err,
+                    context: {
+                        "source" => "WebApplication::graceful_signal",
+                    },
                 }
             });
         };
@@ -131,11 +132,11 @@ impl WebApplication {
                 .unwrap_or_else(|err| {
                     sword_error! {
                         title: "Failed to install SIGTERM handler",
-                            reason: err,
-                            context: {
-                                "signal" => "SIGTERM",
-                                "source" => "WebApplication::graceful_signal",
-                            },
+                        reason: err,
+                        context: {
+                            "signal" => "SIGTERM",
+                            "source" => "WebApplication::graceful_signal",
+                        },
                     }
                 })
                 .recv()
@@ -147,10 +148,18 @@ impl WebApplication {
 
         tokio::select! {
             _ = ctrl_c => {
-                println!(" Shutdown signal received, starting graceful shutdown...");
+                tracing::info!(
+                    target: "sword.startup.signal",
+                    signal = "SIGINT",
+                    "Shutdown signal received, starting graceful shutdown"
+                );
             },
             _ = terminate => {
-                println!(" Shutdown signal received, starting graceful shutdown...");
+                tracing::info!(
+                    target: "sword.startup.signal",
+                    signal = "SIGTERM",
+                    "Shutdown signal received, starting graceful shutdown"
+                );
             },
         }
     }
