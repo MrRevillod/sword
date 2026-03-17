@@ -1,8 +1,8 @@
-use crate::adapters::AdapterRegistry;
-use crate::application::Application;
+use crate::application::engines::web::WebApplication;
+use crate::application::{Application, ApplicationEngine};
+use crate::controllers::ControllerRegistry;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
-use crate::runtimes::http::HttpRuntime;
 
 use axum::{
     extract::Request as AxumRequest, response::IntoResponse, routing::Route,
@@ -11,16 +11,17 @@ use axum::{
 use std::convert::Infallible;
 use std::path::Path;
 use sword_core::{
-    Config, ConfigRegistrar, DependencyContainer, Provider, StartupPhase, State,
+    Config, ConfigRegistrar, DependencyContainer, Provider, State,
     layers::LayerStack, sword_error,
 };
+use sword_layers::tracing::{TracingConfig, TracingSubscriber};
 
 use tower::{Layer, Service};
 
 pub struct ApplicationBuilder {
     state: State,
     container: DependencyContainer,
-    adapter_registry: AdapterRegistry,
+    controller_registry: ControllerRegistry,
     layer_stack: LayerStack<State>,
     pub config: Config,
 }
@@ -34,7 +35,6 @@ impl ApplicationBuilder {
             .build()
             .unwrap_or_else(|err| {
                 sword_error! {
-                    phase: StartupPhase::Config,
                     title: "Failed to load required configuration file",
                     reason: err,
                     context: {
@@ -105,6 +105,10 @@ impl ApplicationBuilder {
         let state = State::new();
         state.insert(config.clone());
 
+        let tracing_config = config.get_or_default::<TracingConfig>();
+        let tracing_status = TracingSubscriber::init_once(tracing_config.clone());
+        TracingSubscriber::emit_init_status_log(tracing_status, &tracing_config);
+
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&state, &config)
         }
@@ -113,7 +117,7 @@ impl ApplicationBuilder {
             state,
             config,
             container: DependencyContainer::new(),
-            adapter_registry: AdapterRegistry::new(),
+            controller_registry: ControllerRegistry::new(),
             layer_stack: LayerStack::new(),
         }
     }
@@ -130,7 +134,7 @@ impl ApplicationBuilder {
         ));
 
         M::register_components(self.container.component_registry());
-        M::register_adapters(&self.adapter_registry);
+        M::register_controllers(&self.controller_registry);
 
         self
     }
@@ -172,9 +176,22 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(mut self) -> Application {
+        if cfg!(all(
+            feature = "web-controllers",
+            feature = "grpc-controllers"
+        )) {
+            sword_error! {
+                title: "Multiple application types enabled",
+                reason: "Only one app type feature can be enabled at a time",
+                hints: [
+                    "Enable only one of `web-controllers` or `grpc-controllers`",
+                    "Use controller features that match the selected app type",
+                ],
+            }
+        }
+
         self.container.build_all(&self.state).unwrap_or_else(|err| {
             sword_error! {
-                phase: StartupPhase::DI,
                 title: "Failed to build dependency injection container",
                 reason: err,
                 context: {
@@ -192,14 +209,14 @@ impl ApplicationBuilder {
 
         let layer_stack = std::mem::take(&mut self.layer_stack);
 
-        let http_runtime = HttpRuntime::new(
+        let web_application = WebApplication::new(
             self.state.clone(),
-            self.config.clone(),
+            &self.config,
             layer_stack,
-            &self.adapter_registry,
+            &self.controller_registry,
         );
 
-        Application::new(http_runtime, self.config)
+        Application::new(ApplicationEngine::Web(web_application), self.config)
     }
 }
 

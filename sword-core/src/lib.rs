@@ -1,11 +1,11 @@
 mod config;
+#[doc(hidden)]
 pub mod error;
 mod injectables;
 pub mod layers;
 mod state;
 
 pub use config::*;
-pub use error::*;
 pub use injectables::*;
 pub use state::*;
 

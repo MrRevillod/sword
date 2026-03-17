@@ -1,10 +1,26 @@
 use axum_test::TestServer;
 use sword::prelude::*;
+use sword_layers::prelude::{CorsConfig, CorsLayer};
 
-#[socketio_adapter("/socket")]
-struct TestSocketIOAdapter;
+fn cors_layer() -> tower_http::cors::CorsLayer {
+    CorsLayer::new(&CorsConfig {
+        enabled: true,
+        allow_origins: Some(vec!["http://localhost:3000".to_string()]),
+        allow_methods: Some(vec!["GET".to_string(), "POST".to_string()]),
+        allow_headers: Some(vec![
+            "Content-Type".to_string(),
+            "Authorization".to_string(),
+        ]),
+        allow_credentials: Some(true),
+        max_age: None,
+        display: false,
+    })
+}
 
-impl TestSocketIOAdapter {
+#[controller(kind = Controller::SocketIo, namespace = "/socket")]
+struct TestSocketIoController;
+
+impl TestSocketIoController {
     #[on("connection")]
     async fn on_connect(&self, _: SocketContext) {
         println!("Client connected via test");
@@ -19,13 +35,16 @@ impl TestSocketIOAdapter {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestSocketIOAdapter>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestSocketIoController>();
     }
 }
 
 fn test_server() -> TestServer {
-    let app = Application::builder().with_module::<TestModule>().build();
+    let app = Application::builder()
+        .with_module::<TestModule>()
+        .with_layer(cors_layer())
+        .build();
 
     TestServer::new(app.router()).unwrap()
 }
@@ -116,7 +135,7 @@ async fn socketio_handshake_without_cors() {
 #[tokio::test]
 async fn cors_doesnt_break_rest() {
     // Add a simple REST controller
-    #[controller("/api")]
+    #[controller(kind = Controller::Web, path = "/api")]
     struct ApiController;
 
     impl ApiController {
@@ -129,14 +148,15 @@ async fn cors_doesnt_break_rest() {
     struct TestModuleWithRest;
 
     impl Module for TestModuleWithRest {
-        fn register_adapters(adapters: &AdapterRegistry) {
-            adapters.register::<TestSocketIOAdapter>();
-            adapters.register::<ApiController>();
+        fn register_controllers(controllers: &ControllerRegistry) {
+            controllers.register::<TestSocketIoController>();
+            controllers.register::<ApiController>();
         }
     }
 
     let app = Application::builder()
         .with_module::<TestModuleWithRest>()
+        .with_layer(cors_layer())
         .build();
 
     let test = TestServer::new(app.router()).unwrap();

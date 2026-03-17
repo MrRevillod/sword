@@ -1,0 +1,18 @@
+[package]
+name = "socketio-controllers-example"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sword = { workspace = true, features = [
+    "validation-validator",
+    "socketio-controllers",
+] }
+
+uuid = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+validator = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+chrono = { workspace = true }

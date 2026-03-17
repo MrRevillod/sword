@@ -1,4 +1,4 @@
-mod adapters;
+mod controllers;
 mod core;
 mod interceptor_derive;
 mod shared;
@@ -9,27 +9,27 @@ use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("GET", attr, item)
+    controllers::web::attributes::attribute("GET", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("POST", attr, item)
+    controllers::web::attributes::attribute("POST", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("PUT", attr, item)
+    controllers::web::attributes::attribute("PUT", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("DELETE", attr, item)
+    controllers::web::attributes::attribute("DELETE", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::http::attributes::attribute("PATCH", attr, item)
+    controllers::web::attributes::attribute("PATCH", attr, item)
 }
 
 /// Defines an HTTP controller with a base path.
@@ -41,19 +41,19 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[controller("/base_path")]
+/// #[controller(kind = Controller::Web, path = "/base_path")]
 /// struct MyController {}
 ///
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> HttpResult {
+///     async fn my_handler(&self) -> Result {
 ///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }
 /// ```
 #[proc_macro_attribute]
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_controller(attr, item)
+    controllers::expand_controller(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -69,16 +69,17 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// struct MyInterceptor;
 ///
 /// // then implement some Interceptor trait variants
-/// // depending on the adapter type (e. g. OnRequest, OnConnect.)
+/// // depending on the controller kind (e.g. OnRequest, OnConnect.)
+/// ```
 #[proc_macro_derive(Interceptor)]
 pub fn derive_interceptor(input: TokenStream) -> TokenStream {
     interceptor_derive::derive_interceptor(input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-/// Applies the interceptor to the current scope.
-/// This macro can be used to apply an `Interceptor` to different `Adapter` types,
-/// such as REST controllers or Socket.IO adapters.
+/// Marks a route or controller with one or more interceptors.
+/// This macro can be used to apply an `Interceptor` to different controller kinds,
+/// such as web controllers or Socket.IO controllers.
 #[proc_macro_attribute]
 pub fn interceptor(attr: TokenStream, item: TokenStream) -> TokenStream {
     let _ = attr;
@@ -260,7 +261,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match adapters::derive_http_error(input) {
+    match controllers::derive_http_error(input) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
@@ -525,7 +526,6 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                     .build()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
-                            phase: ::sword::internal::core::StartupPhase::Runtime,
                             title: "Failed to build Tokio runtime",
                             reason: err,
                             context: {
@@ -545,7 +545,6 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
                     .build()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
-                            phase: ::sword::internal::core::StartupPhase::Runtime,
                             title: "Failed to build Tokio runtime",
                             reason: err,
                             context: {
@@ -561,30 +560,7 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-#[cfg(feature = "adapter-socketio")]
-/// Marks a struct as a Socket.IO adapter.
-/// This macro should be used in combination with the `#[on]`
-/// macro for handler implementation.
-///
-/// ### Usage
-/// ```rust,ignore
-/// #[socketio_adapter("/chat")]
-/// struct ChatSocket;
-///
-/// impl ChatSocket {
-///     #[on("connection")]
-///     async fn on_connect(&self, ctx: SocketContext) {
-///         println!("Client connected: {}", ctx.id());
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_socketio_adapter(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
-}
-
-#[cfg(feature = "adapter-socketio")]
+#[cfg(feature = "socketio-controllers")]
 /// Unified handler attribute for Socket.IO events.
 ///
 /// ### Event Types
@@ -595,20 +571,20 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Parameters
 /// All handlers receive `&self` and `ctx: SocketContext` which provides access to:
-/// - Socket operations via `ctx.socket`
+/// - Socket operations via `ctx`
 /// - Message data via `ctx.try_data::<T>()`
 /// - Event name via `ctx.event()`
 /// - Acknowledgments via `ctx.ack()`
 ///
 /// ### Usage
 /// ```rust,ignore
-/// #[socketio_adapter("/chat")]
-/// pub struct ChatAdapter { ... }
+/// #[controller(kind = Controller::SocketIo, namespace = "/chat")]
+/// pub struct ChatController { ... }
 ///
-/// impl ChatAdapter {
+/// impl ChatController {
 ///     #[on("connection")]
 ///     async fn on_connect(&self, ctx: SocketContext) {
-///         println!("Client connected: {}", ctx.socket.id);
+///         println!("Client connected: {}", ctx.id());
 ///     }
 ///
 ///     #[on("message")]
@@ -620,6 +596,6 @@ pub fn socketio_adapter(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn on(attr: TokenStream, item: TokenStream) -> TokenStream {
-    adapters::expand_on_handler(attr, item)
+    controllers::expand_on_handler(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }

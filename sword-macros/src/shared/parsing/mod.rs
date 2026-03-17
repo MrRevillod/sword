@@ -1,6 +1,6 @@
-mod adapters;
+mod controllers;
 
-pub use adapters::CommonHttpAdapterInput;
+pub use controllers::{CommonControllerInput, ParsedControllerKind};
 use syn::{Fields, Ident, ItemStruct, Type};
 
 pub struct StructFields;

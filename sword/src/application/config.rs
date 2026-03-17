@@ -1,4 +1,4 @@
-use console::style;
+use super::engines::web::WebApplicationConfig;
 use serde::{Deserialize, Serialize};
 use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
 
@@ -25,27 +25,13 @@ pub struct ApplicationConfig {
     /// Defaults `false`
     #[serde(rename = "graceful-shutdown")]
     pub graceful_shutdown: bool,
-}
 
-impl ApplicationConfig {
-    pub fn display(&self) {
-        println!();
-        if let Some(name) = &self.name {
-            println!("{}", style(format!("{} Configuration:", name)).bold());
-        } else {
-            println!("{}", style("Application Configuration:").bold());
-        }
-
-        if self.graceful_shutdown {
-            println!("  ↳  Graceful Shutdown: enabled");
-        } else {
-            println!("  ↳  {}", style("Graceful Shutdown: disabled").red());
-        }
-
-        if let Some(env) = &self.environment {
-            println!("  ↳  Environment: {}", env);
-        }
-    }
+    /// Web server settings flattened into `[application]`.
+    ///
+    /// This keeps the TOML ergonomic while still using a dedicated struct
+    /// for web-specific configuration.
+    #[serde(flatten)]
+    pub web: WebApplicationConfig,
 }
 
 impl ConfigItem for ApplicationConfig {

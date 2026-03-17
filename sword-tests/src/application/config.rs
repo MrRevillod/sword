@@ -11,7 +11,7 @@ struct MyConfig {
     env_user: String,
 }
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 struct TestController {
     custom_config: MyConfig,
 }
@@ -28,8 +28,8 @@ impl TestController {
 struct ConfigModule;
 
 impl Module for ConfigModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

@@ -2,35 +2,35 @@
 
 > <img src="https://avatars.githubusercontent.com/u/228345998?s=200&v=4" align="right" width="120"/>
 
-Structured web framework for rust built on top tokio ecosystem.
-Designed to build server application with less boilerplate and more simplicity.  
+Structured web framework for Rust built on top of the Tokio ecosystem.
+Designed to build server applications with less boilerplate and more simplicity.
 It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 
 > Sword is in active development, expect breaking changes.
 
 ## Features
 
-- **Web Adapters** - Support for REST (Axum) and SocketIO (Socketioxide) adapters
+- **Web Application Type** - Axum-based application stack with web and Socket.IO controllers
 - **Macro-based routing** - Clean and intuitive route definitions
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` crate and extensible validation system
-- **HTTP responses standarization** - Consistent response formats out of the box
+- **HTTP response standardization** - Consistent response formats out of the box
 - **Dependency Injection** - Built-in DI support with declarative macros
-- **Middleware and Interceptors** - Easy to use middleware and interceptor system
-- TOML Config loader - Built-in support for loading configuration from TOML files
+- **Tower layers + interceptors** - Compose global layers and typed interceptors
+- **TOML config loader** - Built-in support for loading configuration from TOML files
 
 ## Coming Soon
 
-- **GraphQL Adapter** - Support for GraphQL APIs
-- **gRPC Adapter** - Support for gRPC services with Tonic
+- **GraphQL Controller** - Support for GraphQL endpoints on the web application type
+- **gRPC Application Type** - Support for gRPC services with Tonic
 - **RabbitMQ Integration** - Built-in support for RabbitMQ messaging
 
-## Web Adapters Examples
+## Controller Example
 
 ```rust
 use sword::prelude::*;
 
-#[controller("/users")]
+#[controller(kind = Controller::Web, path = "/users")]
 pub struct UsersController {
     hasher: Arc<Hasher>,
     users: Arc<UserRepository>,
@@ -38,14 +38,14 @@ pub struct UsersController {
 
 impl UsersController {
     #[get("/")]
-    async fn get_users(&self, req: Request) -> HttpResult {
+    async fn get_users(&self, req: Request) -> Result {
         let data = self.users.find_all().await?;
 
         Ok(JsonResponse::Ok().data(data).request_id(req.id()))
     }
 
     #[post("/")]
-    async fn create_user(&self, req: Request) -> HttpResult {
+    async fn create_user(&self, req: Request) -> Result {
         let body = req.body_validator::<CreateUserDto>()?;
         let user = User::new(body.username, self.hasher.hash(&body.password)?);
 
@@ -67,9 +67,17 @@ impl UsersController {
 
 ## Full Examples
 
-- [Rest API](./examples/http-controllers-adapter)
-- [SocketIO Adapter Chat](./examples/socketio-adapter)
-- [Interceptors (Both adapters)](./examples/interceptors)
+- [Controllers API](./examples/web-controllers)
+- [SocketIO Controllers Chat](./examples/socketio-controllers)
+- [Interceptors (Web + Socket.IO controllers)](./examples/interceptors)
+
+## Application Type Features
+
+- `web-controllers` (default): enables the web application type
+- `grpc-controllers`: enables the gRPC application type
+- `socketio-controllers`: enables Socket.IO controllers for web applications
+- `multipart`: enables multipart request extraction
+- `validation-validator`: enables `validator` integration
 
 ## Changelog
 

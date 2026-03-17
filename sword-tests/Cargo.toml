@@ -10,12 +10,13 @@ publish = false
 
 [dependencies]
 sword = { workspace = true, features = [
+	"web-controllers",
+    "socketio-controllers",
     "multipart",
     "validation-validator",
-    "adapter-socketio",
 ] }
 
-sword-layers = { workspace = true, features = ["helmet"] }
+sword-layers = { workspace = true, features = ["helmet", "compression"] }
 tokio = { workspace = true }
 axum = { workspace = true }
 serde = { workspace = true }

@@ -1,35 +1,7 @@
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, Clone, Copy)]
-pub enum StartupPhase {
-    Config,
-    DI,
-    Runtime,
-    HttpAdapter,
-    SocketIoAdapter,
-    Interceptor,
-    MacroInvariant,
-}
-
-impl Display for StartupPhase {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let phase = match self {
-            Self::Config => "CONFIG",
-            Self::DI => "DI",
-            Self::Runtime => "RUNTIME",
-            Self::HttpAdapter => "HTTP_ADAPTER",
-            Self::SocketIoAdapter => "SOCKETIO_ADAPTER",
-            Self::Interceptor => "INTERCEPTOR",
-            Self::MacroInvariant => "MACRO_INVARIANT",
-        };
-
-        write!(f, "{phase}")
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct StartupDiagnostic {
-    _phase: StartupPhase,
     title: String,
     reason: String,
     context: Vec<(String, String)>,
@@ -39,7 +11,6 @@ pub struct StartupDiagnostic {
 #[macro_export]
 macro_rules! sword_error {
     (
-        phase: $phase:expr,
         title: $title:expr,
         reason: $reason:expr
         $(, context: { $($context_key:expr => $context_value:expr),* $(,)? })?
@@ -47,7 +18,7 @@ macro_rules! sword_error {
         $(,)?
     ) => {{
         let mut diagnostic =
-            $crate::error::StartupDiagnostic::new($phase, $title, ($reason).to_string());
+            $crate::error::StartupDiagnostic::new($title, ($reason).to_string());
 
         $(
             $(
@@ -69,13 +40,8 @@ macro_rules! sword_error {
 }
 
 impl StartupDiagnostic {
-    pub fn new(
-        phase: StartupPhase,
-        title: impl Into<String>,
-        reason: impl Into<String>,
-    ) -> Self {
+    pub fn new(title: impl Into<String>, reason: impl Into<String>) -> Self {
         Self {
-            _phase: phase,
             title: title.into(),
             reason: reason.into(),
             context: Vec::new(),
@@ -134,6 +100,18 @@ impl Display for StartupDiagnostic {
 }
 
 pub fn emit_fatal(diagnostic: StartupDiagnostic) -> ! {
-    eprintln!("{diagnostic}");
+    if tracing::dispatcher::has_been_set() {
+        tracing::error!(
+            target: "sword.startup.error",
+            title = %diagnostic.title,
+            reason = %diagnostic.reason,
+            context = ?diagnostic.context,
+            hints = ?diagnostic.hints,
+            "{diagnostic}"
+        );
+    } else {
+        eprintln!("{diagnostic}");
+    }
+
     std::process::exit(1);
 }

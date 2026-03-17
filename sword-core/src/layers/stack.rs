@@ -25,7 +25,7 @@ where
     /// Add a layer to the stack.
     ///
     /// Layers are applied in FIFO order when `apply()` is called. Each layer will
-    /// wrap the router after all adapters have been registered.
+    /// wrap the router after all controllers have been registered.
     pub fn push<L>(&mut self, layer: L)
     where
         L: Layer<Route> + Clone + Send + Sync + 'static,

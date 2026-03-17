@@ -1,5 +1,6 @@
-pub use crate::adapters::AdapterRegistry;
 pub use crate::application::*;
+pub use crate::controllers::Controller;
+pub use crate::controllers::ControllerRegistry;
 pub use crate::module::Module;
 pub use sword_macros::{Interceptor, interceptor, main};
 
@@ -10,37 +11,33 @@ pub use sword_core::{
 #[cfg(feature = "validation-validator")]
 pub use validator::Validate;
 
-#[cfg(feature = "adapter-http-controllers")]
-pub use crate::adapters::http::{
+#[cfg(feature = "web-controllers")]
+pub use crate::controllers::web::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
-    HttpInterceptorResult, HttpResult, JsonResponse, JsonResponseBody, Next,
-    OnRequest, OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig,
-    Redirect, Request, RequestError, StreamRequest, controller,
+    HttpInterceptorResult, JsonResponse, JsonResponseBody, Next, OnRequest,
+    OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig, Redirect,
+    Request, RequestError, Result, StreamRequest, controller,
     cookies as sword_cookies, delete, get, patch, post, put,
 };
 
 pub use axum::body::Bytes;
 pub use axum::http::{HeaderMap as Headers, Method, Uri};
 
-#[cfg(all(
-    feature = "validation-validator",
-    feature = "adapter-http-controllers"
-))]
-pub use crate::adapters::http::ValidatorRequestValidation;
+#[cfg(all(feature = "validation-validator", feature = "web-controllers"))]
+pub use crate::controllers::web::ValidatorRequestValidation;
 
-#[cfg(all(feature = "multipart", feature = "adapter-http-controllers"))]
-pub use crate::adapters::http::multipart as sword_multipart;
+#[cfg(all(feature = "multipart", feature = "web-controllers"))]
+pub use crate::controllers::web::multipart as sword_multipart;
 
-#[cfg(feature = "adapter-socketio")]
-pub use crate::adapters::socketio::{
+#[cfg(feature = "socketio-controllers")]
+pub use crate::controllers::socketio::{
     AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
     LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
     SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData, on,
-    socketio_adapter,
 };
 
-#[cfg(feature = "adapter-socketio")]
-pub use crate::runtimes::http::SocketIoParser;
+#[cfg(feature = "socketio-controllers")]
+pub use crate::controllers::socketio::SocketIoParser;
 
 #[doc(hidden)]
 pub use sword_core::{
@@ -48,12 +45,12 @@ pub use sword_core::{
 };
 
 #[doc(hidden)]
-pub use crate::{adapters::Adapter, interceptor::Interceptor};
+pub use crate::{controllers::ControllerSpec, interceptor::Interceptor};
 
 #[doc(hidden)]
-#[cfg(feature = "adapter-http-controllers")]
-pub use crate::adapters::http::HttpController;
+#[cfg(feature = "web-controllers")]
+pub use crate::controllers::web::WebController;
 
 #[doc(hidden)]
-#[cfg(feature = "adapter-socketio")]
-pub use crate::adapters::socketio::SocketIoAdapter;
+#[cfg(feature = "socketio-controllers")]
+pub use crate::controllers::socketio::SocketIoController;

@@ -1,10 +1,10 @@
-use crate::adapters::AdapterRegistry;
+use crate::controllers::ControllerRegistry;
 use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 
 /// A trait for defining modules in the application.
 ///
 /// `Module` represents a cohesive unit of functionality that can be
-/// plugged into the application. Modules can register adapters,
+/// plugged into the application. Modules can register controllers,
 /// components, and providers to extend the application's capabilities.
 ///
 /// # Example
@@ -15,8 +15,8 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 /// pub struct MyModule;
 ///
 /// impl Module for MyModule {
-///     fn register_adapters(adapters: &AdapterRegistry) {
-///         adapters.register::<MyController>();  // Register HTTP controller
+///     fn register_controllers(controllers: &ControllerRegistry) {
+///         controllers.register::<MyController>();  // Register HTTP controller
 ///     }
 ///
 ///     fn register_components(components: &ComponentRegistry) {
@@ -31,10 +31,10 @@ use sword_core::{ComponentRegistry, Config, ProviderRegistry};
 #[allow(async_fn_in_trait)]
 #[allow(unused_variables)]
 pub trait Module {
-    /// Register adapters provided by the module.
-    /// A `Adapter` is a way to represent entry points into the application,
+    /// Register controllers provided by the module.
+    /// A `Controller` is a way to represent entry points into the application,
     /// such as HTTP controllers, Socket.IO Handlers, or gRPC services.
-    fn register_adapters(adapters: &AdapterRegistry) {}
+    fn register_controllers(controllers: &ControllerRegistry) {}
 
     /// Register component structs marked with `#[injectable]`
     fn register_components(components: &ComponentRegistry) {}

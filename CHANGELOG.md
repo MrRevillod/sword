@@ -4,6 +4,9 @@
 
 ### Added
 
+- Added `StreamRequest` extractor and stream interceptor traits (`OnRequestStream`, `OnRequestStreamWithConfig`) for non-buffered request handling.
+- Added app type feature naming foundation: `web-controllers` and `grpc-controllers`.
+
 - New `next()` method on `Request` struct. See `Changed` section for more details.
 - Added `Module` trait for creating and registering controllers and injectables as a modules.
 
@@ -17,17 +20,23 @@
 
 - Added `Compression` middleware based on `tower_http::compression::CompressionLayer`. The configuration can be set in the config file under the `compression` key.
 
-- Added `AdapterRegistry` system for managing multiple adapter instances in the application and modules.
+- Added `ControllerRegistry` system for managing multiple controller instances in the application and modules.
 
 - Added `RequestId` middleware for generating and attaching unique request IDs to each incoming request. This middleware uses the tower-http `RequestIdLayer` with a UUID generator under the hood.
 
 - Added unified error handling macros that works with `thiserror` crate. It allows to map custom errors to standarized JSON error responses.
 
-- Added `SocketIo` adapter for handling SocketIO connections.
+- Added `SocketIo` controllers for handling SocketIO connections.
 
 - Added `Interceptor` trait for creating custom interceptors that can access and modify requests and responses.
 
 ### Changed
+
+- Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary application module is now `application::web`.
+- Refactored server config to use `[server]` with `web-router-prefix`, `body-limit`, and `request-timeout`.
+- Runtime now applies only mandatory built-ins by default (`not_found`, `body_limit`, `request_timeout`); optional layers are explicit via `.with_layer(...)`.
+- Replaced `HttpResult` usage with `Result` alias (`Result<T = JsonResponse, E = JsonResponse>`) in controller APIs.
+- Updated macros/docs/examples to match new naming and APIs, including workspace/metadata consistency fixes.
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.
 
@@ -41,7 +50,7 @@
 
 - The `Request Timeout` middleware now can be configured with more human-friendly duration format using `duration-str` crate.
 
-- The associated type in `Module` trait is not required anymore. Use the `register_adapters` method to register rest controllers and other adapter kinds.
+- The associated type in `Module` trait is not required anymore. Use the `register_controllers` method to register web controllers and other controller kinds.
 
 - Removed wrapper types for Axum extractors (`Method`, `Uri`, `Headers`, `Bytes`). These types now use Axum's native types directly with `FromRequest`/`FromRequestParts` trait implementations, eliminating unnecessary encapsulation.
 

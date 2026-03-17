@@ -24,7 +24,7 @@ impl OnRequest for MwWithState {
     }
 }
 
-#[controller("/test")]
+#[controller(kind = Controller::Web, path = "/test")]
 #[interceptor(ExtensionsTestMiddleware)]
 struct TestController {}
 
@@ -42,7 +42,7 @@ impl TestController {
 
     #[get("/middleware-state")]
     #[interceptor(MwWithState)]
-    async fn middleware_state(&self, req: Request) -> HttpResult {
+    async fn middleware_state(&self, req: Request) -> Result {
         let port = req.extensions.get::<u16>().cloned().unwrap_or(0);
         let message = req.extensions.get::<String>().cloned().unwrap_or_default();
 
@@ -60,8 +60,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 

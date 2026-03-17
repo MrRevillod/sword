@@ -8,12 +8,12 @@ use sword::prelude::*;
 
 use crate::utils::TempFile;
 
-#[controller("/")]
+#[controller(kind = Controller::Web, path = "/")]
 struct TestController {}
 
 impl TestController {
     #[post("/multipart")]
-    async fn hello(&self, req: Request) -> HttpResult {
+    async fn hello(&self, req: Request) -> Result {
         let mut fields = vec![];
         let mut multipart = req.multipart().await?;
 
@@ -46,8 +46,8 @@ impl TestController {
 struct TestModule;
 
 impl Module for TestModule {
-    fn register_adapters(adapters: &AdapterRegistry) {
-        adapters.register::<TestController>();
+    fn register_controllers(controllers: &ControllerRegistry) {
+        controllers.register::<TestController>();
     }
 }
 
