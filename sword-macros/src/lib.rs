@@ -32,12 +32,14 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PATCH", attr, item)
 }
 
-/// Defines an HTTP controller with a base path.
+/// Defines a Sword controller.
 /// Route handlers are declared directly inside the `impl` block using method attributes
 /// such as `#[get]`, `#[post]`, `#[put]`, `#[patch]`, and `#[delete]`.
 ///
 /// ### Parameters
-/// - `base_path`: The base path for the controller, e.g., "/api
+/// - `kind`: Controller kind. Use `Controller::Web` or `Controller::SocketIo`.
+/// - `path`: Required when `kind = Controller::Web`.
+/// - `namespace`: Required when `kind = Controller::SocketIo`.
 ///
 /// ### Usage
 /// ```rust,ignore
@@ -49,6 +51,16 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     async fn my_handler(&self) -> Result {
 ///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
+/// }
+/// ```
+///
+/// ```rust,ignore
+/// #[controller(kind = Controller::SocketIo, namespace = "/chat")]
+/// struct ChatController;
+///
+/// impl ChatController {
+///     #[on("connection")]
+///     async fn on_connect(&self, _ctx: SocketContext) {}
 /// }
 /// ```
 #[proc_macro_attribute]

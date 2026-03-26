@@ -22,16 +22,20 @@ use std::fmt::Display;
 /// ```
 ///
 /// ## Applying the Interceptor
-/// To apply this interceptor, use the `#[interceptor(...)]` attribute on an `#[on("connection")]` handler:
+/// For Socket.IO controllers, apply this interceptor at controller level using
+/// `#[interceptor(...)]` on the struct annotated with `#[controller(...)]`.
 /// ```rust,ignore
 /// use sword::prelude::*;
 ///
+/// #[derive(Interceptor)]
+/// pub struct MyInterceptor;
+///
 /// #[controller(kind = Controller::SocketIo, namespace = "/my_namespace")]
+/// #[interceptor(MyInterceptor)]
 /// pub struct MyController;
 ///
 /// impl MyController {
 ///     #[on("connection")]
-///     #[interceptor(MyInterceptor)]
 ///     async fn handle_connection(&self, socket: SocketContext) {
 ///        // handle the initial connection (logging, authentication)
 ///     }

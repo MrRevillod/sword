@@ -6,7 +6,7 @@ port = 8081
 request-timeout = { enabled = true, timeout = "15s", display = true }
 body-limit = { max-size = "5MB", display = true }
 
-[socketio-server]
+[socketio]
 enabled = true
 parser = "common"
 transports = ["websocket", "polling"]

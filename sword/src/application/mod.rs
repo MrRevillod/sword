@@ -73,6 +73,16 @@ impl Application {
     /// requests. It will bind to the host and port specified in the
     /// server configuration.
     pub async fn run(&self) {
+        let app_config = self.config.get_or_default::<ApplicationConfig>();
+
+        tracing::info!(
+            target: "sword.startup.app",
+            name = app_config.name.as_deref().unwrap_or("unknown"),
+            environment = app_config.environment.as_deref().unwrap_or("unknown"),
+            graceful_shutdown = app_config.graceful_shutdown,
+            "Starting Sword application"
+        );
+
         match &self.engine {
             #[cfg(any(
                 feature = "web-controllers",

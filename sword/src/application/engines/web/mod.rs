@@ -58,6 +58,21 @@ impl WebApplication {
     }
 
     pub async fn start(&self) {
+        let bind =
+            format!("{}:{}", self.app_config.web.host, self.app_config.web.port);
+
+        tracing::info!(
+            target: "sword.startup.engine",
+            bind,
+            web_router_prefix = self
+                .app_config
+                .web
+                .web_router_prefix
+                .as_deref()
+                .unwrap_or("none"),
+            "Starting web engine listener"
+        );
+
         let app = self.router.clone().with_state(self.state.clone());
 
         let listener = TcpListener::bind(&format!(
