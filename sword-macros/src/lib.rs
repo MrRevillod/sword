@@ -48,7 +48,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// impl MyController {
 ///     #[get("/sub_path")]
-///     async fn my_handler(&self) -> Result {
+///     async fn my_handler(&self) -> WebResult {
 ///        Ok(JsonResponse::Ok().message("Hello from MyController"))
 ///     }
 /// }

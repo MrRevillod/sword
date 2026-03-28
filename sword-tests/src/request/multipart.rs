@@ -13,7 +13,7 @@ struct TestController {}
 
 impl TestController {
     #[post("/multipart")]
-    async fn hello(&self, req: Request) -> Result {
+    async fn hello(&self, req: Request) -> WebResult {
         let mut fields = vec![];
         let mut multipart = req.multipart().await?;
 
@@ -52,7 +52,7 @@ impl Module for TestModule {
 }
 
 #[tokio::test]
-async fn exceed_limit() -> Result<(), Box<dyn std::error::Error>> {
+async fn exceed_limit() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -84,7 +84,8 @@ async fn exceed_limit() -> Result<(), Box<dyn std::error::Error>> {
 /// Tests that a file exactly at the body limit (considering multipart overhead) is accepted.
 /// The effective limit is ~975KB due to multipart headers/boundaries overhead.
 #[tokio::test]
-async fn body_limit_exactly_at_limit() -> Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_exactly_at_limit()
+-> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -110,7 +111,8 @@ async fn body_limit_exactly_at_limit() -> Result<(), Box<dyn std::error::Error>>
 }
 
 #[tokio::test]
-async fn body_limit_just_under_limit() -> Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_just_under_limit()
+-> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -136,7 +138,8 @@ async fn body_limit_just_under_limit() -> Result<(), Box<dyn std::error::Error>>
 }
 
 #[tokio::test]
-async fn body_limit_just_over_limit() -> Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_just_over_limit()
+-> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -167,7 +170,7 @@ async fn body_limit_just_over_limit() -> Result<(), Box<dyn std::error::Error>> 
 
 #[tokio::test]
 async fn body_limit_multiple_fields_exceed_limit()
--> Result<(), Box<dyn std::error::Error>> {
+-> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -208,7 +211,7 @@ async fn body_limit_multiple_fields_exceed_limit()
 
 #[tokio::test]
 async fn body_limit_small_fields_within_limit()
--> Result<(), Box<dyn std::error::Error>> {
+-> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();

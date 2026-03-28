@@ -6,7 +6,7 @@ pub use axum_responses::{
 
 pub use sword_macros::HttpError;
 
-pub type Result<T = JsonResponse, E = JsonResponse> = std::result::Result<T, E>;
+pub type WebResult<T = JsonResponse, E = JsonResponse> = std::result::Result<T, E>;
 
 impl From<RequestError> for JsonResponse {
     fn from(error: RequestError) -> JsonResponse {

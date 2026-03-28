@@ -38,14 +38,14 @@ pub struct UsersController {
 
 impl UsersController {
     #[get("/")]
-    async fn get_users(&self, req: Request) -> Result {
+    async fn get_users(&self, req: Request) -> WebResult {
         let data = self.users.find_all().await?;
 
         Ok(JsonResponse::Ok().data(data).request_id(req.id()))
     }
 
     #[post("/")]
-    async fn create_user(&self, req: Request) -> Result {
+    async fn create_user(&self, req: Request) -> WebResult {
         let body = req.body_validator::<CreateUserDto>()?;
         let user = User::new(body.username, self.hasher.hash(&body.password)?);
 

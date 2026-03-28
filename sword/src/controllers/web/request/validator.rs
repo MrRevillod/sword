@@ -65,7 +65,7 @@ impl ValidatorRequestValidation for Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[post("/users")]
-    /// async fn create_user(&self, req: Request) -> Result {
+    /// async fn create_user(&self, req: Request) -> WebResult {
     ///     let user_data: CreateUserRequest = req.body_validator()?;
     ///     
     ///     // now data is guaranteed to be valid
@@ -137,7 +137,7 @@ impl ValidatorRequestValidation for Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/search")]
-    /// async fn search(&self, req: Request) -> Result {
+    /// async fn search(&self, req: Request) -> WebResult {
     ///     let query: SearchQuery = req.query_validator()?.unwrap_or_default();
     ///     
     ///     Ok(JsonResponse::Ok().data(query))

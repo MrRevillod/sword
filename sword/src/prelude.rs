@@ -14,9 +14,9 @@ pub use validator::Validate;
 #[cfg(feature = "web-controllers")]
 pub use crate::controllers::web::{
     ContentDisposition, File, FromRequest, FromRequestParts, HttpError,
-    HttpInterceptorResult, JsonResponse, JsonResponseBody, Next, OnRequest,
-    OnRequestStream, OnRequestStreamWithConfig, OnRequestWithConfig, Redirect,
-    Request, RequestError, Result, StreamRequest, controller,
+    JsonResponse, JsonResponseBody, Next, OnRequest, OnRequestStream,
+    OnRequestStreamWithConfig, OnRequestWithConfig, Redirect, Request, RequestError,
+    StreamRequest, WebInterceptorResult, WebResult, controller,
     cookies as sword_cookies, delete, get, patch, post, put,
 };
 

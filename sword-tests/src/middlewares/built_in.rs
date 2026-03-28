@@ -10,53 +10,53 @@ struct TestController;
 
 impl TestController {
     #[get("/timeout")]
-    async fn timeout(&self) -> Result {
+    async fn timeout(&self) -> WebResult {
         sleep(Duration::from_secs(3)).await;
         Ok(JsonResponse::Ok().message("This should not be reached"))
     }
 
     #[get("/timeout-boundary")]
-    async fn timeout_boundary(&self) -> Result {
+    async fn timeout_boundary(&self) -> WebResult {
         sleep(Duration::from_millis(2000)).await;
         Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/timeout-just-under")]
-    async fn timeout_just_under(&self) -> Result {
+    async fn timeout_just_under(&self) -> WebResult {
         sleep(Duration::from_millis(1900)).await;
         Ok(JsonResponse::Ok().message("This should complete"))
     }
 
     #[get("/timeout-just-over")]
-    async fn timeout_just_over(&self) -> Result {
+    async fn timeout_just_over(&self) -> WebResult {
         sleep(Duration::from_millis(2100)).await;
         Ok(JsonResponse::Ok().message("This should timeout"))
     }
 
     #[get("/no-timeout")]
-    async fn no_timeout(&self) -> Result {
+    async fn no_timeout(&self) -> WebResult {
         Ok(JsonResponse::Ok().message("Quick response"))
     }
 
     #[post("/content-type-json")]
-    async fn content_type_json(&self, req: Request) -> Result {
+    async fn content_type_json(&self, req: Request) -> WebResult {
         let _body: Value = req.body()?;
         Ok(JsonResponse::Ok().message("JSON received"))
     }
 
     #[post("/content-type-form")]
-    async fn content_type_form(&self) -> Result {
+    async fn content_type_form(&self) -> WebResult {
         Ok(JsonResponse::Ok().message("Form data received"))
     }
 
     #[post("/content-type-any")]
-    async fn content_type_any(&self, req: Request) -> Result {
+    async fn content_type_any(&self, req: Request) -> WebResult {
         let _body: String = req.body()?;
         Ok(JsonResponse::Ok().message("Any content type"))
     }
 
     #[get("/no-body")]
-    async fn no_body(&self) -> Result {
+    async fn no_body(&self) -> WebResult {
         Ok(JsonResponse::Ok().message("No body required"))
     }
 }

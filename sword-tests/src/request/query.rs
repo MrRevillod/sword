@@ -74,7 +74,7 @@ pub struct UserController {}
 
 impl UserController {
     #[get("/simple-query")]
-    async fn get_users(&self, req: Request) -> Result {
+    async fn get_users(&self, req: Request) -> WebResult {
         let query: Option<QueryData> = req.query()?;
 
         Ok(JsonResponse::Ok()
@@ -83,7 +83,7 @@ impl UserController {
     }
 
     #[get("/validate-query")]
-    async fn get_users_with_validation(&self, req: Request) -> Result {
+    async fn get_users_with_validation(&self, req: Request) -> WebResult {
         let query: Option<ValidableQueryData> = req.query_validator()?;
 
         Ok(JsonResponse::Ok()
@@ -92,7 +92,7 @@ impl UserController {
     }
 
     #[get("/ergonomic-optional-query")]
-    async fn get_users_with_ergonomic_query(&self, req: Request) -> Result {
+    async fn get_users_with_ergonomic_query(&self, req: Request) -> WebResult {
         let query: OptionalQueryData = req.query()?.unwrap_or_default();
 
         Ok(JsonResponse::Ok()
@@ -104,7 +104,7 @@ impl UserController {
     async fn get_users_with_ergonomic_validated_optional_query(
         &self,
         req: Request,
-    ) -> Result {
+    ) -> WebResult {
         let query: DefaultValidableQueryData =
             req.query_validator()?.unwrap_or_default();
 
@@ -114,7 +114,7 @@ impl UserController {
     }
 
     #[get("/complex-query")]
-    async fn get_users_with_complex_query(&self, req: Request) -> Result {
+    async fn get_users_with_complex_query(&self, req: Request) -> WebResult {
         let query: Option<ComplexQueryData> = req.query()?;
 
         Ok(JsonResponse::Ok()
@@ -123,7 +123,7 @@ impl UserController {
     }
 
     #[get("/pattern-match-query")]
-    async fn get_users_with_pattern_match(&self, req: Request) -> Result {
+    async fn get_users_with_pattern_match(&self, req: Request) -> WebResult {
         match req.query::<OptionalQueryData>()? {
             Some(query) => Ok(JsonResponse::Ok()
                 .data(query)

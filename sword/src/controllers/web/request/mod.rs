@@ -5,7 +5,7 @@ mod parts;
 #[cfg(feature = "validation-validator")]
 mod validator;
 
-use super::interceptor::HttpInterceptorResult;
+use super::interceptor::WebInterceptorResult;
 use axum::{
     body::Body as AxumBody,
     body::Bytes as BodyBytes,
@@ -140,7 +140,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/users/{id}/posts/{post_id}")]
-    /// async fn get_user_post(&self, req: Request) -> Result {
+    /// async fn get_user_post(&self, req: Request) -> WebResult {
     ///     let user_id: u32 = req.param("id")?;
     ///     let post_id: u64 = req.param("post_id")?;
     ///
@@ -213,7 +213,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[post("/users")]
-    /// async fn create_user(&self, req: Request) -> Result {
+    /// async fn create_user(&self, req: Request) -> WebResult {
     ///     let user_data: CreateUserRequest = req.body()?;
     ///     
     ///     // Process user creation...
@@ -280,7 +280,7 @@ impl Request {
     /// ... asuming you have a controller struct ...
     ///
     /// #[get("/search")]
-    /// async fn search(&self, req: Request) -> Result {
+    /// async fn search(&self, req: Request) -> WebResult {
     ///     let query: SearchQuery = req.query()?.unwrap_or_default();
     ///     
     ///     let search_term = query.q.unwrap_or("".into());
@@ -331,7 +331,7 @@ impl Request {
     /// ... asuming controller struct ...
     ///
     /// #[get("/show-cookies")]
-    /// async fn show_cookies(&self, req: Request) -> Result {
+    /// async fn show_cookies(&self, req: Request) -> WebResult {
     ///     let cookies = ctx.cookies()?;
     ///     let session_cookie = cookies.get("session_id");
     ///
@@ -405,7 +405,7 @@ impl Request {
     /// ... asuming a controller struct ...
     ///
     /// #[post("/upload")]
-    /// async fn upload(&self, req: Request) -> Result {
+    /// async fn upload(&self, req: Request) -> WebResult {
     ///     let mut multipart = req.multipart().await?;
     ///     let mut field_names = Vec::new();
     ///
@@ -453,7 +453,7 @@ impl Request {
     ///
     /// This method must be used only in interceptor implementations to
     /// pass control to the next interceptor or the final request handler.
-    pub async fn next(mut self) -> HttpInterceptorResult {
+    pub async fn next(mut self) -> WebInterceptorResult {
         let Some(next) = self.next.take() else {
             tracing::error!(
                 "Attempted to call `next()` on Request in a context that is not a `OnRequest` `Interceptor`"
@@ -550,7 +550,7 @@ impl StreamRequest {
         self.next = Some(next);
     }
 
-    pub async fn next(mut self) -> HttpInterceptorResult {
+    pub async fn next(mut self) -> WebInterceptorResult {
         let Some(next) = self.next.take() else {
             tracing::error!(
                 "Attempted to call `next()` on StreamRequest in a context that is not a `OnRequestStream` `Interceptor`"
