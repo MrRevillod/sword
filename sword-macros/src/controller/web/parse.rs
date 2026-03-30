@@ -1,4 +1,4 @@
-use crate::{controllers::web::InterceptorArgs, shared::CMetaStack};
+use crate::{common::CMetaStack, interceptor::InterceptorArgs};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use syn::spanned::Spanned;
@@ -11,24 +11,12 @@ pub enum RequestMode {
     Streaming,
 }
 
-/// Parsed data from a route attribute
 pub struct ParsedRouteAttribute {
-    /// The HTTP method (GET, POST, etc.)
     pub method: String,
-
-    /// The route path (e.g., "/", "/:id")
     pub path: String,
-
-    /// The original function with interceptor attributes removed
     pub function: ItemFn,
-
-    /// Parsed interceptor arguments
     pub interceptors: Vec<InterceptorArgs>,
-
-    /// Request extraction mode inferred from function signature.
     pub request_mode: RequestMode,
-
-    /// Controller metadata from CMetaStack
     pub controller_name: String,
     pub controller_path: String,
 }

@@ -2,25 +2,24 @@ pub mod chat;
 pub mod database;
 
 use sword::prelude::*;
-use tracing_subscriber::EnvFilter;
 
 use crate::{chat::ChatModule, database::Database};
+use sword_layers::cors::{CorsConfig, CorsLayer};
 
 #[sword::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new("info,sword=info")),
-        )
-        .with_target(false)
-        .init();
-
     let database = Database::new();
+    let config = Config::builder()
+        .add_file("Config.toml")
+        .build()
+        .expect("Failed to load configuration");
 
-    let app = Application::from_config_path("Config.toml")
+    let cors_config = config.expect::<CorsConfig>();
+
+    let app = Application::from_config(config)
         .with_module::<ChatModule>()
         .with_provider(database)
+        .with_layer(CorsLayer::new(&cors_config))
         .build();
 
     app.run().await;

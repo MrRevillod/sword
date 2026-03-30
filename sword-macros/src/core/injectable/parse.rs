@@ -1,4 +1,4 @@
-use crate::shared::StructFields;
+use crate::common::StructFields;
 use proc_macro::TokenStream;
 use syn::parse::{ParseStream, Result as ParseResult};
 use syn::{Ident, ItemStruct, Token, Type, parse::Parse};

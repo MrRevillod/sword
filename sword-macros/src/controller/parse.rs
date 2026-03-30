@@ -1,22 +1,9 @@
-use crate::{controllers::web::InterceptorArgs, shared::StructFields};
+use crate::{
+    common::StructFields, controller::model::*, interceptor::InterceptorArgs,
+};
 use proc_macro::TokenStream;
 use syn::spanned::Spanned;
-use syn::{Expr, ExprLit, ExprPath, Ident, ItemStruct, Lit, Type};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ParsedControllerKind {
-    Web,
-    SocketIo,
-    Grpc,
-}
-
-pub struct CommonControllerInput {
-    pub struct_name: Ident,
-    pub base_path: String,
-    pub kind: ParsedControllerKind,
-    pub fields: Vec<(Ident, Type)>,
-    pub interceptors: Vec<InterceptorArgs>,
-}
+use syn::{Expr, ExprLit, ExprPath, ItemStruct, Lit};
 
 impl CommonControllerInput {
     pub fn parse(attr: TokenStream, item: TokenStream) -> syn::Result<Self> {
@@ -36,7 +23,7 @@ impl CommonControllerInput {
         if parsed_attrs.base_path.is_empty() {
             return Err(syn::Error::new(
                 input.ident.span(),
-                "Base path cannot be empty. Use \"/\" for root path",
+                "Base path cannot be empty. Use '/' for root path",
             ));
         }
 

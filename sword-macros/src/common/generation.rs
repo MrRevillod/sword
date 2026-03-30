@@ -51,7 +51,7 @@ pub fn generate_field_extractions(fields: &[(Ident, Type)]) -> TokenStream {
                 quote! {
                     let #field_name = <#field_type as ::sword::internal::core::FromStateArc>::from_state_arc(state)?;
                 }
-            },
+            }
             None => {
                 quote! {
                     let #field_name = <#field_type as ::sword::internal::core::FromState>::from_state(state)?;
@@ -75,16 +75,6 @@ pub fn generate_field_assignments(fields: &[(Ident, Type)]) -> TokenStream {
     }
 }
 
-/// Generates the implementation of the `Build` trait for a component.
-///
-/// This generator is used by (#[interceptor], #[injectable], etc.) macros
-/// to create the `build()` method that constructs an instance from the `State`.
-///
-/// The generated code extracts each field dependency from the `State` using
-/// `FromState` / `FromStateArc` and assembles them into a new component instance.
-///
-/// This differs from `FromState`'s blanket impl which only retrieves pre-existing
-/// instances - `Build` actually constructs new instances from their dependencies.
 pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let extracts = generate_field_extractions(fields);
     let assigns = generate_field_assignments(fields);
@@ -103,10 +93,6 @@ pub fn gen_build(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     }
 }
 
-/// Generates the implementation of the Clone trait for a component.
-///
-/// This generator creates an explicit Clone implementation that clones each
-/// field individually, useful for components with Arc-wrapped dependencies.
 pub fn gen_clone(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let clones = fields.iter().map(|(field_name, _)| {
         quote! { #field_name: self.#field_name.clone() }
@@ -123,11 +109,6 @@ pub fn gen_clone(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     }
 }
 
-/// Generates the implementation of the `HasDeps` trait for a component.
-///
-/// This generator creates the `deps()` method that returns the `TypeId` of allS
-/// component dependencies, allowing the DI system to resolve the correct
-/// construction order using topological sorting.
 pub fn gen_deps(name: &Ident, fields: &[(Ident, Type)]) -> TokenStream {
     let dep_types = fields.iter().map(|(_, field_type)| {
         if let Some(inner_type) = extract_arc_inner_type(field_type) {

@@ -173,9 +173,7 @@ fn generate_json_builder(fields: &Fields, config: &HttpErrorConfig) -> TokenStre
     let code = config.code.as_ref().unwrap().as_u16();
 
     let message_expr = match config.message() {
-        Some(MessageValue::Static(msg)) => {
-            quote! { format!(#msg) }
-        }
+        Some(MessageValue::Static(msg)) => quote! { format!(#msg) },
         Some(MessageValue::Field(field_name)) => {
             let field_ident = Ident::new(&field_name, Span::call_site());
             quote! { format!("{}", #field_ident) }

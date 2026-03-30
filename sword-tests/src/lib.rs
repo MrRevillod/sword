@@ -13,6 +13,7 @@ mod middlewares {
     mod cors_socketio;
     mod handler_level;
     mod helmet;
+    mod socketio_configured;
 }
 
 #[cfg(test)]

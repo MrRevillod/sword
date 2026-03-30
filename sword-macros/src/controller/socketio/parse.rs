@@ -1,4 +1,4 @@
-use crate::shared::CMetaStack;
+use crate::common::CMetaStack;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{ItemFn, LitStr};

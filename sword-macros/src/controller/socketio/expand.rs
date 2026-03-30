@@ -1,12 +1,15 @@
-use crate::shared::{CommonControllerInput, gen_build, gen_clone, gen_deps};
+use crate::{
+    common::{gen_build, gen_clone, gen_deps},
+    controller::CommonControllerInput,
+    interceptor::InterceptorArgs,
+};
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Path;
 
 pub fn generate_socketio_controller_builder(
     input: &CommonControllerInput,
-    interceptors: &[Path],
+    interceptors: &[InterceptorArgs],
 ) -> TokenStream {
     let namespace = &input.base_path;
     let self_name = &input.struct_name;
@@ -17,10 +20,10 @@ pub fn generate_socketio_controller_builder(
     let build_impl = gen_build(self_name, self_fields);
     let clone_impl = gen_clone(self_name, self_fields);
 
-    let interceptor_applications = interceptors.iter().map(|interceptor_path| {
-        quote! {
-            let interceptor = ::std::sync::Arc::new(
-                state.borrow::<#interceptor_path>()
+    let interceptor_applications = interceptors.iter().filter_map(|interceptor| {
+        match interceptor {
+            InterceptorArgs::SwordSimple(interceptor_path) => Some(quote! {
+                let interceptor = state.borrow::<#interceptor_path>()
                     .unwrap_or_else(|err| {
                         ::sword::internal::core::sword_error!(
                             title: "Failed to retrieve Socket.IO interceptor from State",
@@ -30,18 +33,53 @@ pub fn generate_socketio_controller_builder(
                             },
                             hints: ["Ensure the interceptor is registered and built before controller setup"],
                         )
-                    })
-                    .clone()
-            );
+                    });
 
-            let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
-                let interceptor = ::std::sync::Arc::clone(&interceptor);
-                async move {
-                    <#interceptor_path as ::sword::prelude::OnConnect>::on_connect(&*interceptor, ctx)
+                let _ = __check_on_connect(&*interceptor);
+
+                let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
+                    let interceptor = ::std::sync::Arc::clone(&interceptor);
+
+                    async move {
+                        <#interceptor_path as ::sword::prelude::OnConnect>::on_connect(&*interceptor, ctx)
+                            .await
+                            .map_err(|e| ::std::boxed::Box::new(e) as ::std::boxed::Box<dyn ::std::fmt::Display + Send>)
+                    }
+                });
+            }),
+            InterceptorArgs::SwordWithConfig {
+                middleware,
+                config,
+            } => Some(quote! {
+                let interceptor = state.borrow::<#middleware>()
+                    .unwrap_or_else(|err| {
+                        ::sword::internal::core::sword_error!(
+                            title: "Failed to retrieve Socket.IO interceptor from State",
+                            reason: err,
+                            context: {
+                                "interceptor" => stringify!(#middleware),
+                            },
+                            hints: ["Ensure the interceptor is registered and built before controller setup"],
+                        )
+                    });
+
+                let _ = __check_on_connect_configured::<#middleware, _>(&*interceptor);
+
+                let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
+                    let interceptor = ::std::sync::Arc::clone(&interceptor);
+
+                    async move {
+                        <#middleware as ::sword::prelude::OnConnectWithConfig<_>>::on_connect(
+                            &*interceptor,
+                            #config,
+                            ctx,
+                        )
                         .await
                         .map_err(|e| ::std::boxed::Box::new(e) as ::std::boxed::Box<dyn ::std::fmt::Display + Send>)
-                }
-            });
+                    }
+                });
+            }),
+            InterceptorArgs::Expression(_) => None,
         }
     });
 
@@ -49,6 +87,17 @@ pub fn generate_socketio_controller_builder(
         #[doc(hidden)]
         pub fn __socketio_setup(state: &::sword::internal::core::State) {
             use ::sword::internal::socketio::ConnectHandler;
+
+            fn __check_on_connect<M: ::sword::prelude::OnConnect>(mw: &M) -> &M {
+                mw
+            }
+
+            fn __check_on_connect_configured<M, C>(mw: &M) -> &M
+            where
+                M: ::sword::prelude::OnConnectWithConfig<C>
+            {
+                mw
+            }
 
             let controller = ::std::sync::Arc::new(
                 <#self_name as ::sword::internal::core::Build>::build(state).unwrap_or_else(|err| {

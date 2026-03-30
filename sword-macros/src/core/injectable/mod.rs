@@ -1,6 +1,6 @@
 mod parse;
 
-use crate::shared::*;
+use crate::common::{gen_build, gen_clone, gen_deps};
 use parse::*;
 
 use proc_macro::TokenStream;

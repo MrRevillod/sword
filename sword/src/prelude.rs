@@ -32,8 +32,9 @@ pub use crate::controllers::web::multipart as sword_multipart;
 #[cfg(feature = "socketio-controllers")]
 pub use crate::controllers::socketio::{
     AckSender, Data, DisconnectReason, Event, Extension, HttpExtension,
-    LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion,
-    SocketContext, SocketError, SocketIo, SocketRef, TransportType, TryData, on,
+    LocalAdapter, MaybeExtension, MaybeHttpExtension, OnConnect,
+    OnConnectWithConfig, ProtocolVersion, SocketContext, SocketError, SocketIo,
+    SocketRef, TransportType, TryData, on,
 };
 
 #[cfg(feature = "socketio-controllers")]

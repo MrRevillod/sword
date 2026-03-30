@@ -48,5 +48,19 @@ where
 {
     type Error: Display;
 
-    async fn on_connect(&self, socket: SocketContext<A>) -> Result<(), Self::Error>;
+    async fn on_connect(&self, ctx: SocketContext<A>) -> Result<(), Self::Error>;
+}
+
+#[allow(async_fn_in_trait)]
+pub trait OnConnectWithConfig<T, A = LocalAdapter>: Interceptor
+where
+    A: SocketIoSocketAdapter,
+{
+    type Error: Display;
+
+    async fn on_connect(
+        &self,
+        config: T,
+        ctx: SocketContext<A>,
+    ) -> Result<(), Self::Error>;
 }

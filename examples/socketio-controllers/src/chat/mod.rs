@@ -1,6 +1,7 @@
 mod controller;
 mod dtos;
 mod entity;
+mod interceptors;
 
 use controller::ChatController;
 

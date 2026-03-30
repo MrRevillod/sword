@@ -1,10 +1,10 @@
-mod generation;
-pub(crate) mod parsing;
-
 use proc_macro::TokenStream;
 
-pub use generation::generate_route;
-pub use parsing::{ParsedRouteAttribute, RequestMode};
+mod expand;
+mod parse;
+
+pub use expand::*;
+pub use parse::*;
 
 pub fn attribute(
     attribute_str: &str,

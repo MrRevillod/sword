@@ -2,11 +2,12 @@ use std::sync::Arc;
 use sword::prelude::*;
 
 use crate::{
-    chat::{IncommingMessageDto, Message},
+    chat::{IncommingMessageDto, Message, interceptors::LoggingInterceptor},
     database::Database,
 };
 
 #[controller(kind = Controller::SocketIo, namespace = "/chat")]
+#[interceptor(LoggingInterceptor, config = "ChatController Interceptor Config")]
 pub struct ChatController {
     db: Arc<Database>,
 }

@@ -9,6 +9,8 @@ sword = { workspace = true, features = [
     "socketio-controllers",
 ] }
 
+sword-layers = { workspace = true }
+
 uuid = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }

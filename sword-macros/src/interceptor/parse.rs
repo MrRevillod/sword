@@ -1,21 +1,9 @@
-mod generation;
-
-pub use generation::*;
-
 use syn::{
     Expr, Path, Token,
     parse::{Parse, ParseStream},
 };
 
-pub enum InterceptorArgs {
-    SwordSimple(Path),
-    SwordWithConfig {
-        middleware: Path,
-        config: Expr,
-    },
-    /// Any expression (Tower layer or anything else)
-    Expression(Expr),
-}
+use super::InterceptorArgs;
 
 impl Parse for InterceptorArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
@@ -43,7 +31,6 @@ fn parse_as_sword_middleware(
     if fork.peek(Token![,]) {
         let config_fork = fork;
 
-        // Check , config = expr
         if config_fork.parse::<Token![,]>().is_ok()
             && config_fork.peek(syn::Ident)
             && config_fork.peek2(Token![=])
@@ -55,9 +42,9 @@ fn parse_as_sword_middleware(
                 {
                     let path: Path = input.parse()?;
 
-                    input.parse::<Token![,]>()?; // ,
-                    input.parse::<syn::Ident>()?; // config
-                    input.parse::<Token![=]>()?; // =
+                    input.parse::<Token![,]>()?;
+                    input.parse::<syn::Ident>()?;
+                    input.parse::<Token![=]>()?;
 
                     return Ok(Some(InterceptorArgs::SwordWithConfig {
                         middleware: path,

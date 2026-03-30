@@ -1,7 +1,8 @@
-mod controllers;
+mod common;
+mod controller;
 mod core;
-mod interceptor_derive;
-mod shared;
+mod http_error;
+mod interceptor;
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -9,27 +10,27 @@ use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::web::attributes::attribute("GET", attr, item)
+    controller::web::attribute("GET", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::web::attributes::attribute("POST", attr, item)
+    controller::web::attribute("POST", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::web::attributes::attribute("PUT", attr, item)
+    controller::web::attribute("PUT", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::web::attributes::attribute("DELETE", attr, item)
+    controller::web::attribute("DELETE", attr, item)
 }
 
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::web::attributes::attribute("PATCH", attr, item)
+    controller::web::attribute("PATCH", attr, item)
 }
 
 /// Defines a Sword controller.
@@ -65,7 +66,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::expand_controller(attr, item)
+    controller::expand_controller(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -85,7 +86,7 @@ pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(Interceptor)]
 pub fn derive_interceptor(input: TokenStream) -> TokenStream {
-    interceptor_derive::derive_interceptor(input)
+    interceptor::derive_interceptor(input)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }
 
@@ -273,9 +274,9 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match controllers::derive_http_error(input) {
-        Ok(tokens) => tokens.into(),
-        Err(err) => err.to_compile_error().into(),
+    match http_error::derive_http_error(input) {
+        Ok(tokens) => TokenStream::from(tokens),
+        Err(err) => TokenStream::from(err.to_compile_error()),
     }
 }
 
@@ -608,6 +609,6 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn on(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::expand_on_handler(attr, item)
+    controller::socketio::expand_on_handler(attr, item)
         .unwrap_or_else(|err| err.to_compile_error().into())
 }

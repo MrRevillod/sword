@@ -13,7 +13,7 @@ pub use config::*;
 pub use controller::*;
 pub use error::*;
 pub use extract::*;
-pub use interceptor::*;
+pub use interceptor::{OnConnect, OnConnectWithConfig};
 
 #[derive(Clone, Debug)]
 pub enum SocketEventKind {

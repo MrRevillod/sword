@@ -1,4 +1,4 @@
-use crate::shared::{StructFields, gen_build, gen_clone};
+use crate::common::{StructFields, gen_build, gen_clone};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;

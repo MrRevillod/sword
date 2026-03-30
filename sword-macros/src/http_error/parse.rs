@@ -12,18 +12,11 @@ pub enum MessageValue {
 
 #[derive(Default)]
 pub struct HttpErrorConfig {
-    /// Delegate to inner type's `From<T> for Json`
     pub transparent: bool,
-    /// HTTP status code
     pub code: Option<StatusCode>,
-    /// Custom message (static string or field reference)
     pub message: Option<MessageValue>,
-    /// Named field to include as "error" in response
     pub error_field: Option<String>,
-    /// Named field to include as "errors" in response
     pub errors_field: Option<String>,
-
-    /// Optional tracing level
     pub tracing_level: Option<String>,
 }
 
@@ -37,9 +30,10 @@ impl HttpErrorConfig {
 
         for attr in attrs.iter().filter(|a| a.path().is_ident("tracing")) {
             attr.parse_nested_meta(|meta| {
-                let level_ident = meta.path.get_ident().ok_or_else(|| {
-                    Error::new(meta.path.span(), "expected identifier")
-                })?;
+                let level_ident = meta
+                    .path
+                    .get_ident()
+                    .ok_or_else(|| Error::new(meta.path.span(), "expected identifier"))?;
 
                 let level_str = level_ident.to_string();
 
@@ -56,7 +50,6 @@ impl HttpErrorConfig {
                 }
 
                 Ok(())
-
             })?;
         }
 
@@ -72,9 +65,7 @@ impl HttpErrorConfig {
             })?;
 
             match ident.to_string().as_str() {
-                "transparent" => {
-                    self.transparent = true;
-                }
+                "transparent" => self.transparent = true,
                 "code" => {
                     self.code = Some(Self::parse_status_code_value(ident, &meta)?);
                 }

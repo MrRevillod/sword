@@ -23,16 +23,6 @@ impl OnRequest for LoggingInterceptor {
     }
 }
 
-impl OnConnect for LoggingInterceptor {
-    type Error = String;
-
-    async fn on_connect(&self, ctx: SocketContext) -> Result<(), Self::Error> {
-        println!("[SocketIO] - New connection: - Socket ID: {}", ctx.id());
-
-        Ok(())
-    }
-}
-
 impl OnConnectWithConfig<&str> for LoggingInterceptor {
     type Error = String;
 
