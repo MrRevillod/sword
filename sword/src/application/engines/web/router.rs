@@ -218,8 +218,9 @@ impl WebRouter {
         let body_limit_config = server_config.body_limit;
 
         if server_config.request_timeout.enabled {
-            let (timeout_service, response_mapper) =
-                RequestTimeoutLayer::new(&server_config.request_timeout);
+            let timeout_service: TimeoutLayer =
+                server_config.request_timeout.clone().into();
+            let response_mapper = RequestTimeoutResponseLayer::new();
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);

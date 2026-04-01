@@ -8,6 +8,7 @@ pub use interceptor::*;
 pub use request::*;
 pub use response::*;
 
+#[cfg(feature = "web-controllers")]
 pub mod cookies {
     pub use sword_layers::cookies::{
         Cookies, Key as CookiesKey, PrivateCookies, SignedCookies,

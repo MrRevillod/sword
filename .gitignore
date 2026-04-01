@@ -5,4 +5,3 @@ examples/*.md
 .vscode/mcp.json
 
 **/target
-sword-layers/

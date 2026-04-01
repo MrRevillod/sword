@@ -32,6 +32,7 @@ impl WebApplication {
     ) -> Self {
         let app_config = config.get_or_default::<ApplicationConfig>();
         let web_config = app_config.web.clone();
+
         #[cfg(feature = "socketio-controllers")]
         let socketio_config = config.get_or_default::<SocketIoServerConfig>();
 

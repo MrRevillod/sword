@@ -1,10 +1,9 @@
 use axum_test::TestServer;
 use sword::prelude::*;
-use sword_layers::prelude::{CorsConfig, CorsLayer};
+use sword_layers::prelude::CorsConfig;
 
 fn cors_layer() -> tower_http::cors::CorsLayer {
-    CorsLayer::new(&CorsConfig {
-        enabled: true,
+    CorsConfig {
         allow_origins: Some(vec!["http://localhost:3000".to_string()]),
         allow_methods: Some(vec!["GET".to_string(), "POST".to_string()]),
         allow_headers: Some(vec![
@@ -14,7 +13,8 @@ fn cors_layer() -> tower_http::cors::CorsLayer {
         allow_credentials: Some(true),
         max_age: None,
         display: false,
-    })
+    }
+    .into()
 }
 
 #[controller(kind = Controller::SocketIo, namespace = "/socket")]

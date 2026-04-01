@@ -1,7 +1,7 @@
 use axum_test::{TestServer, multipart::MultipartForm};
 use serde_json::Value;
 use sword::prelude::*;
-use sword_layers::prelude::{CompressionConfig, CompressionLayer};
+use sword_layers::prelude::CompressionConfig;
 use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
 
@@ -72,16 +72,17 @@ impl Module for V1UsersModule {
 fn test_server() -> TestServer {
     let app = Application::builder()
         .with_module::<V1UsersModule>()
-        .with_layer(CompressionLayer::new(&CompressionConfig {
-            enabled: true,
-            display: false,
-            algorithms: vec![
-                "gzip".to_string(),
-                "deflate".to_string(),
-                "brotli".to_string(),
-                "zstd".to_string(),
-            ],
-        }))
+        .with_layer(tower_http::compression::CompressionLayer::from(
+            CompressionConfig {
+                display: false,
+                algorithms: vec![
+                    "gzip".to_string(),
+                    "deflate".to_string(),
+                    "brotli".to_string(),
+                    "zstd".to_string(),
+                ],
+            },
+        ))
         .build();
 
     TestServer::new(app.router()).unwrap()

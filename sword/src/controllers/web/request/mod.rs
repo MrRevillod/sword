@@ -16,6 +16,8 @@ use axum_responses::JsonResponse;
 use serde::de::DeserializeOwned;
 use std::{collections::HashMap, fmt::Display, str::FromStr};
 use sword_core::layers::RequestId;
+
+#[cfg(feature = "web-controllers")]
 use sword_layers::cookies::Cookies;
 
 pub use error::*;

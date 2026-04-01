@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sword_layers::prelude::{BodyLimitConfig, RequestTimeoutConfig};
+use sword_layers::{body_limit::BodyLimitConfig, timeout::RequestTimeoutConfig};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebApplicationConfig {

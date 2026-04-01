@@ -1,10 +1,7 @@
 {
-    "recommendations": [
-        "vivaxy.vscode-conventional-commits",
-        "usernamehw.errorlens",
-        "rust-lang.rust-analyzer",
-        "lorenzopirro.rust-flash-snippets",
-        "tamasfe.even-better-toml",
-        "fill-labs.dependi"
-    ]
+	"recommendations": [
+		"usernamehw.errorlens",
+		"rust-lang.rust-analyzer",
+		"tamasfe.even-better-toml",
+	]
 }
