@@ -2,10 +2,9 @@ mod builder;
 mod config;
 pub mod engines;
 
+use self::engines::ApplicationEngine;
 use std::path::Path;
 use sword_core::{Config, sword_error};
-
-use self::engines::ApplicationEngine;
 
 pub use builder::ApplicationBuilder;
 pub use config::ApplicationConfig;

@@ -1,3 +1,5 @@
+#![allow(async_fn_in_trait)]
+
 mod application;
 mod controllers;
 mod interceptor;

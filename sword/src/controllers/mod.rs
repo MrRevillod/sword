@@ -5,7 +5,10 @@ pub mod web;
 pub mod socketio;
 
 use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
-use std::{any::TypeId, collections::HashMap};
+use std::{
+    any::TypeId,
+    collections::{HashMap, HashSet},
+};
 use sword_core::HasDeps;
 
 /// Controller enum used by `#[controller(...)]` attributes and runtime internals.
@@ -66,7 +69,7 @@ pub trait ControllerSpec: HasDeps {
 /// }
 /// ```
 pub struct ControllerRegistry {
-    controllers: RwLock<HashMap<Controller, Vec<TypeId>>>,
+    controllers: RwLock<HashMap<Controller, HashSet<TypeId>>>,
 }
 
 impl ControllerRegistry {
@@ -89,12 +92,12 @@ impl ControllerRegistry {
             .write()
             .entry(C::kind())
             .or_default()
-            .push(C::type_id());
+            .insert(C::type_id());
     }
 
     pub(crate) fn read(
         &self,
-    ) -> RwLockReadGuard<'_, RawRwLock, HashMap<Controller, Vec<TypeId>>> {
+    ) -> RwLockReadGuard<'_, RawRwLock, HashMap<Controller, HashSet<TypeId>>> {
         self.controllers.read()
     }
 }

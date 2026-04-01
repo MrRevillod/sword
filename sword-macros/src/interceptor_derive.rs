@@ -44,7 +44,9 @@ pub fn generate_interceptor_builder(input: &InterceptorInput) -> TokenStream2 {
         impl ::sword::internal::core::Interceptor for #self_name {}
 
         ::sword::internal::inventory::submit! {
-            ::sword::internal::core::InterceptorRegistrar::new::<#self_name>()
+            ::sword::internal::core::InterceptorRegistrar {
+                register: #self_name::register,
+            }
         }
     }
 }

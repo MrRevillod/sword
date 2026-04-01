@@ -8,7 +8,7 @@ use axum::{
 };
 
 use std::any::TypeId;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use sword_core::{State, layers::*, sword_error};
 
 #[cfg(feature = "socketio-controllers")]
@@ -107,7 +107,7 @@ impl WebRouter {
     fn apply_controllers(
         &self,
         mut router: Router<State>,
-        controllers: &HashMap<Controller, Vec<TypeId>>,
+        controllers: &HashMap<Controller, HashSet<TypeId>>,
     ) -> Router<State> {
         for (kind, controller_ids) in controllers.iter() {
             match kind {
@@ -132,7 +132,7 @@ impl WebRouter {
     fn apply_http_controllers(
         &self,
         mut router: Router<State>,
-        controllers: &[TypeId],
+        controllers: &HashSet<TypeId>,
     ) -> Router<State> {
         for controller_id in controllers {
             let mut controller_routes = inventory::iter::<RouteRegistrar>()
@@ -179,7 +179,7 @@ impl WebRouter {
 
     /// Apply SocketIO handlers by calling their setup functions
     #[cfg(feature = "socketio-controllers")]
-    fn apply_socketio_handlers(&self, handlers: &[TypeId]) {
+    fn apply_socketio_handlers(&self, handlers: &HashSet<TypeId>) {
         use crate::controllers::socketio::{
             HandlerRegistrar, SocketIoHandlerRegistrar,
         };
