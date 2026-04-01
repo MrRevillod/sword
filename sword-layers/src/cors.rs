@@ -1,3 +1,8 @@
+//! Cross-origin resource sharing middleware.
+//!
+//! This module defines CORS configuration and conversion into
+//! `tower_http::cors::CorsLayer` for controlling cross-origin policies.
+
 use crate::DisplayConfig;
 
 use axum::http::{HeaderName, HeaderValue, Method};
@@ -7,10 +12,6 @@ use tower_http::cors::Any;
 
 pub use tower_http::cors::CorsLayer;
 
-/// # CORS Configuration
-///
-/// Configuration for the CORS Layer
-/// This configuration allows you to control cross-origin resource sharing policies.
 #[derive(Clone, Debug, Deserialize, Serialize, Default)]
 #[serde(default)]
 pub struct CorsConfig {

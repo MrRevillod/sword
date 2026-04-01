@@ -1,3 +1,8 @@
+//! Request body size limiting middleware.
+//!
+//! This module provides a layer that enforces a maximum request body size
+//! and maps oversized payload responses into Sword's standardized JSON shape.
+
 use crate::DisplayConfig;
 
 use byte_unit::Byte;
@@ -25,13 +30,6 @@ use axum_responses::JsonResponse;
 use tower::ServiceBuilder;
 use tower_http::limit::RequestBodyLimitLayer;
 
-/// ### Body Limit Layer
-///
-/// This structs represents the Body Limit Layer which
-/// restricts the size of incoming request bodies.
-///
-/// The layer is in fact a `ServiceBuilder` that applies a body size limit
-/// and maps responses to `sword` standardized responses.
 pub struct BodyLimitLayer;
 
 impl BodyLimitLayer {

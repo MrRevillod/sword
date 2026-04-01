@@ -1,3 +1,8 @@
+//! Security headers middleware.
+//!
+//! This module wraps `axum-helmet` to provide an ergonomic builder for adding
+//! common HTTP security headers to Sword applications.
+
 pub use axum_helmet::{
     ContentSecurityPolicy, ContentSecurityPolicyDirective,
     CrossOriginEmbedderPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy,
@@ -7,15 +12,6 @@ pub use axum_helmet::{
     XXSSProtection,
 };
 
-/// Middleware that adds various security headers to HTTP responses.
-/// Helmet helps protect your application from common web vulnerabilities
-/// by setting appropriate HTTP headers.
-///
-/// To get more information, visit:  
-///
-/// [axum-helmet docs](https://docs.rs/axum-helmet/latest/axum_helmet/)  
-///
-/// [axum-helmet crate](https://crates.io/crates/axum-helmet)
 pub struct Helmet {
     headers: Vec<Header>,
 }

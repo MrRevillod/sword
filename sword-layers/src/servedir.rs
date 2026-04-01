@@ -1,3 +1,8 @@
+//! Static file serving middleware.
+//!
+//! This module defines configuration and conversion into Tower's `ServeDir`
+//! service for serving files from a configured directory.
+
 use crate::DisplayConfig;
 use serde::{Deserialize, Serialize};
 use thisconfig::{ByteConfig, ConfigItem};
@@ -5,10 +10,6 @@ use tower_http::services::{ServeDir, ServeFile};
 
 pub type ServeDirLayer = ServeDir<ServeFile>;
 
-/// # Serve Directory Configuration
-///
-/// Configuration for the Serve Directory Layer
-/// This configuration allows you to set up static file serving using the ServeDir `tower` layer.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct ServeDirConfig {

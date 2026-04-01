@@ -1,3 +1,8 @@
+//! Request ID propagation middleware.
+//!
+//! This module provides a layer stack that assigns an `x-request-id` to each
+//! request and propagates it through the response pipeline.
+
 use tower::ServiceBuilder;
 use tower_http::request_id::{
     MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer,

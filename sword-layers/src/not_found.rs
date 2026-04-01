@@ -1,3 +1,8 @@
+//! Not found response mapping middleware.
+//!
+//! This module provides a layer that transforms plain `404 Not Found`
+//! responses into Sword's standardized JSON response format.
+
 use crate::ResponseFnMapper;
 use axum::{
     http::StatusCode,

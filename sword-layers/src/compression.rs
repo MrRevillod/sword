@@ -1,24 +1,13 @@
+//! Response compression middleware.
+//!
+//! This module defines compression configuration and conversion into
+//! `tower_http::compression::CompressionLayer` using the configured algorithms.
+
 use crate::DisplayConfig;
 use serde::{Deserialize, Serialize};
 use tower_http::compression::CompressionLayer as TowerCompressionLayer;
 
 pub struct CompressionLayer;
-
-/// # Compression Layer
-///
-/// This struct represents the Compression Layer which
-/// enables response compression based on the provided configuration.
-///
-/// The layer is a wrapper around `tower_http::compression::CompressionLayer`.
-/// Compress response bodies of the underlying service.
-///
-/// This uses the Accept-Encoding header to pick an appropriate encoding
-/// and adds the Content-Encoding header to responses.
-
-/// ## Compression Configuration
-///
-/// This configuration allows you to enable or disable compression
-/// and specify which algorithms to use.
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(default)]

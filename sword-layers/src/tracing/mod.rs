@@ -20,7 +20,6 @@ pub enum TracingInitStatus {
 pub struct TracingSubscriber;
 
 impl TracingSubscriber {
-    #[clippy::allow(new_ret_no_self)]
     pub fn new(config: TracingConfig) -> Box<dyn Subscriber + Send + Sync> {
         let env_filter = if config.use_env_filter {
             EnvFilter::try_from_default_env()
@@ -41,7 +40,7 @@ impl TracingSubscriber {
             .with_thread_names(config.thread_names)
             .with_span_events(SpanEventsFmt::from(config.span_events).0);
 
-        return match (config.output, config.format, config.timer) {
+        match (config.output, config.format, config.timer) {
             (LogOutput::Stdout, LogFormat::Full, true) => {
                 Box::new(builder.with_writer(io::stdout).finish())
             }
@@ -114,7 +113,7 @@ impl TracingSubscriber {
                     .with_writer(io::stderr)
                     .finish(),
             ),
-        };
+        }
     }
 
     pub fn init(config: TracingConfig) -> TracingInitStatus {

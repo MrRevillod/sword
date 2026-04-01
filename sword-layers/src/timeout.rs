@@ -1,10 +1,9 @@
-/// # Request Timeout Layer
-///
-/// This struct represents the Request Timeout Layer which
-/// enforces a maximum duration for incoming requests.
-///
-/// The layer is a combination of `tower_http::timeout::TimeoutLayer` and a response mapper.
-/// Returns a 408 Request Timeout status when a request exceeds the configured duration.
+//! Request timeout middleware.
+//!
+//! This module provides timeout configuration, conversion into
+//! `tower_http::timeout::TimeoutLayer`, and a response mapper that rewrites
+//! timeout responses into Sword's standardized JSON format.
+
 use crate::{MapResponseLayer, ResponseFnMapper};
 
 use axum::{
