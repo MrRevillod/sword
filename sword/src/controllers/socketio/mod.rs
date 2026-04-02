@@ -15,6 +15,8 @@ pub use error::*;
 pub use extract::*;
 pub use interceptor::*;
 
+pub(crate) use socketioxide::layer::SocketIoLayer;
+
 #[derive(Clone, Debug)]
 pub enum SocketEventKind {
     Connection,

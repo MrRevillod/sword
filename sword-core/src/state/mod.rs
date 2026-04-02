@@ -21,6 +21,7 @@ pub struct State {
 }
 
 impl State {
+    /// Creates an empty shared state container.
     pub fn new() -> Self {
         Self {
             inner: Arc::new(RwLock::new(HashMap::new())),
@@ -28,6 +29,12 @@ impl State {
     }
 
     /// Extract a clone of the stored value of type `T` from the state.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no value of type `T` has been registered in the
+    /// state. This usually indicates that the dependency was never inserted or
+    /// was expected to be provided by a module/provider that was not registered.
     pub fn get<T>(&self) -> Result<T, DependencyInjectionError>
     where
         T: Clone + Send + Sync + 'static,
@@ -49,6 +56,11 @@ impl State {
 
     /// Borrow an `Arc` to the stored value of type `T` from the state.
     /// This returns an `Arc<T>` without cloning the underlying value.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no value of type `T` has been registered in the
+    /// state or if the stored value cannot be downcast back to `T`.
     pub fn borrow<T>(&self) -> Result<Arc<T>, DependencyInjectionError>
     where
         T: Send + Sync + 'static,

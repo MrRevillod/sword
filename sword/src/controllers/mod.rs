@@ -11,6 +11,9 @@ use std::{
 };
 use sword_core::HasDeps;
 
+pub(crate) type ControllerMap = HashMap<Controller, HashSet<TypeId>>;
+pub(crate) type ControllerIds = HashSet<TypeId>;
+
 /// Controller enum used by `#[controller(...)]` attributes and runtime internals.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Controller {

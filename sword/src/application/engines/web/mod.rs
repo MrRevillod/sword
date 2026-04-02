@@ -1,21 +1,14 @@
 mod config;
 mod router;
 
-#[cfg(feature = "socketio-controllers")]
-use crate::controllers::socketio::SocketIoServerConfig;
 use crate::{application::ApplicationConfig, controllers::ControllerRegistry};
 
 use axum::Router;
-use sword_core::{
-    Config, State,
-    layers::{LayerStack, NotFoundLayer},
-    sword_error,
-};
-
+use sword_core::{Config, State, layers::LayerStack, sword_error};
 use tokio::net::TcpListener;
 
 pub use config::WebApplicationConfig;
-pub use router::WebRouter;
+pub(crate) use router::WebRouter;
 
 pub struct WebApplication {
     state: State,
@@ -27,34 +20,22 @@ impl WebApplication {
     pub fn new(
         state: State,
         config: &Config,
-        layer_stack: LayerStack<State>,
-        controller_registry: &ControllerRegistry,
+        layers: LayerStack<State>,
+        controllers: &ControllerRegistry,
     ) -> Self {
         let app_config = config.get_or_default::<ApplicationConfig>();
-        let web_config = app_config.web.clone();
 
-        #[cfg(feature = "socketio-controllers")]
-        let socketio_config = config.get_or_default::<SocketIoServerConfig>();
-
-        let http_router = WebRouter::new(
-            state.clone(),
-            app_config.web.clone(),
-            #[cfg(feature = "socketio-controllers")]
-            socketio_config.clone(),
-        );
-
-        let mut router = http_router.build(layer_stack, controller_registry);
-
-        if let Some(prefix) = &web_config.web_router_prefix {
-            router = Router::new().nest(prefix, router);
-        }
-
-        router = router.layer(NotFoundLayer::new());
+        let router = WebRouter {
+            state: state.clone(),
+            config,
+            layer_stack: layers,
+            controller_registry: controllers,
+        };
 
         Self {
             state,
             app_config,
-            router,
+            router: router.build(),
         }
     }
 

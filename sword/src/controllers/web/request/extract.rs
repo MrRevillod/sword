@@ -12,8 +12,6 @@ use axum::{
     response::IntoResponse,
 };
 
-use http_body_util::LengthLimitError;
-
 #[allow(async_fn_in_trait)]
 /// Fixed-state version of `axum::extract::FromRequest` using sword's State.
 ///
@@ -55,14 +53,9 @@ impl FromRequest for Request {
         } = req.prepare().await?;
 
         let body_bytes = to_bytes(body, body_limit).await.map_err(|err| {
-            if err.into_inner().is::<LengthLimitError>() {
-                return RequestError::BodyTooLarge;
-            }
+            let inner = err.into_inner();
 
-            RequestError::parse_error(
-                "Failed to read request body",
-                "Error reading body".to_string(),
-            )
+            RequestError::from_body_read_error(inner.as_ref())
         })?;
 
         Ok(Self {

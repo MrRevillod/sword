@@ -87,6 +87,11 @@ impl Request {
     ///
     /// ### Note
     /// If the header already exists, its value will be overwritten.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `name` is not a valid HTTP header name or if
+    /// `value` cannot be encoded as a valid HTTP header value.
     pub fn set_header(
         &mut self,
         name: impl Into<String>,
@@ -128,7 +133,7 @@ impl Request {
     /// Returns `Ok(T)` with the parsed value if the parameter exists and can be
     /// converted, or `Err(RequestError)` if the parameter is missing or invalid.
     ///
-    /// ### Errors
+    /// # Errors
     ///
     /// This function will return an error if:
     /// - The parameter is not found in the request
@@ -192,7 +197,7 @@ impl Request {
     /// Returns `Ok(T)` with the deserialized instance if the JSON is valid,
     /// or `Err(RequestError)` if the body is empty or invalid JSON.
     ///
-    /// ### Errors
+    /// # Errors
     ///
     /// This function will return an error if:
     /// - The request body is empty
@@ -261,7 +266,7 @@ impl Request {
     /// - `Ok(None)` if no query parameters are present in the URL
     /// - `Err(RequestError)` if query parameters exist but cannot be deserialized
     ///
-    /// ### Errors
+    /// # Errors
     ///
     /// This function will return an error if the query parameters exist but
     /// cannot be parsed or deserialized to the target type.
@@ -324,6 +329,12 @@ impl Request {
     ///
     /// The documentation for `tower_cookies::Cookies` can be found [here](https://docs.rs/tower-cookies/latest/tower_cookies/struct.Cookies.html)
     /// Also, the other cookie-related types like `Cookie`, `CookieBuilder`, `Expiration`, and `SameSite` can be found in the `tower_cookies` crate.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal server error response if the request does not carry
+    /// the `Cookies` extension. In normal Sword setups, this usually means the
+    /// cookie middleware was not applied to the router handling the request.
     ///
     /// ### Usage
     /// ```rust,ignore
@@ -397,8 +408,11 @@ impl Request {
     #[cfg(feature = "multipart")]
     /// Extracts multipart form data from the request.
     ///
-    /// ### Errors
-    /// Returns `RequestError::ParseError` if the multipart form data cannot be parsed.
+    /// # Errors
+    ///
+    /// Returns an error if the request cannot be converted into Axum's
+    /// multipart extractor, if the multipart boundary is missing or invalid, or
+    /// if the request body exceeds the configured body limit.
     ///
     /// ### Example
     /// ```rust,ignore
@@ -455,6 +469,12 @@ impl Request {
     ///
     /// This method must be used only in interceptor implementations to
     /// pass control to the next interceptor or the final request handler.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal server error response if called outside a Sword
+    /// interceptor chain. This usually indicates the request was manually
+    /// constructed or `next` was already consumed earlier in the chain.
     pub async fn next(mut self) -> WebInterceptorResult {
         let Some(next) = self.next.take() else {
             tracing::error!(
@@ -484,6 +504,12 @@ impl StreamRequest {
         &self.headers
     }
 
+    /// Retrieves and parses a route parameter by name from an unbuffered request.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the parameter is missing from the request path or if
+    /// its value cannot be parsed into the requested type `T`.
     pub fn param<T>(&self, key: &str) -> Result<T, RequestError>
     where
         T: FromStr,
@@ -552,6 +578,13 @@ impl StreamRequest {
         self.next = Some(next);
     }
 
+    /// Runs the next streaming interceptor or handler in the chain.
+    ///
+    /// # Errors
+    ///
+    /// Returns an internal server error response if called outside a Sword
+    /// streaming interceptor chain. This usually means `next` was never set or
+    /// was already consumed earlier in the chain.
     pub async fn next(mut self) -> WebInterceptorResult {
         let Some(next) = self.next.take() else {
             tracing::error!(

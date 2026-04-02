@@ -46,7 +46,7 @@ pub struct RouteRegistrar {
     /// Base path of the controller (e.g., "/api/users")
     pub controller_path: &'static str,
 
-    /// Path of this specific route (e.g., "/:id")
+    /// Path of this specific route (e.g., "/{id}")
     pub path: &'static str,
 
     /// Function that builds the MethodRouter for this route

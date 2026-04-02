@@ -1,3 +1,5 @@
+use http_body_util::LengthLimitError;
+use std::error::Error as StdError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -54,6 +56,24 @@ impl RequestError {
             message: message.into(),
             details: details.into(),
         }
+    }
+
+    pub(crate) fn from_body_read_error(err: &(dyn StdError + 'static)) -> Self {
+        if err.is::<LengthLimitError>() {
+            return Self::BodyTooLarge;
+        }
+
+        let mut source = err.source();
+
+        while let Some(current) = source {
+            if current.is::<LengthLimitError>() {
+                return Self::BodyTooLarge;
+            }
+
+            source = current.source();
+        }
+
+        Self::parse_error("Failed to read request body", "Error reading body")
     }
 
     #[cfg(feature = "validation-validator")]
