@@ -56,7 +56,6 @@ pub struct SocketIoServerConfig {
 
     /// The transports to allow for connections.
     /// Valid options are "polling" and "websocket".
-    #[serde(alias = "transport")]
     pub transports: Option<Vec<String>>,
 
     #[serde(default)]

@@ -52,7 +52,7 @@ impl ApplicationBuilder {
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
-    /// modules, add middleware layers, and set up dependency injection.
+    /// modules, add Tower layers, and set up dependency injection.
     ///
     /// # Example
     ///
@@ -78,7 +78,7 @@ impl ApplicationBuilder {
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
-    /// modules, add middleware layers, and set up dependency injection.
+    /// modules, add Tower layers, and set up dependency injection.
     ///
     /// The builder follows this configuration pattern:
     /// 1. Create with `Application::builder()`
@@ -144,10 +144,10 @@ impl ApplicationBuilder {
     /// Adds a `tower::Layer` to the application builder.
     ///
     /// This method is equivalent to Axum's `Router::layer` method, allowing you to
-    /// apply middleware layers to the application's router.
+    /// apply Tower layers to the application's router.
     ///
-    /// Custom layers are applied **after** all built-in Sword middlewares,
-    /// making them the outermost layer in the middleware stack.
+    /// Custom layers are applied **after** all built-in Sword layers,
+    /// making them the outermost layer in the layer stack.
     /// This means custom layers execute first on incoming requests and last on outgoing responses.
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where

@@ -9,7 +9,7 @@ request-timeout = { enabled = true, timeout = "15s", display = true }
 [socketio]
 enabled = true
 parser = "common"
-transport = ["websocket", "polling"]
+transports = ["websocket", "polling"]
 
 [tracing]
 enabled = true

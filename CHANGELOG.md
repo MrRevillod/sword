@@ -32,6 +32,7 @@
 
 ### Changed
 
+- Aligned current naming across docs/examples/changelog: the canonical config section is `[application]`, the router prefix key is `web-router-prefix`, Socket.IO transport configuration uses `transports`, and Sword terminology now distinguishes Tower `layers` from typed `interceptors`.
 - **BREAKING:** Renamed web interceptor return alias from `HttpInterceptorResult` to `WebInterceptorResult`.
 - **BREAKING:** Renamed web controller result alias from `Result` to `WebResult`.
 - Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary application module is now `application::web`.
