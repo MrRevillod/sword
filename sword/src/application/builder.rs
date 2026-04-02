@@ -11,10 +11,12 @@ use axum::{
 use std::convert::Infallible;
 use std::path::Path;
 use sword_core::{
-    Config, ConfigRegistrar, DependencyContainer, Provider, State,
-    layers::LayerStack, sword_error,
+    Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error,
 };
-use sword_layers::tracing::{TracingConfig, TracingSubscriber};
+use sword_layers::{
+    layer_stack::LayerStack,
+    tracing::{TracingConfig, TracingSubscriber},
+};
 
 use tower::{Layer, Service};
 

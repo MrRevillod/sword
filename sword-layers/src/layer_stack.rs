@@ -1,4 +1,3 @@
-use crate::State;
 use axum::{Router, extract::Request, response::IntoResponse, routing::Route};
 use std::convert::Infallible;
 use tower::{Layer, Service};
@@ -10,7 +9,7 @@ type LayerFn<S> = Box<dyn Fn(Router<S>) -> Router<S> + Send + Sync>;
 /// `LayerStack` provides a way to accumulate layers and apply them to a router in the
 /// order they were added. Layers are applied via the `push()` method during configuration,
 /// and then applied to the router via `apply()` during the build phase.
-pub struct LayerStack<S = State> {
+pub struct LayerStack<S> {
     layers: Vec<LayerFn<S>>,
 }
 

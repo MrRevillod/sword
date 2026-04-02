@@ -2,11 +2,9 @@ pub use crate::application::*;
 pub use crate::controllers::Controller;
 pub use crate::controllers::ControllerRegistry;
 pub use crate::module::Module;
-pub use sword_macros::{Interceptor, interceptor, main};
 
-pub use sword_core::{
-    ComponentRegistry, Config, Provider, ProviderRegistry, config, injectable,
-};
+pub use sword_core::{ComponentRegistry, Config, Provider, ProviderRegistry};
+pub use sword_macros::{Interceptor, config, injectable, interceptor, main};
 
 #[cfg(feature = "validation-validator")]
 pub use validator::Validate;

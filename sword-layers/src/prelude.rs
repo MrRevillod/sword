@@ -1,3 +1,5 @@
+pub use crate::layer_stack::LayerStack;
+
 #[cfg(feature = "body-limit")]
 pub use crate::body_limit::*;
 

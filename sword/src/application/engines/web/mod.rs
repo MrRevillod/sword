@@ -4,7 +4,8 @@ mod router;
 use crate::{application::ApplicationConfig, controllers::ControllerRegistry};
 
 use axum::Router;
-use sword_core::{Config, State, layers::LayerStack, sword_error};
+use sword_core::{Config, State, sword_error};
+use sword_layers::layer_stack::LayerStack;
 use tokio::net::TcpListener;
 
 pub use config::WebApplicationConfig;

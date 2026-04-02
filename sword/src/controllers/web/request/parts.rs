@@ -6,7 +6,7 @@ use axum::{
     http::request::Parts,
 };
 use std::collections::HashMap;
-use sword_core::layers::BodyLimitValue;
+use sword_layers::body_limit::BodyLimitValue;
 
 pub(super) struct PreparedRequestParts {
     pub params: HashMap<String, String>,

@@ -1,4 +1,3 @@
-use axum_responses::JsonResponse;
 use thisconfig::ConfigError;
 use thiserror::Error;
 
@@ -18,11 +17,4 @@ pub enum DependencyInjectionError {
 
     #[error("Circular dependency detected in dependency container")]
     CircularDependency,
-}
-
-impl From<DependencyInjectionError> for JsonResponse {
-    fn from(error: DependencyInjectionError) -> Self {
-        tracing::error!("Dependency injection error: {}", error);
-        JsonResponse::InternalServerError()
-    }
 }

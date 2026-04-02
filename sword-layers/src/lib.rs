@@ -1,5 +1,7 @@
 #![allow(clippy::new_ret_no_self)]
 
+pub mod layer_stack;
+
 #[cfg(feature = "body-limit")]
 pub mod body_limit;
 

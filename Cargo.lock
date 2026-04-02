@@ -2995,15 +2995,10 @@ dependencies = [
 name = "sword-core"
 version = "0.2.1"
 dependencies = [
- "axum",
- "axum_responses",
  "inventory",
  "parking_lot",
- "sword-layers",
- "sword-macros",
  "thisconfig",
  "thiserror",
- "tower",
  "tracing",
 ]
 

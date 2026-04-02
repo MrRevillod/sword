@@ -21,31 +21,26 @@ default = [
     "tracing",
 ]
 body-limit = [
-    "dep:axum",
     "dep:axum_responses",
     "dep:byte-unit",
     "dep:tracing",
-    "dep:tower",
     "dep:tower-http",
     "dep:tower-layer",
     "tower-http/limit",
 ]
 compression = ["dep:tower-http", "dep:tracing", "tower-http/compression-full"]
 cookies = ["dep:tower-cookies"]
-cors = ["dep:axum", "dep:tower-http", "dep:tracing", "tower-http/cors"]
+cors = ["dep:tower-http", "dep:tracing", "tower-http/cors"]
 helmet = ["dep:axum-helmet"]
-not-found = ["dep:axum", "dep:axum_responses", "dep:tower", "dep:tower-layer"]
+not-found = ["dep:axum_responses", "dep:tower-layer"]
 req-timeout = [
-    "dep:axum",
     "dep:axum_responses",
     "dep:tracing",
-    "dep:tower",
     "dep:tower-http",
     "dep:tower-layer",
     "tower-http/timeout",
 ]
 request-id = [
-    "dep:tower",
     "dep:tower-http",
     "dep:tower-layer",
     "dep:uuid",
@@ -55,7 +50,7 @@ servedir = ["dep:tower-http", "dep:tracing", "tower-http/fs"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 [dependencies]
-axum = { version = "0.8.7", optional = true }
+axum = { version = "0.8.7" }
 axum-helmet = { version = "0.2.0", optional = true }
 axum_responses = { version = "0.5.4", optional = true }
 byte-unit = { version = "5.2.0", optional = true }
@@ -64,7 +59,7 @@ thisconfig = { version = "0.2.1", features = ["byte-unit", "time-unit"] }
 tracing = { version = "0.1.41", optional = true }
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt", "json"], optional = true }
 
-tower = { version = "0.5.2", optional = true }
+tower = { version = "0.5.2" }
 tower-cookies = { version = "0.11.0", features = ["private", "signed"], optional = true }
 tower-http = { version = "0.6.8", optional = true }
 tower-layer = { version = "0.3.3", optional = true }

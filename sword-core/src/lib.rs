@@ -2,7 +2,6 @@ mod config;
 #[doc(hidden)]
 pub mod error;
 mod injectables;
-pub mod layers;
 mod state;
 
 pub use config::*;
