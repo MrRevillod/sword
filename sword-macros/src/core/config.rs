@@ -49,14 +49,10 @@ pub fn expand_config_struct(
 
             fn try_from(state: &::sword::internal::core::State) -> Result<Self, Self::Error> {
                 let config = state.get::<::sword::internal::core::Config>()
-                    .map_err(|_| ::sword::internal::core::DependencyInjectionError::DependencyNotFound {
-                        type_name: "Config".to_string(),
-                    })?;
+                    .map_err(|_| ::sword::internal::core::DependencyInjectionError::dependency_not_found("Config"))?;
 
                 config.get::<Self>()
-                    .ok_or_else(|| ::sword::internal::core::DependencyInjectionError::DependencyNotFound {
-                        type_name: format!("Config item '{}'", Self::key()),
-                    })
+                    .ok_or_else(|| ::sword::internal::core::DependencyInjectionError::dependency_not_found(format!("Config item '{}'", Self::key())))
             }
         }
 

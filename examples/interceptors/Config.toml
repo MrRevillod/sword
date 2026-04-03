@@ -22,8 +22,6 @@ transports = ["websocket", "polling"]
 enabled = true
 default-filter = "info,sword=info"
 format = "dev"
-timer = true
 time-style = "local"
 time-pattern = "%H:%M:%S"
-ansi = true
 with-fields = []

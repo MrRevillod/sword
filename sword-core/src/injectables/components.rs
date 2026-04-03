@@ -37,10 +37,7 @@ impl ComponentRegistry {
         let component_builder = Box::new(move |state: &State| {
             T::build(state)
                 .map(|instance| Arc::new(instance) as Injectable)
-                .map_err(|e| DependencyInjectionError::BuildFailed {
-                    type_name: type_name.to_string(),
-                    reason: e.to_string(),
-                })
+                .map_err(|e| DependencyInjectionError::build_failed(type_name, e))
         });
 
         self.dependency_graph.write().insert(type_id, T::deps());

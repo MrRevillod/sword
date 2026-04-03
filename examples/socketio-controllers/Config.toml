@@ -22,6 +22,5 @@ transports = ["websocket", "polling"]
 enabled = true
 default-filter = "info,sword=info"
 format = "pretty"
-ansi = false
-timer = false
+time-style = "none"
 with-fields = []

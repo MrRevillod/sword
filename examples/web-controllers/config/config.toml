@@ -15,10 +15,9 @@ display = true
 
 [tracing]
 enabled = true
-default-filter = "info,sword=info"
-format = "pretty"
-ansi = false
-timer = false
+default-filter = "info,sword=debug,sqlx=error"
+format = "dev"
+time-style = "none"
 with-fields = []
 
 [database]

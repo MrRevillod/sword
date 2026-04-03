@@ -42,16 +42,14 @@ impl State {
         let map = self.inner.read();
         let type_name = type_name::<T>().to_string();
 
-        let state_ref = map.get(&TypeId::of::<T>()).ok_or(
-            DependencyInjectionError::DependencyNotFound {
-                type_name: type_name.clone(),
-            },
-        )?;
+        let state_ref = map.get(&TypeId::of::<T>()).ok_or_else(|| {
+            DependencyInjectionError::dependency_not_found(type_name.clone())
+        })?;
 
         state_ref
             .downcast_ref::<T>()
             .cloned()
-            .ok_or(DependencyInjectionError::DependencyNotFound { type_name })
+            .ok_or_else(|| DependencyInjectionError::dependency_not_found(type_name))
     }
 
     /// Borrow an `Arc` to the stored value of type `T` from the state.
@@ -68,16 +66,14 @@ impl State {
         let map = self.inner.read();
         let type_name = type_name::<T>().to_string();
 
-        let state_ref = map.get(&TypeId::of::<T>()).ok_or(
-            DependencyInjectionError::DependencyNotFound {
-                type_name: type_name.clone(),
-            },
-        )?;
+        let state_ref = map.get(&TypeId::of::<T>()).ok_or_else(|| {
+            DependencyInjectionError::dependency_not_found(type_name.clone())
+        })?;
 
         state_ref
             .clone()
             .downcast::<T>()
-            .map_err(|_| DependencyInjectionError::DependencyNotFound { type_name })
+            .map_err(|_| DependencyInjectionError::dependency_not_found(type_name))
     }
 
     pub fn insert<T: Send + Sync + 'static>(&self, state: T) {
