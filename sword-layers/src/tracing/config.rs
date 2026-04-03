@@ -6,8 +6,8 @@ use thisconfig::ConfigItem;
 pub struct TracingConfig {
     /// Enables or disables global tracing initialization.
     ///
-    /// When `false`, `TracingSubscriber::init` and `init_once` return without
-    /// registering a subscriber.
+    /// When `false`, `TracingSubscriber::init` returns without registering a
+    /// subscriber.
     pub enabled: bool,
     /// Reads filter directives from the `RUST_LOG` environment variable.
     ///
@@ -26,26 +26,12 @@ pub struct TracingConfig {
     /// `full` follows tracing-subscriber defaults, while `pretty`, `compact`,
     /// `dev` and `json` provide alternative renderers.
     pub format: LogFormat,
-    /// Output stream where logs are written.
-    ///
-    /// Choose `stdout` for regular output pipelines or `stderr` to keep logs
-    /// separated from application stdout data.
-    pub output: LogOutput,
-    /// Enables ANSI color/style escape sequences in text formats.
-    ///
-    /// This only affects human-readable outputs (`full`, `pretty`, `compact`)
-    /// and may be ignored by terminals or CI environments.
-    pub ansi: bool,
     /// Optional metadata fields to include in each event record.
     ///
     /// Supported values are `target`, `file`, `line-number`, `thread-id`, and
     /// `thread-name`.
     #[serde(rename = "with-fields")]
     pub with_fields: Vec<TracingField>,
-    /// Enables timestamp emission in formatter output.
-    ///
-    /// When disabled, logs are emitted without time metadata.
-    pub timer: bool,
     /// Selects which clock source is used for timestamps.
     ///
     /// `system` uses tracing-subscriber's default wall-clock formatter,
@@ -61,7 +47,7 @@ pub struct TracingConfig {
     pub time_pattern: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum LogFormat {
     #[default]
@@ -76,14 +62,6 @@ pub enum LogFormat {
     /// the keys when ANSI is enabled.
     Dev,
     Json,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum LogOutput {
-    #[default]
-    Stdout,
-    Stderr,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -114,10 +92,7 @@ impl Default for TracingConfig {
             use_env_filter: true,
             default_filter: "info".to_string(),
             format: LogFormat::Full,
-            output: LogOutput::Stderr,
-            ansi: true,
             with_fields: vec![TracingField::Target],
-            timer: true,
             time_style: TimeStyle::System,
             time_pattern: None,
         }

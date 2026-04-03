@@ -13,10 +13,8 @@ use std::path::Path;
 use sword_core::{
     Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error,
 };
-use sword_layers::{
-    layer_stack::LayerStack,
-    tracing::{TracingConfig, TracingSubscriber},
-};
+use sword_layers::layer_stack::LayerStack;
+use sword_layers::tracing::{TracingConfig, TracingSubscriber};
 
 use tower::{Layer, Service};
 
@@ -108,8 +106,19 @@ impl ApplicationBuilder {
         state.insert(config.clone());
 
         let tracing_config = config.get_or_default::<TracingConfig>();
-        let tracing_status = TracingSubscriber::init_once(tracing_config.clone());
-        TracingSubscriber::emit_init_status_log(tracing_status, &tracing_config);
+        TracingSubscriber::from(tracing_config.clone())
+            .init()
+            .unwrap_or_else(|err| {
+                sword_error! {
+                    title: "Failed to initialize tracing subscriber",
+                    reason: err,
+                    source: "ApplicationBuilder::from_config",
+                    hints: [
+                        "Ensure tracing is initialized only once per process",
+                        "Avoid initializing tracing manually before building the app when using Sword bootstrap",
+                    ],
+                }
+            });
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&state, &config)
@@ -193,13 +202,28 @@ impl ApplicationBuilder {
         }
 
         self.container.build_all(&self.state).unwrap_or_else(|err| {
-            sword_error! {
-                title: "Failed to build dependency injection container",
-                reason: err,
-                context: {
-                    "source" => "ApplicationBuilder::build",
-                },
-                hints: ["Check that all required components and providers are registered"],
+            match (err.dependency_path(), err.missing_dependency_path()) {
+                (Some(dependency_path), Some(missing_dependency_path)) => {
+                    sword_error! {
+                        title: "Failed to Build DI Container",
+                        reason: err,
+                        source: "ApplicationBuilder::build",
+                        fields: {
+                            dependency_path = dependency_path,
+                            missing_dependency_path = missing_dependency_path,
+                        },
+                        hints: ["Check that all required components and providers are registered"],
+                    }
+                }
+                _ => {
+                    sword_error! {
+                        title: "Failed to Build DI Container",
+                        reason: err,
+                        source: "ApplicationBuilder::build",
+                        extra_context: err.diagnostic_context(),
+                        hints: ["Check that all required components and providers are registered"],
+                    }
+                }
             }
         });
 

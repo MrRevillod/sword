@@ -2,153 +2,105 @@ mod config;
 mod dev;
 mod time;
 
-use std::io;
-use std::sync::OnceLock;
-
 use dev::DevFormatter;
+use std::{io, sync::OnceLock};
 use time::TimestampFormatter;
-use tracing::Subscriber;
-use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use tracing_subscriber::{
+    EnvFilter, Registry,
+    layer::{Layer, SubscriberExt},
+};
 
 pub use config::*;
 
-static TRACING_INIT_STATUS: OnceLock<TracingInitStatus> = OnceLock::new();
+type BoxLayer = Box<dyn Layer<Registry> + Send + Sync + 'static>;
+static TRACING_INIT: OnceLock<()> = OnceLock::new();
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TracingInitStatus {
-    Disabled,
-    Initialized,
-    AlreadySet,
+#[derive(Debug, Clone)]
+pub struct TracingSubscriber {
+    config: TracingConfig,
 }
 
-pub struct TracingSubscriber;
-
 impl TracingSubscriber {
-    pub fn new(config: TracingConfig) -> Box<dyn Subscriber + Send + Sync> {
-        let env_filter = if config.use_env_filter {
+    pub fn env_filter(&self) -> EnvFilter {
+        if self.config.use_env_filter {
             EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new(config.default_filter.clone()))
+                .or_else(|_| EnvFilter::try_new(self.config.default_filter.clone()))
                 .unwrap_or_else(|_| EnvFilter::new("info"))
         } else {
-            EnvFilter::try_new(config.default_filter.clone())
+            EnvFilter::try_new(self.config.default_filter.clone())
                 .unwrap_or_else(|_| EnvFilter::new("info"))
-        };
-
-        let timer = TimestampFormatter::from_config(&config);
-        let with_target = config.has_field(TracingField::Target);
-        let with_file = config.has_field(TracingField::File);
-        let with_line_number = config.has_field(TracingField::LineNumber);
-        let with_thread_ids = config.has_field(TracingField::ThreadId);
-        let with_thread_names = config.has_field(TracingField::ThreadName);
-
-        let builder = FmtSubscriber::builder()
-            .with_env_filter(env_filter)
-            .with_ansi(config.ansi)
-            .with_thread_ids(with_thread_ids)
-            .with_thread_names(with_thread_names);
-
-        macro_rules! finish_standard {
-            ($builder:expr, $writer:expr) => {
-                Box::new(
-                    $builder
-                        .with_timer(timer.clone())
-                        .with_writer($writer)
-                        .with_target(with_target)
-                        .with_file(with_file)
-                        .with_line_number(with_line_number)
-                        .finish(),
-                )
-            };
-        }
-
-        macro_rules! finish_dev {
-            ($writer:expr) => {
-                Box::new(
-                    builder
-                        .event_format(DevFormatter::new(
-                            config.ansi,
-                            &config.with_fields,
-                            timer.clone(),
-                        ))
-                        .with_writer($writer)
-                        .finish(),
-                )
-            };
-        }
-
-        match (config.output, config.format) {
-            (LogOutput::Stdout, LogFormat::Full) => {
-                finish_standard!(builder, io::stdout)
-            }
-            (LogOutput::Stdout, LogFormat::Pretty) => {
-                finish_standard!(builder.pretty(), io::stdout)
-            }
-            (LogOutput::Stdout, LogFormat::Compact) => {
-                finish_standard!(builder.compact(), io::stdout)
-            }
-            (LogOutput::Stdout, LogFormat::Json) => {
-                finish_standard!(builder.json(), io::stdout)
-            }
-            (LogOutput::Stdout, LogFormat::Dev) => finish_dev!(io::stdout),
-            (LogOutput::Stderr, LogFormat::Full) => {
-                finish_standard!(builder, io::stderr)
-            }
-            (LogOutput::Stderr, LogFormat::Pretty) => {
-                finish_standard!(builder.pretty(), io::stderr)
-            }
-            (LogOutput::Stderr, LogFormat::Compact) => {
-                finish_standard!(builder.compact(), io::stderr)
-            }
-            (LogOutput::Stderr, LogFormat::Json) => {
-                finish_standard!(builder.json(), io::stderr)
-            }
-            (LogOutput::Stderr, LogFormat::Dev) => finish_dev!(io::stderr),
         }
     }
 
-    pub fn init(config: TracingConfig) -> TracingInitStatus {
-        if !config.enabled {
-            return TracingInitStatus::Disabled;
+    pub fn fmt_layer(&self) -> BoxLayer {
+        let config = &self.config;
+        let timer = TimestampFormatter::from_config(config);
+
+        let builder = tracing_subscriber::fmt::layer()
+            .with_ansi(config.format != LogFormat::Json)
+            .with_thread_ids(config.has_field(TracingField::ThreadId))
+            .with_thread_names(config.has_field(TracingField::ThreadName))
+            .with_writer(io::stdout)
+            .with_timer(timer.clone())
+            .with_target(config.has_field(TracingField::Target))
+            .with_file(config.has_field(TracingField::File))
+            .with_line_number(config.has_field(TracingField::LineNumber));
+
+        match config.format {
+            LogFormat::Full => Box::new(builder),
+            LogFormat::Pretty => Box::new(builder.pretty()),
+            LogFormat::Compact => Box::new(builder.compact()),
+            LogFormat::Json => Box::new(builder.json().flatten_event(true)),
+
+            LogFormat::Dev => {
+                let dev_fmt = DevFormatter::new(config);
+                let builder = builder.event_format(dev_fmt);
+
+                Box::new(builder)
+            }
+        }
+    }
+
+    pub fn layer(&self) -> BoxLayer {
+        Box::new(self.fmt_layer().with_filter(self.env_filter()))
+    }
+
+    pub fn init(self) -> Result<(), tracing::subscriber::SetGlobalDefaultError> {
+        if !self.config.enabled {
+            return Ok(());
         }
 
-        let subscriber = Self::new(config);
+        if TRACING_INIT.get().is_some() || tracing::dispatcher::has_been_set() {
+            return Ok(());
+        }
+
+        let config = self.config.clone();
+        let subscriber = Registry::default().with(self.layer());
 
         match tracing::subscriber::set_global_default(subscriber) {
-            Ok(()) => TracingInitStatus::Initialized,
-            Err(_) => TracingInitStatus::AlreadySet,
-        }
-    }
+            Ok(()) => {
+                let _ = TRACING_INIT.set(());
 
-    pub fn init_once(config: TracingConfig) -> TracingInitStatus {
-        *TRACING_INIT_STATUS.get_or_init(|| Self::init(config))
-    }
-
-    pub fn emit_init_status_log(status: TracingInitStatus, config: &TracingConfig) {
-        match status {
-            TracingInitStatus::Initialized => {
                 tracing::info!(
                     target: "sword.startup.tracing",
                     format = ?config.format,
-                    output = ?config.output,
                     default_filter = %config.default_filter,
                     use_env_filter = config.use_env_filter,
                     "Initialized tracing subscriber"
                 );
             }
-            TracingInitStatus::AlreadySet => {
-                tracing::debug!(
-                    target: "sword.startup.tracing",
-                    "Tracing subscriber already set, using existing global subscriber"
-                );
+            Err(_) if tracing::dispatcher::has_been_set() => {
+                let _ = TRACING_INIT.set(());
             }
-            TracingInitStatus::Disabled => {
-                if tracing::dispatcher::has_been_set() {
-                    tracing::debug!(
-                        target: "sword.startup.tracing",
-                        "Tracing subscriber disabled in config, using existing global subscriber"
-                    );
-                }
-            }
+            Err(err) => return Err(err),
         }
+
+        Ok(())
+    }
+}
+
+impl From<TracingConfig> for TracingSubscriber {
+    fn from(config: TracingConfig) -> Self {
+        Self { config }
     }
 }

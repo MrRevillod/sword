@@ -1,4 +1,8 @@
 use std::fmt;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 
 use tracing::{
     Event, Level, Subscriber,
@@ -9,7 +13,7 @@ use tracing_subscriber::{
     registry::LookupSpan,
 };
 
-use super::{TracingField, time::TimestampFormatter};
+use super::{TracingConfig, TracingField, time::TimestampFormatter};
 
 const ANSI_RESET: &str = "\x1b[0m";
 const ANSI_KEY: &str = "\x1b[36m";
@@ -21,30 +25,26 @@ const ANSI_TRACE: &str = "\x1b[90m";
 
 #[derive(Clone, Debug)]
 pub struct DevFormatter {
-    pub ansi: bool,
-    pub with_target: bool,
-    pub with_file: bool,
-    pub with_line_number: bool,
-    pub timer: TimestampFormatter,
+    with_target: bool,
+    with_file: bool,
+    with_line_number: bool,
+    timer: TimestampFormatter,
+    has_written_event: Arc<AtomicBool>,
 }
 
 impl DevFormatter {
-    pub fn new(
-        ansi: bool,
-        with_fields: &[TracingField],
-        timer: TimestampFormatter,
-    ) -> Self {
+    pub fn new(config: &TracingConfig) -> Self {
         Self {
-            ansi,
-            with_target: with_fields.contains(&TracingField::Target),
-            with_file: with_fields.contains(&TracingField::File),
-            with_line_number: with_fields.contains(&TracingField::LineNumber),
-            timer,
+            with_target: config.has_field(TracingField::Target),
+            with_file: config.has_field(TracingField::File),
+            with_line_number: config.has_field(TracingField::LineNumber),
+            timer: TimestampFormatter::from_config(config),
+            has_written_event: Arc::new(AtomicBool::new(false)),
         }
     }
 
     fn write_key(&self, writer: &mut Writer<'_>, key: &str) -> fmt::Result {
-        if self.ansi && writer.has_ansi_escapes() {
+        if writer.has_ansi_escapes() {
             write!(writer, "{ANSI_KEY}{key}{ANSI_RESET}")
         } else {
             writer.write_str(key)
@@ -52,7 +52,7 @@ impl DevFormatter {
     }
 
     fn write_level(&self, writer: &mut Writer<'_>, level: &Level) -> fmt::Result {
-        if self.ansi && writer.has_ansi_escapes() {
+        if writer.has_ansi_escapes() {
             let color = match *level {
                 Level::ERROR => ANSI_ERROR,
                 Level::WARN => ANSI_WARN,
@@ -61,9 +61,9 @@ impl DevFormatter {
                 Level::TRACE => ANSI_TRACE,
             };
 
-            write!(writer, "{color}{level:>5}{ANSI_RESET}")
+            write!(writer, "{color}{level}{ANSI_RESET}")
         } else {
-            write!(writer, "{level:>5}")
+            write!(writer, "{level}")
         }
     }
 
@@ -78,6 +78,57 @@ impl DevFormatter {
         writer.write_str(": ")?;
         writer.write_str(value)
     }
+
+    fn write_multiline_field(
+        &self,
+        writer: &mut Writer<'_>,
+        key: &str,
+        value: &str,
+    ) -> fmt::Result {
+        writer.write_str("\n       ")?;
+        self.write_key(writer, key)?;
+        writer.write_str(":")?;
+
+        let lines: Vec<&str> = value.lines().collect();
+
+        if lines.is_empty() {
+            return Ok(());
+        }
+
+        let render_as_block = lines.len() > 1 || lines[0].starts_with("- ");
+
+        if !render_as_block {
+            writer.write_str(" ")?;
+            writer.write_str(lines[0])?;
+            return Ok(());
+        }
+
+        for line in lines {
+            writer.write_str("\n         ")?;
+            writer.write_str(line)?;
+        }
+
+        Ok(())
+    }
+
+    fn should_use_multiline(&self, visitor: &DevFieldVisitor) -> bool {
+        const MAX_SINGLE_LINE_MESSAGE: usize = 80;
+        const MAX_SINGLE_LINE_FIELD: usize = 100;
+        const MAX_SINGLE_LINE_FIELDS: usize = 1;
+
+        let message_requires_multiline =
+            visitor.message.as_deref().is_some_and(|message| {
+                message.len() > MAX_SINGLE_LINE_MESSAGE || message.contains('\n')
+            });
+
+        let has_too_many_fields = visitor.fields.len() > MAX_SINGLE_LINE_FIELDS;
+
+        let field_requires_multiline = visitor.fields.iter().any(|(_, value)| {
+            value.len() > MAX_SINGLE_LINE_FIELD || value.contains('\n')
+        });
+
+        message_requires_multiline || has_too_many_fields || field_requires_multiline
+    }
 }
 
 impl<S, N> FormatEvent<S, N> for DevFormatter
@@ -87,11 +138,19 @@ where
 {
     fn format_event(
         &self,
-        _ctx: &FmtContext<'_, S, N>,
+        _: &FmtContext<'_, S, N>,
         mut writer: Writer<'_>,
         event: &Event<'_>,
     ) -> fmt::Result {
+        if self.has_written_event.swap(true, Ordering::Relaxed) {
+            writer.write_str("\n")?;
+        }
+
         self.timer.format_time(&mut writer)?;
+
+        if !matches!(self.timer, TimestampFormatter::None) {
+            writer.write_str(" ")?;
+        }
 
         let metadata = event.metadata();
         self.write_level(&mut writer, metadata.level())?;
@@ -104,28 +163,60 @@ where
             writer.write_str(message)?;
         }
 
+        let multiline = self.should_use_multiline(&visitor);
+
+        if multiline {
+            if self.with_target {
+                self.write_multiline_field(
+                    &mut writer,
+                    "target",
+                    metadata.target(),
+                )?;
+            }
+
+            if self.with_file
+                && let Some(file) = metadata.file()
+            {
+                self.write_multiline_field(&mut writer, "file", file)?;
+            }
+
+            if self.with_line_number
+                && let Some(line_number) = metadata.line()
+            {
+                let line_number = line_number.to_string();
+                self.write_multiline_field(&mut writer, "line", &line_number)?;
+            }
+
+            for (key, value) in &visitor.fields {
+                self.write_multiline_field(&mut writer, key, value)?;
+            }
+
+            writer.write_str("\n")?;
+            return Ok(());
+        }
+
         if self.with_target {
             self.write_field(&mut writer, "target", metadata.target())?;
         }
 
-        if self.with_file {
-            if let Some(file) = metadata.file() {
-                self.write_field(&mut writer, "file", file)?;
-            }
+        if self.with_file
+            && let Some(file) = metadata.file()
+        {
+            self.write_field(&mut writer, "file", file)?;
         }
 
-        if self.with_line_number {
-            if let Some(line_number) = metadata.line() {
-                let line_number = line_number.to_string();
-                self.write_field(&mut writer, "line", &line_number)?;
-            }
+        if self.with_line_number
+            && let Some(line_number) = metadata.line()
+        {
+            let line_number = line_number.to_string();
+            self.write_field(&mut writer, "line", &line_number)?;
         }
 
         for (key, value) in &visitor.fields {
             self.write_field(&mut writer, key, value)?;
         }
 
-        writeln!(writer)
+        writer.write_str("\n")
     }
 }
 

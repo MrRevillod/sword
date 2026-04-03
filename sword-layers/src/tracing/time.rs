@@ -1,11 +1,11 @@
+use super::{TimeStyle, TracingConfig};
+
 use std::fmt;
 
 use tracing_subscriber::fmt::{
     format::Writer,
     time::{ChronoLocal, ChronoUtc, FormatTime, SystemTime, Uptime},
 };
-
-use super::{TimeStyle, TracingConfig};
 
 const DEFAULT_LOCAL_TIME_PATTERN: &str = "%Y-%m-%d %H:%M:%S";
 const DEFAULT_UTC_TIME_PATTERN: &str = "%Y-%m-%dT%H:%M:%SZ";
@@ -21,10 +21,6 @@ pub enum TimestampFormatter {
 
 impl TimestampFormatter {
     pub fn from_config(config: &TracingConfig) -> Self {
-        if !config.timer {
-            return Self::None;
-        }
-
         match config.time_style {
             TimeStyle::None => Self::None,
             TimeStyle::System => Self::System(SystemTime),
@@ -49,22 +45,10 @@ impl FormatTime for TimestampFormatter {
     fn format_time(&self, w: &mut Writer<'_>) -> fmt::Result {
         match self {
             Self::None => Ok(()),
-            Self::System(timer) => {
-                timer.format_time(w)?;
-                w.write_char(' ')
-            }
-            Self::Uptime(timer) => {
-                timer.format_time(w)?;
-                w.write_char(' ')
-            }
-            Self::Local(timer) => {
-                timer.format_time(w)?;
-                w.write_char(' ')
-            }
-            Self::Utc(timer) => {
-                timer.format_time(w)?;
-                w.write_char(' ')
-            }
+            Self::System(timer) => timer.format_time(w),
+            Self::Uptime(timer) => timer.format_time(w),
+            Self::Local(timer) => timer.format_time(w),
+            Self::Utc(timer) => timer.format_time(w),
         }
     }
 }
