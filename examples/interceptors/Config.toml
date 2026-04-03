@@ -3,8 +3,15 @@ graceful-shutdown = false
 name = "Interceptors Example"
 host = "0.0.0.0"
 port = 8081
-body-limit = { max-size = "2MB", display = true }
-request-timeout = { enabled = true, timeout = "15s", display = true }
+
+[application.request-timeout]
+enabled = true
+timeout = "15s"
+display = true
+
+[application.body-limit]
+max-size = "5MB"
+display = true
 
 [socketio]
 enabled = true
@@ -13,5 +20,10 @@ transports = ["websocket", "polling"]
 
 [tracing]
 enabled = true
-timer = false
-target = false
+default-filter = "info,sword=info"
+format = "dev"
+timer = true
+time-style = "local"
+time-pattern = "%H:%M:%S"
+ansi = true
+with-fields = []

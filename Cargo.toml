@@ -29,7 +29,7 @@ uuid = { version = "1.18.0", features = ["v4", "serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt", "json"] }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt", "json", "chrono"] }
 
 socketioxide = "0.18.0"
 socketioxide-core = "0.17.0"

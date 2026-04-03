@@ -1,8 +1,12 @@
 mod config;
+mod dev;
+mod time;
 
 use std::io;
 use std::sync::OnceLock;
 
+use dev::DevFormatter;
+use time::TimestampFormatter;
 use tracing::Subscriber;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
@@ -30,89 +34,75 @@ impl TracingSubscriber {
                 .unwrap_or_else(|_| EnvFilter::new("info"))
         };
 
+        let timer = TimestampFormatter::from_config(&config);
+        let with_target = config.has_field(TracingField::Target);
+        let with_file = config.has_field(TracingField::File);
+        let with_line_number = config.has_field(TracingField::LineNumber);
+        let with_thread_ids = config.has_field(TracingField::ThreadId);
+        let with_thread_names = config.has_field(TracingField::ThreadName);
+
         let builder = FmtSubscriber::builder()
             .with_env_filter(env_filter)
             .with_ansi(config.ansi)
-            .with_target(config.target)
-            .with_file(config.file)
-            .with_line_number(config.line_number)
-            .with_thread_ids(config.thread_ids)
-            .with_thread_names(config.thread_names)
-            .with_span_events(SpanEventsFmt::from(config.span_events).0);
+            .with_thread_ids(with_thread_ids)
+            .with_thread_names(with_thread_names);
 
-        match (config.output, config.format, config.timer) {
-            (LogOutput::Stdout, LogFormat::Full, true) => {
-                Box::new(builder.with_writer(io::stdout).finish())
+        macro_rules! finish_standard {
+            ($builder:expr, $writer:expr) => {
+                Box::new(
+                    $builder
+                        .with_timer(timer.clone())
+                        .with_writer($writer)
+                        .with_target(with_target)
+                        .with_file(with_file)
+                        .with_line_number(with_line_number)
+                        .finish(),
+                )
+            };
+        }
+
+        macro_rules! finish_dev {
+            ($writer:expr) => {
+                Box::new(
+                    builder
+                        .event_format(DevFormatter::new(
+                            config.ansi,
+                            &config.with_fields,
+                            timer.clone(),
+                        ))
+                        .with_writer($writer)
+                        .finish(),
+                )
+            };
+        }
+
+        match (config.output, config.format) {
+            (LogOutput::Stdout, LogFormat::Full) => {
+                finish_standard!(builder, io::stdout)
             }
-            (LogOutput::Stdout, LogFormat::Full, false) => {
-                Box::new(builder.without_time().with_writer(io::stdout).finish())
+            (LogOutput::Stdout, LogFormat::Pretty) => {
+                finish_standard!(builder.pretty(), io::stdout)
             }
-            (LogOutput::Stdout, LogFormat::Pretty, true) => {
-                Box::new(builder.pretty().with_writer(io::stdout).finish())
+            (LogOutput::Stdout, LogFormat::Compact) => {
+                finish_standard!(builder.compact(), io::stdout)
             }
-            (LogOutput::Stdout, LogFormat::Pretty, false) => Box::new(
-                builder
-                    .pretty()
-                    .without_time()
-                    .with_writer(io::stdout)
-                    .finish(),
-            ),
-            (LogOutput::Stdout, LogFormat::Compact, true) => {
-                Box::new(builder.compact().with_writer(io::stdout).finish())
+            (LogOutput::Stdout, LogFormat::Json) => {
+                finish_standard!(builder.json(), io::stdout)
             }
-            (LogOutput::Stdout, LogFormat::Compact, false) => Box::new(
-                builder
-                    .compact()
-                    .without_time()
-                    .with_writer(io::stdout)
-                    .finish(),
-            ),
-            (LogOutput::Stdout, LogFormat::Json, true) => {
-                Box::new(builder.json().with_writer(io::stdout).finish())
+            (LogOutput::Stdout, LogFormat::Dev) => finish_dev!(io::stdout),
+            (LogOutput::Stderr, LogFormat::Full) => {
+                finish_standard!(builder, io::stderr)
             }
-            (LogOutput::Stdout, LogFormat::Json, false) => Box::new(
-                builder
-                    .json()
-                    .without_time()
-                    .with_writer(io::stdout)
-                    .finish(),
-            ),
-            (LogOutput::Stderr, LogFormat::Full, true) => {
-                Box::new(builder.with_writer(io::stderr).finish())
+            (LogOutput::Stderr, LogFormat::Pretty) => {
+                finish_standard!(builder.pretty(), io::stderr)
             }
-            (LogOutput::Stderr, LogFormat::Full, false) => {
-                Box::new(builder.without_time().with_writer(io::stderr).finish())
+            (LogOutput::Stderr, LogFormat::Compact) => {
+                finish_standard!(builder.compact(), io::stderr)
             }
-            (LogOutput::Stderr, LogFormat::Pretty, true) => {
-                Box::new(builder.pretty().with_writer(io::stderr).finish())
+            (LogOutput::Stderr, LogFormat::Json) => {
+                finish_standard!(builder.json(), io::stderr)
             }
-            (LogOutput::Stderr, LogFormat::Pretty, false) => Box::new(
-                builder
-                    .pretty()
-                    .without_time()
-                    .with_writer(io::stderr)
-                    .finish(),
-            ),
-            (LogOutput::Stderr, LogFormat::Compact, true) => {
-                Box::new(builder.compact().with_writer(io::stderr).finish())
-            }
-            (LogOutput::Stderr, LogFormat::Compact, false) => Box::new(
-                builder
-                    .compact()
-                    .without_time()
-                    .with_writer(io::stderr)
-                    .finish(),
-            ),
-            (LogOutput::Stderr, LogFormat::Json, true) => {
-                Box::new(builder.json().with_writer(io::stderr).finish())
-            }
-            (LogOutput::Stderr, LogFormat::Json, false) => Box::new(
-                builder
-                    .json()
-                    .without_time()
-                    .with_writer(io::stderr)
-                    .finish(),
-            ),
+            (LogOutput::Stderr, LogFormat::Dev) => finish_dev!(io::stderr),
         }
     }
 
@@ -142,13 +132,7 @@ impl TracingSubscriber {
                     output = ?config.output,
                     default_filter = %config.default_filter,
                     use_env_filter = config.use_env_filter,
-                    "Initialized Sword tracing subscriber"
-                );
-
-                tracing::trace!(
-                    target: "sword.startup.tracing",
-                    tracing_config = ?config,
-                    "Resolved tracing configuration"
+                    "Initialized tracing subscriber"
                 );
             }
             TracingInitStatus::AlreadySet => {
@@ -161,7 +145,7 @@ impl TracingSubscriber {
                 if tracing::dispatcher::has_been_set() {
                     tracing::debug!(
                         target: "sword.startup.tracing",
-                        "Sword tracing subscriber disabled in config, using existing global subscriber"
+                        "Tracing subscriber disabled in config, using existing global subscriber"
                     );
                 }
             }
