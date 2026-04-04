@@ -24,10 +24,10 @@ impl TracingSubscriber {
     pub fn env_filter(&self) -> EnvFilter {
         if self.config.use_env_filter {
             EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new(self.config.default_filter.clone()))
+                .or_else(|_| EnvFilter::try_new(self.config.filter.clone()))
                 .unwrap_or_else(|_| EnvFilter::new("info"))
         } else {
-            EnvFilter::try_new(self.config.default_filter.clone())
+            EnvFilter::try_new(self.config.filter.clone())
                 .unwrap_or_else(|_| EnvFilter::new("info"))
         }
     }
@@ -81,10 +81,14 @@ impl TracingSubscriber {
             Ok(()) => {
                 let _ = TRACING_INIT.set(());
 
+                if !config.display {
+                    return Ok(());
+                }
+
                 tracing::info!(
                     target: "sword.startup.tracing",
                     format = ?config.format,
-                    default_filter = %config.default_filter,
+                    default_filter = %config.filter,
                     use_env_filter = config.use_env_filter,
                     "Initialized tracing subscriber"
                 );

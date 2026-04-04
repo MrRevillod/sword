@@ -60,6 +60,8 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
+        println!();
+
         let config = Self::load_required_config(DEFAULT_CONFIG_PATH, "ApplicationBuilder::new");
 
         Self::from_config(config)
@@ -95,6 +97,8 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn from_config(config: Config) -> Self {
+        println!();
+
         let state = State::new();
         state.insert(config.clone());
 

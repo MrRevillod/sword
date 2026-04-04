@@ -1,7 +1,7 @@
 use std::fmt;
 use std::sync::{
     Arc,
-    atomic::{AtomicBool, Ordering},
+    atomic::{AtomicU8, Ordering},
 };
 
 use tracing::{
@@ -29,7 +29,7 @@ pub struct DevFormatter {
     with_file: bool,
     with_line_number: bool,
     timer: TimestampFormatter,
-    has_written_event: Arc<AtomicBool>,
+    last_event_layout: Arc<AtomicU8>,
 }
 
 impl DevFormatter {
@@ -39,7 +39,7 @@ impl DevFormatter {
             with_file: config.has_field(TracingField::File),
             with_line_number: config.has_field(TracingField::LineNumber),
             timer: TimestampFormatter::from_config(config),
-            has_written_event: Arc::new(AtomicBool::new(false)),
+            last_event_layout: Arc::new(AtomicU8::new(0)),
         }
     }
 
@@ -106,23 +106,40 @@ impl DevFormatter {
         Ok(())
     }
 
-    fn should_use_multiline(&self, visitor: &DevFieldVisitor) -> bool {
-        const MAX_SINGLE_LINE_MESSAGE: usize = 80;
-        const MAX_SINGLE_LINE_FIELD: usize = 100;
-        const MAX_SINGLE_LINE_FIELDS: usize = 1;
+    fn should_use_multiline(&self, level: &Level, visitor: &DevFieldVisitor) -> bool {
+        const MAX_SINGLE_LINE_MESSAGE: usize = 100;
+        const MAX_SINGLE_LINE_FIELD: usize = 60;
+        const MAX_SINGLE_LINE_FIELDS: usize = 3;
+        const MAX_SINGLE_LINE_TOTAL: usize = 140;
+        const MAX_SINGLE_LINE_TOTAL_ERROR: usize = 120;
 
-        let message_requires_multiline = visitor.message.as_deref().is_some_and(|message| {
-            message.len() > MAX_SINGLE_LINE_MESSAGE || message.contains('\n')
-        });
+        let summary = EventLayoutSummary::from_visitor(visitor);
 
-        let has_too_many_fields = visitor.fields.len() > MAX_SINGLE_LINE_FIELDS;
+        if summary.message_has_newline || summary.field_has_newline {
+            return true;
+        }
 
-        let field_requires_multiline = visitor
-            .fields
-            .iter()
-            .any(|(_, value)| value.len() > MAX_SINGLE_LINE_FIELD || value.contains('\n'));
+        if summary.is_diagnostic {
+            return true;
+        }
 
-        message_requires_multiline || has_too_many_fields || field_requires_multiline
+        if summary.message_len > MAX_SINGLE_LINE_MESSAGE {
+            return true;
+        }
+
+        if summary.max_field_len > MAX_SINGLE_LINE_FIELD {
+            return true;
+        }
+
+        if summary.field_count > MAX_SINGLE_LINE_FIELDS {
+            return true;
+        }
+
+        if *level == Level::ERROR && summary.total_len > MAX_SINGLE_LINE_TOTAL_ERROR {
+            return true;
+        }
+
+        summary.total_len > MAX_SINGLE_LINE_TOTAL
     }
 }
 
@@ -137,7 +154,15 @@ where
         mut writer: Writer<'_>,
         event: &Event<'_>,
     ) -> fmt::Result {
-        if self.has_written_event.swap(true, Ordering::Relaxed) {
+        let previous_layout = self.last_event_layout.load(Ordering::Relaxed);
+
+        let metadata = event.metadata();
+        let mut visitor = DevFieldVisitor::default();
+        event.record(&mut visitor);
+
+        let multiline = self.should_use_multiline(metadata.level(), &visitor);
+
+        if previous_layout != 0 && (previous_layout == 2 || multiline) {
             writer.write_str("\n")?;
         }
 
@@ -147,18 +172,12 @@ where
             writer.write_str(" ")?;
         }
 
-        let metadata = event.metadata();
         self.write_level(&mut writer, metadata.level())?;
-
-        let mut visitor = DevFieldVisitor::default();
-        event.record(&mut visitor);
 
         if let Some(message) = visitor.message.as_deref() {
             writer.write_str("  ")?;
             writer.write_str(message)?;
         }
-
-        let multiline = self.should_use_multiline(&visitor);
 
         if multiline {
             if self.with_target {
@@ -183,6 +202,7 @@ where
             }
 
             writer.write_str("\n")?;
+            self.last_event_layout.store(2, Ordering::Relaxed);
             return Ok(());
         }
 
@@ -207,7 +227,63 @@ where
             self.write_field(&mut writer, key, value)?;
         }
 
+        self.last_event_layout.store(1, Ordering::Relaxed);
         writer.write_str("\n")
+    }
+}
+
+struct EventLayoutSummary {
+    field_count: usize,
+    message_len: usize,
+    max_field_len: usize,
+    total_len: usize,
+    message_has_newline: bool,
+    field_has_newline: bool,
+    is_diagnostic: bool,
+}
+
+impl EventLayoutSummary {
+    fn from_visitor(visitor: &DevFieldVisitor) -> Self {
+        let message = visitor.message.as_deref().unwrap_or_default();
+        let field_count = visitor.fields.len();
+        let message_len = message.len();
+        let message_has_newline = message.contains('\n');
+        let field_has_newline = visitor.fields.iter().any(|(_, value)| value.contains('\n'));
+        let max_field_len = visitor
+            .fields
+            .iter()
+            .map(|(_, value)| value.len())
+            .max()
+            .unwrap_or(0);
+        let total_len = message_len
+            + visitor
+                .fields
+                .iter()
+                .map(|(key, value)| key.len() + value.len() + 4)
+                .sum::<usize>();
+
+        let is_diagnostic = visitor.fields.iter().any(|(key, _)| {
+            matches!(
+                key.as_str(),
+                "reason"
+                    | "source"
+                    | "hint"
+                    | "hints"
+                    | "details"
+                    | "dependency_path"
+                    | "missing_dependency_path"
+            )
+        });
+
+        Self {
+            field_count,
+            message_len,
+            max_field_len,
+            total_len,
+            message_has_newline,
+            field_has_newline,
+            is_diagnostic,
+        }
     }
 }
 

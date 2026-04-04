@@ -4,6 +4,9 @@ use thisconfig::ConfigItem;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct TracingConfig {
+    /// Enables the initial display of the tracing subscriber configuration on initialization.
+    pub display: bool,
+
     /// Enables or disables global tracing initialization.
     ///
     /// When `false`, `TracingSubscriber::init` returns without registering a
@@ -19,8 +22,8 @@ pub struct TracingConfig {
     ///
     /// Accepts standard tracing directives like `info`, `warn,my_crate=debug`,
     /// etc. This value is always used when `use_env_filter` is `false`.
-    #[serde(rename = "default-filter")]
-    pub default_filter: String,
+    #[serde(rename = "filter")]
+    pub filter: String,
     /// Event formatting style used by the subscriber output.
     ///
     /// `full` follows tracing-subscriber defaults, while `pretty`, `compact`,
@@ -88,9 +91,10 @@ pub enum TimeStyle {
 impl Default for TracingConfig {
     fn default() -> Self {
         Self {
+            display: false,
             enabled: true,
             use_env_filter: true,
-            default_filter: "info".to_string(),
+            filter: "info".to_string(),
             format: LogFormat::Full,
             with_fields: vec![TracingField::Target],
             time_style: TimeStyle::System,

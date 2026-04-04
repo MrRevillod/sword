@@ -44,7 +44,7 @@ impl WebApplication {
         let bind = format!("{}:{}", self.app_config.web.host, self.app_config.web.port);
 
         tracing::info!(
-            target: "sword.startup.engine",
+            target: "sword.startup.web",
             bind,
             web_router_prefix = self
                 .app_config
@@ -52,7 +52,7 @@ impl WebApplication {
                 .web_router_prefix
                 .as_deref()
                 .unwrap_or("none"),
-            "Starting web engine listener"
+            "Starting application listener"
         );
 
         let app = self.router.clone().with_state(self.state.clone());
