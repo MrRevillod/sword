@@ -4,15 +4,11 @@ use crate::controllers::ControllerRegistry;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
 
-use axum::{
-    extract::Request as AxumRequest, response::IntoResponse, routing::Route,
-};
+use axum::{extract::Request as AxumRequest, response::IntoResponse, routing::Route};
 
 use std::convert::Infallible;
 use std::path::Path;
-use sword_core::{
-    Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error,
-};
+use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error};
 use sword_layers::layer_stack::LayerStack;
 use sword_layers::tracing::{TracingConfig, TracingSubscriber};
 
@@ -64,10 +60,7 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        let config = Self::load_required_config(
-            DEFAULT_CONFIG_PATH,
-            "ApplicationBuilder::new",
-        );
+        let config = Self::load_required_config(DEFAULT_CONFIG_PATH, "ApplicationBuilder::new");
 
         Self::from_config(config)
     }
@@ -227,9 +220,7 @@ impl ApplicationBuilder {
             }
         });
 
-        for InterceptorRegistrar { register } in
-            inventory::iter::<InterceptorRegistrar>
-        {
+        for InterceptorRegistrar { register } in inventory::iter::<InterceptorRegistrar> {
             register(&self.state);
         }
 

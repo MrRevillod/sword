@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::InterceptorArgs;
 use crate::controllers::web::attributes::RequestMode;
+use crate::interceptor::InterceptorArgs;
 
 /// Expands interceptor arguments into the appropriate runtime code.
 ///
@@ -12,17 +12,18 @@ use crate::controllers::web::attributes::RequestMode;
 /// 2. **Configured interceptor** (`#[interceptor(MyInterceptor, config = ...)]`):
 ///    - Requires `MyInterceptor` to implement
 ///      `OnRequestWithConfig<ConfigType>` or `OnRequestStreamWithConfig<ConfigType>`
-pub fn expand_interceptor_args(
+pub fn expand_web_interceptor_args(
     args: &InterceptorArgs,
     request_mode: RequestMode,
 ) -> TokenStream {
-    let mode = mode_tokens(request_mode);
+    let mode = ModeTokens::from_request_mode(request_mode);
 
     match args {
-        InterceptorArgs::SwordSimple(path) => generate_sword_simple(path, &mode),
-        InterceptorArgs::SwordWithConfig { middleware, config } => {
-            generate_sword_configured(middleware, config, &mode)
-        }
+        InterceptorArgs::Traditional(path) => generate_sword_simple(path, &mode),
+        InterceptorArgs::WithConfig {
+            interceptor,
+            config,
+        } => generate_sword_configured(interceptor, config, &mode),
         InterceptorArgs::Expression(expr) => {
             quote! { #expr }
         }
@@ -35,18 +36,20 @@ struct ModeTokens {
     configured_trait: TokenStream,
 }
 
-fn mode_tokens(request_mode: RequestMode) -> ModeTokens {
-    match request_mode {
-        RequestMode::Streaming => ModeTokens {
-            req_ty: quote! { ::sword::prelude::StreamRequest },
-            simple_trait: quote! { ::sword::prelude::OnRequestStream },
-            configured_trait: quote! { ::sword::prelude::OnRequestStreamWithConfig },
-        },
-        _ => ModeTokens {
-            req_ty: quote! { ::sword::prelude::Request },
-            simple_trait: quote! { ::sword::prelude::OnRequest },
-            configured_trait: quote! { ::sword::prelude::OnRequestWithConfig },
-        },
+impl ModeTokens {
+    fn from_request_mode(request_mode: RequestMode) -> Self {
+        match request_mode {
+            RequestMode::Streaming => Self {
+                req_ty: quote! { ::sword::prelude::StreamRequest },
+                simple_trait: quote! { ::sword::prelude::OnRequestStream },
+                configured_trait: quote! { ::sword::prelude::OnRequestStreamWithConfig },
+            },
+            _ => Self {
+                req_ty: quote! { ::sword::prelude::Request },
+                simple_trait: quote! { ::sword::prelude::OnRequest },
+                configured_trait: quote! { ::sword::prelude::OnRequestWithConfig },
+            },
+        }
     }
 }
 

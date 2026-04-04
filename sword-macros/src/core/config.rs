@@ -2,19 +2,13 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Error, Expr, Lit, Meta};
 
-pub fn expand_config_struct(
-    args: TokenStream,
-    input: &DeriveInput,
-) -> syn::Result<TokenStream> {
+pub fn expand_config_struct(args: TokenStream, input: &DeriveInput) -> syn::Result<TokenStream> {
     let struct_name = &input.ident;
     let self_ty = quote! { #struct_name };
     let meta = syn::parse::<Meta>(args)?;
 
     let nv = meta.require_name_value().map_err(|_| {
-        Error::new_spanned(
-            &meta,
-            r#"expected format: #[config(key = "section_name")]"#,
-        )
+        Error::new_spanned(&meta, r#"expected format: #[config(key = "section_name")]"#)
     })?;
 
     if !nv.path.is_ident("key") {

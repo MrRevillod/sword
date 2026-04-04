@@ -48,10 +48,7 @@ pub enum RequestError {
 }
 
 impl RequestError {
-    pub fn parse_error(
-        message: impl Into<String>,
-        details: impl Into<String>,
-    ) -> Self {
+    pub fn parse_error(message: impl Into<String>, details: impl Into<String>) -> Self {
         RequestError::ParseError {
             message: message.into(),
             details: details.into(),
@@ -77,10 +74,7 @@ impl RequestError {
     }
 
     #[cfg(feature = "validation-validator")]
-    pub fn validator_error(
-        message: &'static str,
-        details: serde_json::Value,
-    ) -> Self {
+    pub fn validator_error(message: &'static str, details: serde_json::Value) -> Self {
         RequestError::ValidatorError { message, details }
     }
 

@@ -5,8 +5,7 @@ use std::{
     sync::Arc,
 };
 
-type ComponentBuilderFn =
-    Box<dyn Fn(&State) -> Result<Injectable, DependencyInjectionError>>;
+type ComponentBuilderFn = Box<dyn Fn(&State) -> Result<Injectable, DependencyInjectionError>>;
 
 /// Trait for injectable components that can be automatically constructed
 /// by the dependency container with automatic dependency resolution.

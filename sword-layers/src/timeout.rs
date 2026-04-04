@@ -35,10 +35,7 @@ pub struct RequestTimeoutConfig {
 
 impl From<RequestTimeoutConfig> for TimeoutLayer {
     fn from(config: RequestTimeoutConfig) -> Self {
-        TimeoutLayer::with_status_code(
-            StatusCode::REQUEST_TIMEOUT,
-            config.timeout.parsed,
-        )
+        TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, config.timeout.parsed)
     }
 }
 

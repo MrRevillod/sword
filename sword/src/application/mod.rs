@@ -83,10 +83,7 @@ impl Application {
         );
 
         match &self.engine {
-            #[cfg(any(
-                feature = "web-controllers",
-                feature = "socketio-controllers"
-            ))]
+            #[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
             ApplicationEngine::Web(app) => app.start().await,
         }
     }

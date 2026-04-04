@@ -104,10 +104,8 @@ impl Request {
             .parse::<HeaderName>()
             .map_err(|_| RequestError::InvalidHeaderName(header_name_raw.clone()))?;
 
-        let header_value =
-            HeaderValue::from_str(&header_value_raw).map_err(|_| {
-                RequestError::invalid_header_value(header_name_raw.clone())
-            })?;
+        let header_value = HeaderValue::from_str(&header_value_raw)
+            .map_err(|_| RequestError::invalid_header_value(header_name_raw.clone()))?;
 
         self.headers.insert(header_name, header_value);
 
@@ -308,9 +306,8 @@ impl Request {
             return Ok(None);
         }
 
-        let deserializer = serde_urlencoded::Deserializer::new(
-            form_urlencoded::parse(query_string.as_bytes()),
-        );
+        let deserializer =
+            serde_urlencoded::Deserializer::new(form_urlencoded::parse(query_string.as_bytes()));
 
         let deserialized = T::deserialize(deserializer).map_err(|e| {
             RequestError::deserialization_error(
@@ -434,9 +431,7 @@ impl Request {
     ///     Ok(JsonResponse::Ok().data(field_names))
     /// }
     /// ```
-    pub async fn multipart(
-        self,
-    ) -> Result<axum::extract::multipart::Multipart, RequestError> {
+    pub async fn multipart(self) -> Result<axum::extract::multipart::Multipart, RequestError> {
         use axum::extract::FromRequest;
         Ok(axum::extract::Multipart::from_request(self.try_into()?, &()).await?)
     }
@@ -451,8 +446,7 @@ impl Request {
         };
 
         mime.type_() == "application"
-            && (mime.subtype() == "json"
-                || mime.suffix().is_some_and(|name| name == "json"))
+            && (mime.subtype() == "json" || mime.suffix().is_some_and(|name| name == "json"))
     }
 
     #[doc(hidden)]

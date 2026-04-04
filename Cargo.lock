@@ -1543,6 +1543,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "sword",
+ "sword-layers",
 ]
 
 [[package]]

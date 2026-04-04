@@ -1,6 +1,4 @@
 use super::super::ControllerSpec;
-use axum::Router as AxumRouter;
-use sword_core::State;
 
 pub use sword_macros::{controller, delete, get, patch, post, put};
 
@@ -33,8 +31,4 @@ pub use sword_macros::{controller, delete, get, patch, post, put};
 /// ```
 pub trait WebController: ControllerSpec {
     fn base_path() -> &'static str;
-    fn apply_interceptors(
-        router: AxumRouter<State>,
-        state: State,
-    ) -> AxumRouter<State>;
 }

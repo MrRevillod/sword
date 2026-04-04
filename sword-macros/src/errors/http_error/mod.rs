@@ -150,11 +150,7 @@ fn generate_from_arm(
     }
 }
 
-fn generate_pattern(
-    enum_name: &Ident,
-    variant_name: &Ident,
-    fields: &Fields,
-) -> TokenStream {
+fn generate_pattern(enum_name: &Ident, variant_name: &Ident, fields: &Fields) -> TokenStream {
     match fields {
         Fields::Named(named) => {
             let field_names: Vec<_> = named.named.iter().map(|f| &f.ident).collect();

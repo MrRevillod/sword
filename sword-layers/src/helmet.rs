@@ -4,12 +4,10 @@
 //! common HTTP security headers to Sword applications.
 
 pub use axum_helmet::{
-    ContentSecurityPolicy, ContentSecurityPolicyDirective,
-    CrossOriginEmbedderPolicy, CrossOriginOpenerPolicy, CrossOriginResourcePolicy,
-    Header, HelmetLayer, OriginAgentCluster, ReferrerPolicy,
-    StrictTransportSecurity, XContentTypeOptions, XDNSPrefetchControl,
-    XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies, XPoweredBy,
-    XXSSProtection,
+    ContentSecurityPolicy, ContentSecurityPolicyDirective, CrossOriginEmbedderPolicy,
+    CrossOriginOpenerPolicy, CrossOriginResourcePolicy, Header, HelmetLayer, OriginAgentCluster,
+    ReferrerPolicy, StrictTransportSecurity, XContentTypeOptions, XDNSPrefetchControl,
+    XDownloadOptions, XFrameOptions, XPermittedCrossDomainPolicies, XPoweredBy, XXSSProtection,
 };
 
 pub struct Helmet {

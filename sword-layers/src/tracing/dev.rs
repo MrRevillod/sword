@@ -67,12 +67,7 @@ impl DevFormatter {
         }
     }
 
-    fn write_field(
-        &self,
-        writer: &mut Writer<'_>,
-        key: &str,
-        value: &str,
-    ) -> fmt::Result {
+    fn write_field(&self, writer: &mut Writer<'_>, key: &str, value: &str) -> fmt::Result {
         writer.write_str("  ")?;
         self.write_key(writer, key)?;
         writer.write_str(": ")?;
@@ -116,16 +111,16 @@ impl DevFormatter {
         const MAX_SINGLE_LINE_FIELD: usize = 100;
         const MAX_SINGLE_LINE_FIELDS: usize = 1;
 
-        let message_requires_multiline =
-            visitor.message.as_deref().is_some_and(|message| {
-                message.len() > MAX_SINGLE_LINE_MESSAGE || message.contains('\n')
-            });
+        let message_requires_multiline = visitor.message.as_deref().is_some_and(|message| {
+            message.len() > MAX_SINGLE_LINE_MESSAGE || message.contains('\n')
+        });
 
         let has_too_many_fields = visitor.fields.len() > MAX_SINGLE_LINE_FIELDS;
 
-        let field_requires_multiline = visitor.fields.iter().any(|(_, value)| {
-            value.len() > MAX_SINGLE_LINE_FIELD || value.contains('\n')
-        });
+        let field_requires_multiline = visitor
+            .fields
+            .iter()
+            .any(|(_, value)| value.len() > MAX_SINGLE_LINE_FIELD || value.contains('\n'));
 
         message_requires_multiline || has_too_many_fields || field_requires_multiline
     }
@@ -167,11 +162,7 @@ where
 
         if multiline {
             if self.with_target {
-                self.write_multiline_field(
-                    &mut writer,
-                    "target",
-                    metadata.target(),
-                )?;
+                self.write_multiline_field(&mut writer, "target", metadata.target())?;
             }
 
             if self.with_file
@@ -265,11 +256,7 @@ impl Visit for DevFieldVisitor {
         self.push(field, value.to_string());
     }
 
-    fn record_error(
-        &mut self,
-        field: &Field,
-        value: &(dyn std::error::Error + 'static),
-    ) {
+    fn record_error(&mut self, field: &Field, value: &(dyn std::error::Error + 'static)) {
         self.push(field, value.to_string());
     }
 

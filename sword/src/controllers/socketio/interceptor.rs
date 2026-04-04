@@ -1,6 +1,4 @@
-use crate::{
-    controllers::socketio::extract::SocketContext, interceptor::Interceptor,
-};
+use crate::{controllers::socketio::extract::SocketContext, interceptor::Interceptor};
 use socketioxide::adapter::{Adapter as SocketIoSocketAdapter, LocalAdapter};
 use std::fmt::Display;
 

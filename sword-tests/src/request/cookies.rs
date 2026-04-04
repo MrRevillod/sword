@@ -46,12 +46,11 @@ impl CookieController {
     async fn with_middleware(&self, req: Request) -> WebResult {
         let cookies = req.cookies()?;
 
-        let session_cookie = cookies.get("session_id").ok_or(
-            JsonResponse::Unauthorized().message("Session cookie not found"),
-        )?;
+        let session_cookie = cookies
+            .get("session_id")
+            .ok_or(JsonResponse::Unauthorized().message("Session cookie not found"))?;
 
-        Ok(JsonResponse::Ok()
-            .message(format!("Session ID: {}", session_cookie.value())))
+        Ok(JsonResponse::Ok().message(format!("Session ID: {}", session_cookie.value())))
     }
 }
 
@@ -96,8 +95,7 @@ async fn test_set_cookie() -> std::result::Result<(), Box<dyn std::error::Error>
 }
 
 #[tokio::test]
-async fn test_with_middleware() -> std::result::Result<(), Box<dyn std::error::Error>>
-{
+async fn test_with_middleware() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = test_app();
 
     let server = TestServer::new(app.router())?;

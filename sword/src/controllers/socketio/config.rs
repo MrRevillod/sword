@@ -4,9 +4,7 @@ use socketioxide_parser_common::CommonParser;
 use socketioxide_parser_msgpack::MsgPackParser;
 use std::collections::HashSet;
 use std::str::FromStr;
-use sword_core::{
-    ByteConfig, ConfigItem, ConfigRegistrar, TimeConfig, inventory_submit,
-};
+use sword_core::{ByteConfig, ConfigItem, ConfigRegistrar, TimeConfig, inventory_submit};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
@@ -176,12 +174,10 @@ impl SocketIoServerLayer {
                 .collect::<Vec<_>>();
 
             match parsed_transports.len() {
-                1 => {
-                    layer_builder = layer_builder.transports([parsed_transports[0]])
-                }
+                1 => layer_builder = layer_builder.transports([parsed_transports[0]]),
                 2 => {
-                    layer_builder = layer_builder
-                        .transports([parsed_transports[0], parsed_transports[1]])
+                    layer_builder =
+                        layer_builder.transports([parsed_transports[0], parsed_transports[1]])
                 }
                 _ => {}
             };

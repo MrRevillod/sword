@@ -7,7 +7,6 @@ pub struct ExampleRestController;
 
 impl ExampleRestController {
     #[get("/")]
-    #[interceptor(LoggingInterceptor)]
     async fn hello(&self) -> JsonResponse {
         JsonResponse::Ok().message("Hello from sword application!")
     }

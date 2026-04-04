@@ -24,28 +24,15 @@ pub mod not_found;
 
 pub mod prelude;
 
-#[cfg(any(
-    feature = "body-limit",
-    feature = "not-found",
-    feature = "req-timeout"
-))]
+#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
 use axum::{body::Body, response::Response};
-#[cfg(any(
-    feature = "body-limit",
-    feature = "not-found",
-    feature = "req-timeout"
-))]
+#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
 use tower::{ServiceBuilder, util::MapResponseLayer as TowerMapResponseLayer};
-#[cfg(any(
-    feature = "body-limit",
-    feature = "not-found",
-    feature = "req-timeout"
-))]
+#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
 use tower_layer::{Identity, Stack};
 
 #[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-pub(crate) type ServiceLayer<Inner, Outer> =
-    ServiceBuilder<Stack<Inner, Stack<Outer, Identity>>>;
+pub(crate) type ServiceLayer<Inner, Outer> = ServiceBuilder<Stack<Inner, Stack<Outer, Identity>>>;
 
 #[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
 pub(crate) type MapResponseLayer = TowerMapResponseLayer<ResponseFnMapper>;

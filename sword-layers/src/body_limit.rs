@@ -33,9 +33,7 @@ use tower_http::limit::RequestBodyLimitLayer;
 pub struct BodyLimitLayer;
 
 impl BodyLimitLayer {
-    pub fn new(
-        config: &BodyLimitConfig,
-    ) -> ServiceLayer<MapResponseLayer, RequestBodyLimitLayer> {
+    pub fn new(config: &BodyLimitConfig) -> ServiceLayer<MapResponseLayer, RequestBodyLimitLayer> {
         fn map_body_limit_response(r: Response<Body>) -> Response<Body> {
             if r.status().as_u16() != 413 {
                 return r;

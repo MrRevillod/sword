@@ -42,8 +42,7 @@ impl From<ServeDirConfig> for ServeDirLayer {
         let mut fallback = ServeFile::new(format!("{}/404.html", config.static_dir));
 
         if let Some(not_found_file) = &config.not_found_file {
-            fallback =
-                ServeFile::new(format!("{}/{not_found_file}", config.static_dir));
+            fallback = ServeFile::new(format!("{}/{not_found_file}", config.static_dir));
         }
 
         let mut layer = ServeDir::new(&config.static_dir).fallback(fallback);

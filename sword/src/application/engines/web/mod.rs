@@ -41,8 +41,7 @@ impl WebApplication {
     }
 
     pub async fn start(&self) {
-        let bind =
-            format!("{}:{}", self.app_config.web.host, self.app_config.web.port);
+        let bind = format!("{}:{}", self.app_config.web.host, self.app_config.web.port);
 
         tracing::info!(
             target: "sword.startup.engine",

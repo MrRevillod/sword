@@ -84,8 +84,7 @@ async fn exceed_limit() -> std::result::Result<(), Box<dyn std::error::Error>> {
 /// Tests that a file exactly at the body limit (considering multipart overhead) is accepted.
 /// The effective limit is ~975KB due to multipart headers/boundaries overhead.
 #[tokio::test]
-async fn body_limit_exactly_at_limit()
--> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_exactly_at_limit() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -111,8 +110,7 @@ async fn body_limit_exactly_at_limit()
 }
 
 #[tokio::test]
-async fn body_limit_just_under_limit()
--> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_just_under_limit() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();
@@ -138,8 +136,7 @@ async fn body_limit_just_under_limit()
 }
 
 #[tokio::test]
-async fn body_limit_just_over_limit()
--> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn body_limit_just_over_limit() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app = Application::builder().with_module::<TestModule>().build();
 
     let test = TestServer::new(app.router()).unwrap();

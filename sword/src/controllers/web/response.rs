@@ -1,8 +1,6 @@
 use crate::controllers::web::RequestError;
 
-pub use axum_responses::{
-    ContentDisposition, File, JsonResponse, JsonResponseBody, Redirect,
-};
+pub use axum_responses::{ContentDisposition, File, JsonResponse, JsonResponseBody, Redirect};
 
 pub use sword_macros::HttpError;
 
@@ -24,9 +22,8 @@ impl From<RequestError> for JsonResponse {
             RequestError::BodyIsEmpty => {
                 JsonResponse::BadRequest().message("Request body is empty")
             }
-            RequestError::BodyTooLarge => JsonResponse::PayloadTooLarge().message(
-                "The request body exceeds the maximum allowed size by the server",
-            ),
+            RequestError::BodyTooLarge => JsonResponse::PayloadTooLarge()
+                .message("The request body exceeds the maximum allowed size by the server"),
             RequestError::UnsupportedMediaType { message } => {
                 JsonResponse::UnsupportedMediaType().message(message)
             }
@@ -89,9 +86,7 @@ impl From<RequestError> for JsonResponse {
 ///   ]
 /// }
 /// ```
-pub(crate) fn format_validator_errors(
-    e: validator::ValidationErrors,
-) -> serde_json::Value {
+pub(crate) fn format_validator_errors(e: validator::ValidationErrors) -> serde_json::Value {
     let mut formatted_errors = serde_json::Map::new();
 
     for (field, field_errors) in e.field_errors() {

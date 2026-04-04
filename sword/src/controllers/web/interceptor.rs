@@ -18,8 +18,7 @@ pub trait OnRequest: Interceptor {
     /// This method receives the request and the next interceptor in the chain.
     /// It should either call `req.next().await` to continue the chain or return early with
     /// a response to short-circuit the request.
-    fn on_request(&self, req: Request)
-    -> impl Future<Output = WebInterceptorResult>;
+    fn on_request(&self, req: Request) -> impl Future<Output = WebInterceptorResult>;
 }
 
 /// Trait for interceptors that handle requests with route-specific configuration.
@@ -33,11 +32,7 @@ pub trait OnRequestWithConfig<C>: Interceptor {
     /// This method receives configuration, the request, and the next interceptor.
     /// The configuration is passed from the route definition and can be used to
     /// customize the interceptor behavior per route.
-    fn on_request(
-        &self,
-        config: C,
-        req: Request,
-    ) -> impl Future<Output = WebInterceptorResult>;
+    fn on_request(&self, config: C, req: Request) -> impl Future<Output = WebInterceptorResult>;
 }
 
 /// Trait for interceptors that handle streaming requests.
@@ -45,10 +40,7 @@ pub trait OnRequestWithConfig<C>: Interceptor {
 /// This variant is intended for handlers that use `StreamRequest`, where the
 /// request body is not eagerly buffered in memory.
 pub trait OnRequestStream: Interceptor {
-    fn on_request(
-        &self,
-        req: StreamRequest,
-    ) -> impl Future<Output = WebInterceptorResult>;
+    fn on_request(&self, req: StreamRequest) -> impl Future<Output = WebInterceptorResult>;
 }
 
 /// Trait for interceptors that handle streaming requests with route-specific configuration.

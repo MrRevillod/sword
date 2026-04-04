@@ -7,7 +7,7 @@ use crate::DisplayConfig;
 
 use axum::http::{HeaderName, HeaderValue, Method};
 use serde::{Deserialize, Serialize};
-use thisconfig::TimeConfig;
+use thisconfig::{ConfigItem, TimeConfig};
 use tower_http::cors::Any;
 
 pub use tower_http::cors::CorsLayer;
@@ -103,5 +103,11 @@ impl From<CorsConfig> for CorsLayer {
         }
 
         layer
+    }
+}
+
+impl ConfigItem for CorsConfig {
+    fn key() -> &'static str {
+        "cors"
     }
 }

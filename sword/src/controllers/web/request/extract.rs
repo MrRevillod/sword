@@ -20,10 +20,7 @@ use axum::{
 pub trait FromRequest: Sized {
     type Rejection: IntoResponse;
 
-    async fn from_request(
-        req: AxumReq,
-        state: &State,
-    ) -> Result<Self, Self::Rejection>;
+    async fn from_request(req: AxumReq, state: &State) -> Result<Self, Self::Rejection>;
 }
 
 #[allow(async_fn_in_trait)]
@@ -31,10 +28,7 @@ pub trait FromRequest: Sized {
 pub trait FromRequestParts: Sized {
     type Rejection: IntoResponse;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &State,
-    ) -> Result<Self, Self::Rejection>;
+    async fn from_request_parts(parts: &mut Parts, state: &State) -> Result<Self, Self::Rejection>;
 }
 
 /// Implementation of `FromRequest` for `Request`.

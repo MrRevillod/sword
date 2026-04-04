@@ -5,6 +5,7 @@
 
 use crate::DisplayConfig;
 use serde::{Deserialize, Serialize};
+use thisconfig::ConfigItem;
 use tower_http::compression::CompressionLayer as TowerCompressionLayer;
 
 pub struct CompressionLayer;
@@ -45,5 +46,11 @@ impl DisplayConfig for CompressionConfig {
                 algorithms = ?self.algorithms,
             );
         }
+    }
+}
+
+impl ConfigItem for CompressionConfig {
+    fn key() -> &'static str {
+        "compression"
     }
 }

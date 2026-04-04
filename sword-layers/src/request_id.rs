@@ -4,16 +4,11 @@
 //! request and propagates it through the response pipeline.
 
 use tower::ServiceBuilder;
-use tower_http::request_id::{
-    MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer,
-};
+use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_layer::{Identity, Stack};
 
 type RequestIdServiceType = ServiceBuilder<
-    Stack<
-        PropagateRequestIdLayer,
-        Stack<SetRequestIdLayer<MakeRequestUuid>, Identity>,
-    >,
+    Stack<PropagateRequestIdLayer, Stack<SetRequestIdLayer<MakeRequestUuid>, Identity>>,
 >;
 
 pub use tower_http::request_id::RequestId;

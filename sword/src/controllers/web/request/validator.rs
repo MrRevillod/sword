@@ -7,17 +7,11 @@ use serde::de::DeserializeOwned;
 use validator::Validate;
 
 pub trait ValidatorRequestValidation {
-    fn body_validator<T: DeserializeOwned + Validate>(
-        &self,
-    ) -> Result<T, RequestError>;
+    fn body_validator<T: DeserializeOwned + Validate>(&self) -> Result<T, RequestError>;
 
-    fn query_validator<T: DeserializeOwned + Validate>(
-        &self,
-    ) -> Result<Option<T>, RequestError>;
+    fn query_validator<T: DeserializeOwned + Validate>(&self) -> Result<Option<T>, RequestError>;
 
-    fn params_validator<T: DeserializeOwned + Validate>(
-        &self,
-    ) -> Result<T, RequestError>;
+    fn params_validator<T: DeserializeOwned + Validate>(&self) -> Result<T, RequestError>;
 }
 
 impl ValidatorRequestValidation for Request {
@@ -80,10 +74,7 @@ impl ValidatorRequestValidation for Request {
         let body = self.body::<T>()?;
 
         body.validate().map_err(|error| {
-            RequestError::validator_error(
-                "Invalid request body",
-                format_validator_errors(error),
-            )
+            RequestError::validator_error("Invalid request body", format_validator_errors(error))
         })?;
 
         Ok(body)
@@ -167,12 +158,9 @@ impl ValidatorRequestValidation for Request {
     /// This method combines path parameter parsing with validation using the
     /// `validator` crate. It first deserializes the path parameters and then
     /// runs validation rules defined on the target type.
-    fn params_validator<T: DeserializeOwned + Validate>(
-        &self,
-    ) -> Result<T, RequestError> {
-        let params = serde_json::to_value(self.params.clone()).map_err(|e| {
-            RequestError::parse_error("Failed to serialize params", e.to_string())
-        })?;
+    fn params_validator<T: DeserializeOwned + Validate>(&self) -> Result<T, RequestError> {
+        let params = serde_json::to_value(self.params.clone())
+            .map_err(|e| RequestError::parse_error("Failed to serialize params", e.to_string()))?;
 
         let deserialized: T = serde_json::from_value(params).map_err(|e| {
             RequestError::parse_error(
@@ -182,10 +170,7 @@ impl ValidatorRequestValidation for Request {
         })?;
 
         deserialized.validate().map_err(|error| {
-            RequestError::validator_error(
-                "Invalid request params",
-                format_validator_errors(error),
-            )
+            RequestError::validator_error("Invalid request params", format_validator_errors(error))
         })?;
 
         Ok(deserialized)

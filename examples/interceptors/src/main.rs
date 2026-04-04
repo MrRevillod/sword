@@ -6,7 +6,9 @@ mod controllers {
 
 use controllers::socketio::EventsController;
 use controllers::web::ExampleRestController;
+
 use sword::prelude::*;
+use sword_layers::cors::*;
 
 pub struct ExampleModule;
 
@@ -19,8 +21,17 @@ impl Module for ExampleModule {
 
 #[sword::main]
 async fn main() {
-    let app = Application::from_config_path("Config.toml")
+    let config = Config::builder()
+        .add_file("Config.toml")
+        .build()
+        .expect("Failed to load configuration");
+
+    let cors_config = config.expect::<CorsConfig>();
+    let cors_layers = CorsLayer::from(cors_config);
+
+    let app = Application::from_config(config)
         .with_module::<ExampleModule>()
+        .with_layer(cors_layers)
         .build();
 
     app.run().await;

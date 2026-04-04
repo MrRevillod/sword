@@ -8,10 +8,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::ItemStruct;
 
-pub fn expand_injectable(
-    attr: TokenStream,
-    item: TokenStream,
-) -> syn::Result<TokenStream> {
+pub fn expand_injectable(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
     let input = syn::parse::<ItemStruct>(item.clone())?;
     let parsed = parse_injectable_input(attr, item)?;
 

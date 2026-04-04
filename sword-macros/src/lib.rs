@@ -1,7 +1,12 @@
 mod controllers;
 mod core;
+mod errors;
 mod interceptor_derive;
 mod shared;
+mod interceptor {
+    mod parse;
+    pub use parse::InterceptorArgs;
+}
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -65,8 +70,7 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn controller(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::expand_controller(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
+    controllers::expand_controller(attr, item).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
 /// Derive macro for creating interceptors.
@@ -273,7 +277,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match controllers::derive_http_error(input) {
+    match errors::derive_http_error(input) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
@@ -608,6 +612,5 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn on(attr: TokenStream, item: TokenStream) -> TokenStream {
-    controllers::expand_on_handler(attr, item)
-        .unwrap_or_else(|err| err.to_compile_error().into())
+    controllers::expand_on_handler(attr, item).unwrap_or_else(|err| err.to_compile_error().into())
 }

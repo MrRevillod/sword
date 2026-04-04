@@ -3,10 +3,8 @@ use crate::controllers::socketio::{
     HandlerRegistrar, SocketIoHandlerRegistrar, SocketIoLayer, SocketIoParser,
     SocketIoServerConfig, SocketIoServerLayer,
 };
-use crate::controllers::web::{ControllerMeta, RouteRegistrar};
-use crate::controllers::{
-    Controller, ControllerIds, ControllerMap, ControllerRegistry,
-};
+use crate::controllers::web::{RouteRegistrar, WebControllerRegistrar};
+use crate::controllers::{Controller, ControllerIds, ControllerMap, ControllerRegistry};
 use crate::{application::ApplicationConfig, engines::web::WebApplicationConfig};
 
 use axum::Router;
@@ -72,15 +70,9 @@ impl<'a> WebRouter<'a> {
         let mut router = Router::new();
 
         #[cfg(feature = "socketio-controllers")]
-        let (socketio_layer, socketio_config) =
-            Self::socketio_setup(&self.state, &socketio_config);
+        let (socketio_layer, socketio_config) = Self::socketio_setup(&self.state, &socketio_config);
 
-        router = Self::apply_controllers(
-            &self.state,
-            router,
-            &self.controller_registry.read(),
-        );
-
+        router = Self::apply_controllers(&self.state, router, &self.controller_registry.read());
         router = Self::apply_web_layers(router, &web_config);
 
         #[cfg(feature = "socketio-controllers")]
@@ -127,17 +119,12 @@ impl<'a> WebRouter<'a> {
         controllers: &ControllerIds,
     ) -> Router<State> {
         for controller_id in controllers {
-            let mut controller_routes = inventory::iter::<RouteRegistrar>()
-                .filter(|reg| &reg.controller_id == controller_id)
-                .peekable();
-
-            let controller_meta = controller_routes
-                .peek()
-                .map(|reg| ControllerMeta::from(*reg))
+            let controller_registrar = inventory::iter::<WebControllerRegistrar>()
+                .find(|reg| &reg.controller_id == controller_id)
                 .unwrap_or_else(|| {
                     sword_error! {
-                        title: "Controller has no registered routes",
-                        reason: "No RouteRegistrar entries were found for controller",
+                        title: "Controller metadata not found",
+                        reason: "No WebControllerRegistrar entry was found for controller",
                         context: {
                             "controller_id" => format!("{controller_id:?}"),
                             "source" => "WebRouter::apply_http_controllers",
@@ -146,23 +133,33 @@ impl<'a> WebRouter<'a> {
                     }
                 });
 
+            let controller_routes: Vec<_> = inventory::iter::<RouteRegistrar>()
+                .filter(|reg| &reg.controller_id == controller_id)
+                .collect();
+
+            if controller_routes.is_empty() {
+                sword_error! {
+                    title: "Controller has no registered routes",
+                    reason: "No RouteRegistrar entries were found for controller",
+                    context: {
+                        "controller_id" => format!("{controller_id:?}"),
+                        "source" => "WebRouter::apply_http_controllers",
+                    },
+                    hints: ["This usually indicates a controller macro expansion issue"],
+                }
+            }
+
             let mut controller_router = Router::new();
 
             for route in controller_routes {
-                controller_router = controller_router
-                    .route(route.path, (route.handler)(state.clone()));
+                controller_router =
+                    controller_router.route(route.path, (route.handler)(state.clone()));
             }
 
-            controller_router = (controller_meta.apply_top_level_interceptors)(
-                controller_router,
-                state.clone(),
-            );
-
-            if controller_meta.controller_path == "/" {
+            if controller_registrar.controller_path == "/" {
                 router = router.merge(controller_router);
             } else {
-                router =
-                    router.nest(controller_meta.controller_path, controller_router);
+                router = router.nest(controller_registrar.controller_path, controller_router);
             }
         }
 
@@ -210,8 +207,7 @@ impl<'a> WebRouter<'a> {
         router = router.layer(BodyLimitLayer::new(&body_limit_config));
 
         if web_config.request_timeout.enabled {
-            let timeout_service: TimeoutLayer =
-                web_config.request_timeout.clone().into();
+            let timeout_service: TimeoutLayer = web_config.request_timeout.clone().into();
 
             let response_mapper = RequestTimeoutResponseLayer::new();
 

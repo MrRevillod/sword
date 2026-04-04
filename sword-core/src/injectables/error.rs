@@ -21,10 +21,7 @@ pub enum DependencyInjectionError {
 }
 
 impl DependencyInjectionError {
-    pub fn build_failed(
-        type_name: impl Into<String>,
-        source: DependencyInjectionError,
-    ) -> Self {
+    pub fn build_failed(type_name: impl Into<String>, source: DependencyInjectionError) -> Self {
         Self::BuildFailed {
             type_name: type_name.into(),
             source: Box::new(source),
@@ -67,10 +64,7 @@ impl DependencyInjectionError {
                 source.collect_diagnostic_context(context);
             }
             Self::DependencyNotFound { type_name } => {
-                context.push((
-                    "missing_dependency_path".to_string(),
-                    type_name.clone(),
-                ));
+                context.push(("missing_dependency_path".to_string(), type_name.clone()));
             }
             Self::ConfigInjectionError { source } => {
                 context.push(("config_error".to_string(), source.to_string()));

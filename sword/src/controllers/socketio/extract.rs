@@ -175,8 +175,7 @@ where
         v: &mut Value,
         ack_id: &Option<i64>,
     ) -> Result<Self, Self::Error> {
-        let ack = ack_id
-            .and_then(|id| AckSender::from_message_parts(s, v, &Some(id)).ok());
+        let ack = ack_id.and_then(|id| AckSender::from_message_parts(s, v, &Some(id)).ok());
 
         let event = Event::from_message_parts(s, v, ack_id)
             .ok()
@@ -201,10 +200,7 @@ where
 {
     type Error = Infallible;
 
-    fn from_connect_parts(
-        s: &Arc<Socket<A>>,
-        auth: &Option<Value>,
-    ) -> Result<Self, Self::Error> {
+    fn from_connect_parts(s: &Arc<Socket<A>>, auth: &Option<Value>) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_connect_parts(s, auth)?,
             data: RwLock::new(auth.clone()),

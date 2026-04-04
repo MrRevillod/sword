@@ -42,9 +42,9 @@ impl State {
         let map = self.inner.read();
         let type_name = type_name::<T>().to_string();
 
-        let state_ref = map.get(&TypeId::of::<T>()).ok_or_else(|| {
-            DependencyInjectionError::dependency_not_found(type_name.clone())
-        })?;
+        let state_ref = map
+            .get(&TypeId::of::<T>())
+            .ok_or_else(|| DependencyInjectionError::dependency_not_found(type_name.clone()))?;
 
         state_ref
             .downcast_ref::<T>()
@@ -66,9 +66,9 @@ impl State {
         let map = self.inner.read();
         let type_name = type_name::<T>().to_string();
 
-        let state_ref = map.get(&TypeId::of::<T>()).ok_or_else(|| {
-            DependencyInjectionError::dependency_not_found(type_name.clone())
-        })?;
+        let state_ref = map
+            .get(&TypeId::of::<T>())
+            .ok_or_else(|| DependencyInjectionError::dependency_not_found(type_name.clone()))?;
 
         state_ref
             .clone()
@@ -82,11 +82,7 @@ impl State {
             .insert(TypeId::of::<T>(), Arc::new(state));
     }
 
-    pub fn insert_instance(
-        &self,
-        type_id: TypeId,
-        instance: Arc<dyn Any + Send + Sync>,
-    ) {
+    pub fn insert_instance(&self, type_id: TypeId, instance: Arc<dyn Any + Send + Sync>) {
         self.inner.write().insert(type_id, instance);
     }
 }
