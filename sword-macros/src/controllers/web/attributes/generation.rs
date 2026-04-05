@@ -116,8 +116,8 @@ impl WebRouteGenerator {
                         controller_id: ::std::any::TypeId::of::<#controller_ident>(),
                         path: #route_path,
                         handler: |state: ::sword::internal::core::State| -> ::sword::internal::axum::MethodRouter<::sword::internal::core::State> {
-                            let controller = std::sync::Arc::new(
-                                #controller_ident::build(&state).unwrap_or_else(|err| {
+                            let controller =
+                                state.borrow::<#controller_ident>().unwrap_or_else(|err| {
                                     ::sword::internal::core::sword_error!(
                                         title: "Failed to build HTTP controller",
                                         reason: err,
@@ -127,8 +127,7 @@ impl WebRouteGenerator {
                                         },
                                         hints: ["Ensure all controller dependencies are registered in the DI container"],
                                     )
-                                })
-                            );
+                                });
 
                             #controller_ident::#route_fn_name(controller, state)
                         },

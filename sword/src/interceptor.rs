@@ -24,7 +24,7 @@ pub trait Interceptor: Build {
 }
 
 pub struct InterceptorRegistrar {
-    pub register: fn(&State) -> (),
+    pub register: fn(&State),
 }
 
 inventory::collect!(InterceptorRegistrar);

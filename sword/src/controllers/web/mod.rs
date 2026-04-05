@@ -35,6 +35,7 @@ use sword_core::State;
 pub struct WebControllerRegistrar {
     pub controller_id: TypeId,
     pub controller_path: &'static str,
+    pub build: fn(&State),
 }
 
 #[derive(Clone)]

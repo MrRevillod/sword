@@ -49,6 +49,20 @@ pub fn expand_web_controller(input: &ControllerStruct) -> syn::Result<TokenStrea
             ::sword::internal::controllers::WebControllerRegistrar {
                 controller_id: ::std::any::TypeId::of::<#self_name>(),
                 controller_path: #path,
+                build: |state: &::sword::internal::core::State| {
+                    state.insert::<#self_name>(#self_name::build(state).unwrap_or_else(|e| {
+                        ::sword::internal::core::sword_error! {
+                            title: "Failed to build controller",
+                            reason: "An error occurred while building the web controller",
+                            context: {
+                                "controller_name" => stringify!(#self_name),
+                                "error" => format!("{e:?}"),
+                                "source" => "WebControllerRegistrar::build",
+                            },
+                            hints: ["Check the error message for details on what went wrong during construction"],
+                        }
+                    }));
+                },
             }
         }
 

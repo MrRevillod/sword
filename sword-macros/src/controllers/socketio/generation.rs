@@ -28,20 +28,17 @@ pub fn generate_socketio_controller_builder(
 
     let interceptor_applications = interceptors.iter().map(|interceptor_path| {
         quote! {
-            let interceptor = ::std::sync::Arc::new(
-                state.borrow::<#interceptor_path>()
-                    .unwrap_or_else(|err| {
-                        ::sword::internal::core::sword_error!(
-                            title: "Failed to retrieve Socket.IO interceptor from State",
-                            reason: err,
-                            context: {
-                                "interceptor" => stringify!(#interceptor_path),
-                            },
-                            hints: ["Ensure the interceptor is registered and built before controller setup"],
-                        )
-                    })
-                    .clone()
-            );
+            let interceptor = state.borrow::<#interceptor_path>()
+                .unwrap_or_else(|err| {
+                    ::sword::internal::core::sword_error!(
+                        title: "Failed to retrieve Socket.IO interceptor from State",
+                        reason: err,
+                        context: {
+                            "interceptor" => stringify!(#interceptor_path),
+                        },
+                        hints: ["Ensure the interceptor is registered and built before controller setup"],
+                    )
+                });
 
             let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
                 let interceptor = ::std::sync::Arc::clone(&interceptor);

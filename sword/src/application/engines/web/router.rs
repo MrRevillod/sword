@@ -9,6 +9,10 @@ use crate::{application::ApplicationConfig, engines::web::WebApplicationConfig};
 
 use axum::Router;
 use axum::{extract::Request, middleware::Next};
+use std::any::TypeId;
+use std::collections::HashMap;
+#[cfg(feature = "socketio-controllers")]
+use std::collections::HashSet;
 use sword_core::{Config, State, sword_error};
 use sword_layers::{
     body_limit::{BodyLimitLayer, BodyLimitValue},
@@ -118,9 +122,24 @@ impl<'a> WebRouter<'a> {
         mut router: Router<State>,
         controllers: &ControllerIds,
     ) -> Router<State> {
+        let controller_registrars: HashMap<TypeId, &WebControllerRegistrar> =
+            inventory::iter::<WebControllerRegistrar>()
+                .map(|reg| (reg.controller_id, reg))
+                .collect();
+
+        let mut routes_by_controller: HashMap<TypeId, Vec<&RouteRegistrar>> = HashMap::new();
+
+        for route in inventory::iter::<RouteRegistrar>() {
+            routes_by_controller
+                .entry(route.controller_id)
+                .or_default()
+                .push(route);
+        }
+
         for controller_id in controllers {
-            let controller_registrar = inventory::iter::<WebControllerRegistrar>()
-                .find(|reg| &reg.controller_id == controller_id)
+            let controller_registrar = controller_registrars
+                .get(controller_id)
+                .copied()
                 .unwrap_or_else(|| {
                     sword_error! {
                         title: "Controller metadata not found",
@@ -133,9 +152,12 @@ impl<'a> WebRouter<'a> {
                     }
                 });
 
-            let controller_routes: Vec<_> = inventory::iter::<RouteRegistrar>()
-                .filter(|reg| &reg.controller_id == controller_id)
-                .collect();
+            (controller_registrar.build)(state);
+
+            let controller_routes = routes_by_controller
+                .get(controller_id)
+                .cloned()
+                .unwrap_or_default();
 
             if controller_routes.is_empty() {
                 sword_error! {
@@ -169,15 +191,20 @@ impl<'a> WebRouter<'a> {
     /// Apply SocketIO handlers by calling their setup functions
     #[cfg(feature = "socketio-controllers")]
     fn apply_socketio_controllers(state: &State, handlers: &ControllerIds) {
-        for handler_id in handlers {
-            let setup_fn = inventory::iter::<SocketIoHandlerRegistrar>()
-                .find(|s| &s.handler_type_id == handler_id);
+        let setup_fns: HashMap<TypeId, &SocketIoHandlerRegistrar> =
+            inventory::iter::<SocketIoHandlerRegistrar>()
+                .map(|setup| (setup.handler_type_id, setup))
+                .collect();
 
-            if let Some(setup) = setup_fn {
+        let handler_controllers: HashSet<TypeId> = inventory::iter::<HandlerRegistrar>()
+            .map(|handler| handler.controller_type_id)
+            .collect();
+
+        for handler_id in handlers {
+            if let Some(setup) = setup_fns.get(handler_id).copied() {
                 (setup.setup_fn)(state);
             } else {
-                let has_handlers = inventory::iter::<HandlerRegistrar>()
-                    .any(|h| &h.controller_type_id == handler_id);
+                let has_handlers = handler_controllers.contains(handler_id);
 
                 if has_handlers {
                     sword_error! {
