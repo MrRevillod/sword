@@ -7,6 +7,7 @@ use crate::controllers::web::{RouteRegistrar, WebControllerRegistrar};
 use crate::controllers::{Controller, ControllerIds, ControllerMap, ControllerRegistry};
 use crate::{application::ApplicationConfig, engines::web::WebApplicationConfig};
 
+use crate::web::JsonResponse;
 use axum::Router;
 use axum::{extract::Request, middleware::Next};
 use std::any::TypeId;
@@ -89,6 +90,11 @@ impl<'a> WebRouter<'a> {
         if let Some(prefix) = &web_config.web_router_prefix {
             router = Router::new().nest(prefix, router);
         }
+
+        router = router.route(
+            "/health",
+            axum::routing::get(|| async { JsonResponse::Ok().message("healthy") }),
+        );
 
         router.layer(NotFoundLayer::new())
     }

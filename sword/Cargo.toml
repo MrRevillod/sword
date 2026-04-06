@@ -45,6 +45,11 @@ socketioxide = { workspace = true, optional = true, features = [
 ] }
 socketioxide-parser-common = { workspace = true, optional = true }
 socketioxide-parser-msgpack = { workspace = true, optional = true }
+tonic = { workspace = true, optional = true }
+tonic-prost = { workspace = true, optional = true }
+tonic-async-interceptor = { workspace = true, optional = true }
+tonic-health = { version = "0.14.2", optional = true }
+tonic-reflection = { version = "0.14.2", optional = true }
 
 tower = { workspace = true }
 tracing = { workspace = true }
@@ -80,7 +85,14 @@ socketio-controllers = [
     "sword-layers/cors",
 ]
 
-grpc-controllers = []
+grpc-controllers = [
+    "sword-macros/grpc-controllers",
+    "dep:tonic",
+    "dep:tonic-prost",
+    "dep:tonic-async-interceptor",
+    "dep:tonic-health",
+    "dep:tonic-reflection",
+]
 
 multipart = ["axum/multipart", "axum_responses/multipart"]
 validation-validator = ["dep:validator"]

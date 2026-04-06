@@ -1,3 +1,9 @@
+#[cfg(feature = "grpc-controllers")]
+use crate::application::engines::grpc::GrpcApplication;
+#[cfg(all(
+    any(feature = "web-controllers", feature = "socketio-controllers"),
+    not(feature = "grpc-controllers")
+))]
 use crate::application::engines::web::WebApplication;
 use crate::application::{Application, ApplicationEngine};
 use crate::controllers::ControllerRegistry;
@@ -5,7 +11,6 @@ use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
 
 use axum::{extract::Request as AxumRequest, response::IntoResponse, routing::Route};
-
 use std::convert::Infallible;
 use std::path::Path;
 use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error};
@@ -179,9 +184,12 @@ impl ApplicationBuilder {
     ///
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
-    pub fn build(mut self) -> Application {
+    pub fn build(self) -> Application {
         if cfg!(all(
-            feature = "web-controllers",
+            any(
+                feature = "web-controllers",
+                feature = "socketio-controllers"
+            ),
             feature = "grpc-controllers"
         )) {
             sword_error! {
@@ -224,16 +232,42 @@ impl ApplicationBuilder {
             register(&self.state);
         }
 
-        let layer_stack = std::mem::take(&mut self.layer_stack);
+        #[cfg(feature = "grpc-controllers")]
+        {
+            let grpc_application =
+                GrpcApplication::new(self.state.clone(), &self.config, &self.controller_registry);
 
-        let web_application = WebApplication::new(
-            self.state.clone(),
-            &self.config,
-            layer_stack,
-            &self.controller_registry,
-        );
+            Application::new(ApplicationEngine::Grpc(grpc_application), self.config)
+        }
 
-        Application::new(ApplicationEngine::Web(web_application), self.config)
+        #[cfg(all(
+            any(feature = "web-controllers", feature = "socketio-controllers"),
+            not(feature = "grpc-controllers")
+        ))]
+        {
+            let web_application = WebApplication::new(
+                self.state.clone(),
+                &self.config,
+                self.layer_stack,
+                &self.controller_registry,
+            );
+
+            Application::new(ApplicationEngine::Web(web_application), self.config)
+        }
+
+        #[cfg(not(any(
+            feature = "web-controllers",
+            feature = "socketio-controllers",
+            feature = "grpc-controllers"
+        )))]
+        sword_error! {
+            title: "No application engine available",
+            reason: "No supported controller feature is enabled",
+            context: {
+                "source" => "ApplicationBuilder::build",
+            },
+            hints: ["Enable one of: web-controllers, socketio-controllers, grpc-controllers"],
+        }
     }
 }
 
