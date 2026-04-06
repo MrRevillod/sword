@@ -1,6 +1,6 @@
 use axum_test::TestServer;
 use sword::prelude::*;
-use sword_cookies::*;
+use sword::web::*;
 use sword_layers::cookies::CookieManagerLayer;
 
 #[derive(Interceptor)]

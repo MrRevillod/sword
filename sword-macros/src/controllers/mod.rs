@@ -1,5 +1,8 @@
 pub mod shared;
 
+#[cfg(feature = "grpc-controllers")]
+pub mod grpc;
+
 #[cfg(feature = "socketio-controllers")]
 pub mod socketio;
 
@@ -30,12 +33,7 @@ pub fn expand_controller(attr: TokenStream, item: TokenStream) -> syn::Result<To
         }
 
         #[cfg(feature = "grpc-controllers")]
-        ParsedControllerKind::Grpc => {
-            return Err(syn::Error::new_spanned(
-                &input.ident,
-                "gRPC controllers are not yet supported",
-            ));
-        }
+        ParsedControllerKind::Grpc { .. } => grpc::expand_grpc_controller(&parsed_input)?,
     }
     .into();
 

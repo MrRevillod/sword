@@ -3,38 +3,14 @@ pub use crate::controllers::Controller;
 pub use crate::controllers::ControllerRegistry;
 pub use crate::module::Module;
 
-pub use sword_core::{ComponentRegistry, Config, Provider, ProviderRegistry};
-pub use sword_macros::{Interceptor, config, injectable, interceptor, main};
-
-#[cfg(feature = "validation-validator")]
-pub use validator::Validate;
-
-#[cfg(feature = "web-controllers")]
-pub use crate::controllers::web::{
-    ContentDisposition, File, FromRequest, FromRequestParts, HttpError, JsonResponse,
-    JsonResponseBody, Next, OnRequest, OnRequestStream, OnRequestStreamWithConfig,
-    OnRequestWithConfig, Redirect, Request, RequestError, StreamRequest, WebInterceptorResult,
-    WebResult, controller, cookies as sword_cookies, delete, get, patch, post, put,
-};
-
 pub use axum::body::Bytes;
 pub use axum::http::{HeaderMap as Headers, Method, Uri};
 
-#[cfg(all(feature = "validation-validator", feature = "web-controllers"))]
-pub use crate::controllers::web::ValidatorRequestValidation;
+pub use sword_core::{ComponentRegistry, Config, Provider, ProviderRegistry};
+pub use sword_macros::{Interceptor, config, controller, injectable, interceptor, main};
 
-#[cfg(all(feature = "multipart", feature = "web-controllers"))]
-pub use crate::controllers::web::multipart as sword_multipart;
-
-#[cfg(feature = "socketio-controllers")]
-pub use crate::controllers::socketio::{
-    AckSender, Data, DisconnectReason, Event, Extension, HttpExtension, LocalAdapter,
-    MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion, SocketContext, SocketError,
-    SocketIo, SocketRef, TransportType, TryData, on,
-};
-
-#[cfg(feature = "socketio-controllers")]
-pub use crate::controllers::socketio::SocketIoParser;
+#[cfg(feature = "validation-validator")]
+pub use validator::Validate;
 
 #[doc(hidden)]
 pub use sword_core::{Build, Component, ConfigItem, FromState, FromStateArc, HasDeps};
@@ -49,3 +25,7 @@ pub use crate::controllers::web::WebController;
 #[doc(hidden)]
 #[cfg(feature = "socketio-controllers")]
 pub use crate::controllers::socketio::SocketIoController;
+
+#[doc(hidden)]
+#[cfg(feature = "grpc-controllers")]
+pub use crate::controllers::grpc::GrpcController;

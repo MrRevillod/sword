@@ -6,6 +6,41 @@ mod interceptor;
 mod module;
 pub mod prelude;
 
+#[cfg(feature = "web-controllers")]
+pub mod web {
+    pub use crate::controllers::web::cookies::*;
+    pub use crate::controllers::web::{
+        ContentDisposition, File, FromRequest, FromRequestParts, HttpError, JsonResponse,
+        JsonResponseBody, Next, OnRequest, OnRequestStream, OnRequestStreamWithConfig,
+        OnRequestWithConfig, Redirect, Request, RequestError, StreamRequest, WebInterceptorResult,
+        WebResult, cookies as sword_cookies, delete, get, patch, post, put,
+    };
+
+    #[cfg(feature = "validation-validator")]
+    pub use crate::controllers::web::ValidatorRequestValidation;
+
+    #[cfg(feature = "multipart")]
+    pub use crate::controllers::web::multipart::*;
+}
+
+#[cfg(feature = "socketio-controllers")]
+pub mod socketio {
+    pub use crate::controllers::socketio::{
+        AckSender, Data, DisconnectReason, Event, Extension, HttpExtension, LocalAdapter,
+        MaybeExtension, MaybeHttpExtension, OnConnect, ProtocolVersion, SocketContext, SocketError,
+        SocketIo, SocketIoParser, SocketRef, TransportType, TryData, on,
+    };
+}
+
+#[cfg(feature = "grpc-controllers")]
+pub mod grpc {
+    pub use crate::controllers::grpc::{
+        Code, GrpcError, GrpcInterceptorResult, GrpcResult, OnRequest, OnRequestWithConfig,
+        Request, Response, Status,
+    };
+    pub use tonic::async_trait;
+}
+
 pub use application::*;
 pub use sword_macros::main;
 
@@ -33,7 +68,19 @@ pub mod internal {
         pub use socketioxide::handler::connect::FromConnectParts;
     }
 
+    #[cfg(feature = "grpc-controllers")]
+    pub mod tonic {
+        pub use tonic::*;
+    }
+
+    #[cfg(feature = "grpc-controllers")]
+    pub mod tonic_async_interceptor {
+        pub use tonic_async_interceptor::*;
+    }
+
     pub mod core {
+        #[cfg(feature = "grpc-controllers")]
+        pub use crate::controllers::grpc::GrpcController;
         #[cfg(feature = "socketio-controllers")]
         pub use crate::controllers::socketio::SocketIoController;
         #[cfg(feature = "web-controllers")]
@@ -49,6 +96,15 @@ pub mod internal {
     pub mod controllers {
         pub use crate::controllers::web::RouteRegistrar;
         pub use crate::controllers::web::WebControllerRegistrar;
+    }
+
+    #[cfg(feature = "grpc-controllers")]
+    pub mod grpc {
+        pub use crate::application::engines::grpc::GrpcServiceRegistry;
+        pub use crate::controllers::grpc::{
+            GrpcBodyLimitValue, GrpcControllerRegistrar, GrpcReflectionDescriptorRegistrar,
+            OnRequest, OnRequestWithConfig,
+        };
     }
 
     pub use inventory;

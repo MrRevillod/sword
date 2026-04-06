@@ -40,10 +40,10 @@ pub fn generate_socketio_controller_builder(
                     )
                 });
 
-            let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
+            let handler = handler.with(move |ctx: ::sword::socketio::SocketContext| {
                 let interceptor = ::std::sync::Arc::clone(&interceptor);
                 async move {
-                    <#interceptor_path as ::sword::prelude::OnConnect>::on_connect(&*interceptor, ctx)
+                    <#interceptor_path as ::sword::socketio::OnConnect>::on_connect(&*interceptor, ctx)
                         .await
                         .map_err(|e| ::std::boxed::Box::new(e) as ::std::boxed::Box<dyn ::std::fmt::Display + Send>)
                 }
@@ -69,7 +69,7 @@ pub fn generate_socketio_controller_builder(
                 })
             );
 
-            let io = <::sword::prelude::SocketIo as ::sword::internal::core::FromState>::from_state(state)
+            let io = <::sword::socketio::SocketIo as ::sword::internal::core::FromState>::from_state(state)
                 .unwrap_or_else(|err| {
                     ::sword::internal::core::sword_error!(
                         title: "Socket.IO component not found in application state",
@@ -117,7 +117,7 @@ pub fn generate_socketio_controller_builder(
             let message_handlers: ::std::sync::Arc<[::sword::internal::socketio::HandlerRegistrar]> =
                 ::std::sync::Arc::from(message_handlers.into_boxed_slice());
 
-            let base_handler = move |ctx: ::sword::prelude::SocketContext| -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ()> + ::std::marker::Send>> {
+            let base_handler = move |ctx: ::sword::socketio::SocketContext| -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ()> + ::std::marker::Send>> {
                 let controller = controller.clone();
                 let socket = ctx.socket.clone();
                 let connection_handler = connection_handler.clone();

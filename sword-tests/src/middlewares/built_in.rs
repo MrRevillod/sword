@@ -1,8 +1,8 @@
 use axum_test::{TestServer, multipart::MultipartForm};
 use serde_json::Value;
 use sword::prelude::*;
+use sword::web::*;
 use sword_layers::prelude::CompressionConfig;
-use sword_multipart::Bytes;
 use tokio::time::{Duration, sleep};
 
 #[controller(kind = Controller::Web, path = "/test")]

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use sword::prelude::*;
+use sword::socketio::*;
 
 use crate::{
     chat::{IncommingMessageDto, Message},

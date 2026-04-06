@@ -5,8 +5,8 @@ use sword::prelude::*;
 
 use crate::shared::errors::AppResult;
 
-#[derive(Clone, Deserialize)]
 #[config(key = "database")]
+#[derive(Clone, Deserialize)]
 pub struct DatabaseConfig {
     pub uri: String,
     pub migrations_path: String,

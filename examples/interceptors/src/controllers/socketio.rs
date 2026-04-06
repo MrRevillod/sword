@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sword::prelude::*;
+use sword::socketio::*;
 
 use crate::interceptors::LoggingInterceptor;
 

@@ -1,3 +1,4 @@
+#[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
 mod cmeta;
 mod parse;
 
@@ -8,6 +9,7 @@ use syn::{
     spanned::Spanned,
 };
 
+#[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
 pub(crate) use cmeta::CMetaStack;
 pub(crate) use parse::ControllerStruct;
 
@@ -22,6 +24,7 @@ pub struct ControllerArgs {
     pub kind: Option<ControllerKind>,
     pub path: Option<LitStr>,
     pub namespace: Option<LitStr>,
+    pub service: Option<Path>,
 }
 
 pub enum ParsedControllerKind {
@@ -32,7 +35,7 @@ pub enum ParsedControllerKind {
     SocketIo { namespace: String },
 
     #[cfg(feature = "grpc-controllers")]
-    Grpc,
+    Grpc { service: Path },
 }
 
 // Try to parse from a path like `Controller::Web` or `Controller::SocketIo`.
@@ -94,6 +97,12 @@ impl Parse for ControllerArgs {
                     }
                     out.namespace = Some(input.parse()?);
                 }
+                "service" => {
+                    if out.service.is_some() {
+                        return Err(Error::new(key_span, "Duplicate argument `service`"));
+                    }
+                    out.service = Some(input.parse()?);
+                }
                 _ => {
                     return Err(Error::new(key_span, "Unknown controller argument"));
                 }
@@ -124,6 +133,10 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
 
         match kind {
             ControllerKind::Web => {
+                if let Some(service) = args.service {
+                    return Err(Error::new(service.span(), "`service` is not valid for Web"));
+                }
+
                 let path = args
                     .path
                     .ok_or_else(|| Error::new(Span::call_site(), "Web requires `path`"))?;
@@ -144,10 +157,26 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
                     ));
                 }
 
+                #[cfg(not(feature = "web-controllers"))]
+                {
+                    return Err(Error::new(
+                        Span::call_site(),
+                        "Web controllers require enabling the `web-controllers` feature",
+                    ));
+                }
+
+                #[cfg(feature = "web-controllers")]
                 Ok(ParsedControllerKind::Web { path })
             }
 
             ControllerKind::SocketIo => {
+                if let Some(service) = args.service {
+                    return Err(Error::new(
+                        service.span(),
+                        "`service` is not valid for SocketIo",
+                    ));
+                }
+
                 let namespace = args.namespace.ok_or_else(|| {
                     Error::new(Span::call_site(), "SocketIo requires `namespace`")
                 })?;
@@ -191,6 +220,7 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
 
                 #[cfg(not(feature = "grpc-controllers"))]
                 {
+                    let _ = args.service;
                     return Err(Error::new(
                         Span::call_site(),
                         "gRPC controllers require enabling the `grpc-controllers` feature",
@@ -198,7 +228,12 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
                 }
 
                 #[cfg(feature = "grpc-controllers")]
-                Ok(ParsedControllerKind::Grpc)
+                let service = args
+                    .service
+                    .ok_or_else(|| Error::new(Span::call_site(), "Grpc requires `service`"))?;
+
+                #[cfg(feature = "grpc-controllers")]
+                Ok(ParsedControllerKind::Grpc { service })
             }
         }
     }

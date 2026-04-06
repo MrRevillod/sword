@@ -5,6 +5,7 @@ use axum_test::{
 
 use std::fs;
 use sword::prelude::*;
+use sword::web::*;
 
 use crate::utils::TempFile;
 
