@@ -85,6 +85,8 @@ impl Application {
         match &self.engine {
             #[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
             ApplicationEngine::Web(app) => app.start().await,
+            #[cfg(feature = "grpc-controllers")]
+            ApplicationEngine::Grpc(app) => app.start().await,
         }
     }
 
@@ -92,6 +94,17 @@ impl Application {
     pub fn router(&self) -> axum::Router {
         match &self.engine {
             ApplicationEngine::Web(app) => app.router(),
+            #[cfg(feature = "grpc-controllers")]
+            ApplicationEngine::Grpc(_) => {
+                sword_error! {
+                    title: "Router API is not available for gRPC engine",
+                    reason: "Application::router() is only valid for web/socketio applications",
+                    context: {
+                        "source" => "Application::router",
+                    },
+                    hints: ["Use Application::run() to start the gRPC server"],
+                }
+            }
         }
     }
 }

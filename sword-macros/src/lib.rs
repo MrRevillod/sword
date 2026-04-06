@@ -14,29 +14,89 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, parse_macro_input};
 
+#[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("GET", attr, item)
 }
 
+#[cfg(not(feature = "web-controllers"))]
+#[proc_macro_attribute]
+pub fn get(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    syn::Error::new(
+        proc_macro2::Span::call_site(),
+        "#[get] requires enabling the `web-controllers` feature",
+    )
+    .to_compile_error()
+    .into()
+}
+
+#[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("POST", attr, item)
 }
 
+#[cfg(not(feature = "web-controllers"))]
+#[proc_macro_attribute]
+pub fn post(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    syn::Error::new(
+        proc_macro2::Span::call_site(),
+        "#[post] requires enabling the `web-controllers` feature",
+    )
+    .to_compile_error()
+    .into()
+}
+
+#[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PUT", attr, item)
 }
 
+#[cfg(not(feature = "web-controllers"))]
+#[proc_macro_attribute]
+pub fn put(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    syn::Error::new(
+        proc_macro2::Span::call_site(),
+        "#[put] requires enabling the `web-controllers` feature",
+    )
+    .to_compile_error()
+    .into()
+}
+
+#[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("DELETE", attr, item)
 }
 
+#[cfg(not(feature = "web-controllers"))]
+#[proc_macro_attribute]
+pub fn delete(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    syn::Error::new(
+        proc_macro2::Span::call_site(),
+        "#[delete] requires enabling the `web-controllers` feature",
+    )
+    .to_compile_error()
+    .into()
+}
+
+#[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PATCH", attr, item)
+}
+
+#[cfg(not(feature = "web-controllers"))]
+#[proc_macro_attribute]
+pub fn patch(_attr: TokenStream, _item: TokenStream) -> TokenStream {
+    syn::Error::new(
+        proc_macro2::Span::call_site(),
+        "#[patch] requires enabling the `web-controllers` feature",
+    )
+    .to_compile_error()
+    .into()
 }
 
 /// Defines a Sword controller.
@@ -280,6 +340,69 @@ pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     match errors::derive_http_error(input) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+/// Derive macro for gRPC error enums.
+///
+/// Generates:
+/// - `From<Self> for tonic::Status`
+///
+/// Supported attributes per variant:
+/// - `#[grpc(code = "invalid_argument")]`
+/// - `#[grpc(message = "custom text")]`
+/// - `#[grpc(message = field_name)]`
+/// - `#[grpc(transparent)]`
+/// - `#[tracing(level)]`
+///
+/// gRPC code values accepted by `#[grpc(code = "...")]`:
+///
+/// - `ok`
+/// - `cancelled`
+/// - `unknown`
+/// - `invalid_argument`
+/// - `deadline_exceeded`
+/// - `not_found`
+/// - `already_exists`
+/// - `permission_denied`
+/// - `resource_exhausted`
+/// - `failed_precondition`
+/// - `aborted`
+/// - `out_of_range`
+/// - `unimplemented`
+/// - `internal`
+/// - `unavailable`
+/// - `data_loss`
+/// - `unauthenticated`
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use sword::prelude::*;
+/// use thiserror::Error;
+///
+/// #[derive(Debug, Error, GrpcError)]
+/// enum UserError {
+///     #[grpc(code = "not_found")]
+///     #[error("User not found: {id}")]
+///     NotFound { id: String },
+///
+///     #[grpc(code = "invalid_argument", message = "Invalid input")]
+///     #[error("Validation error: {0}")]
+///     Validation(String),
+///
+///     #[grpc(transparent)]
+///     #[error("Database error: {0}")]
+///     Database(#[from] anyhow::Error),
+/// }
+/// ```
+#[proc_macro_derive(GrpcError, attributes(grpc, tracing))]
+pub fn derive_grpc_error(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    match errors::derive_grpc_error(input) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }

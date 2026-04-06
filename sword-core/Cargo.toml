@@ -18,9 +18,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-thiserror = { workspace = true }
 tracing = { workspace = true }
-
 inventory = { workspace = true }
 parking_lot = { workspace = true }
 thisconfig = { workspace = true }

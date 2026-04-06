@@ -5,6 +5,9 @@ pub mod layer_stack;
 #[cfg(feature = "body-limit")]
 pub mod body_limit;
 
+#[cfg(feature = "body-limit")]
+pub mod grpc_body_limit;
+
 #[cfg(feature = "compression")]
 pub mod compression;
 
