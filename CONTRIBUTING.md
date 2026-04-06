@@ -11,7 +11,11 @@ Hey! Want to help out with Sword? Awesome! Here’s how you can jump in:
 ## Code style & tests
 
 - Use `rustfmt` to keep code style.
-- Add tests if you can. Run `cargo test` to make sure everything works.
+- Run the full local quality gate before opening a PR:
+  - `cargo fmt --all -- --check`
+  - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
+  - `cargo test --workspace --all-features`
+  - `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features`
 - Try to write clear code and add comments if something’s tricky.
 
 ## Docs
