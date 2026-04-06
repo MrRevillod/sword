@@ -1,57 +1,44 @@
-use crate::controllers::web::{ControllerMeta, RouteRegistrar};
-use crate::controllers::{Controller, ControllerRegistry};
-use crate::engines::web::WebApplicationConfig;
-
-use axum::{
-    Router,
-    {extract::Request, middleware::Next},
-};
-
-use std::any::TypeId;
-use std::collections::HashMap;
-use sword_core::{State, layers::*, sword_error};
-
 #[cfg(feature = "socketio-controllers")]
 use crate::controllers::socketio::{
-    SocketIoParser, SocketIoServerConfig, SocketIoServerLayer,
+    HandlerRegistrar, SocketIoHandlerRegistrar, SocketIoLayer, SocketIoParser,
+    SocketIoServerConfig, SocketIoServerLayer,
+};
+use crate::controllers::web::{RouteRegistrar, WebControllerRegistrar};
+use crate::controllers::{Controller, ControllerIds, ControllerMap, ControllerRegistry};
+use crate::{application::ApplicationConfig, engines::web::WebApplicationConfig};
+
+use axum::Router;
+use axum::{extract::Request, middleware::Next};
+use std::any::TypeId;
+use std::collections::HashMap;
+#[cfg(feature = "socketio-controllers")]
+use std::collections::HashSet;
+use sword_core::{Config, State, sword_error};
+use sword_layers::{
+    body_limit::{BodyLimitLayer, BodyLimitValue},
+    layer_stack::LayerStack,
+    not_found::NotFoundLayer,
+    timeout::{RequestTimeoutResponseLayer, TimeoutLayer},
 };
 
-pub struct WebRouter {
-    state: State,
-    web_config: WebApplicationConfig,
-
-    #[cfg(feature = "socketio-controllers")]
-    socketio_config: SocketIoServerConfig,
+pub(crate) struct WebRouter<'a> {
+    pub state: State,
+    pub config: &'a Config,
+    pub layer_stack: LayerStack<State>,
+    pub controller_registry: &'a ControllerRegistry,
 }
 
-impl WebRouter {
-    pub fn new(
-        state: State,
-        web_config: WebApplicationConfig,
-        #[cfg(feature = "socketio-controllers")]
-        socketio_config: SocketIoServerConfig,
-    ) -> Self {
-        Self {
-            state,
-            web_config,
-
-            #[cfg(feature = "socketio-controllers")]
-            socketio_config,
-        }
-    }
-
+impl<'a> WebRouter<'a> {
     #[cfg(feature = "socketio-controllers")]
     fn socketio_setup(
-        &self,
-    ) -> (
-        Option<socketioxide::layer::SocketIoLayer>,
-        SocketIoServerConfig,
-    ) {
-        let socketio_config = self.socketio_config.clone();
+        state: &State,
+        socketio_config: &SocketIoServerConfig,
+    ) -> (Option<SocketIoLayer>, SocketIoServerConfig) {
+        let socketio_config = socketio_config.clone();
 
         let layer = socketio_config.enabled.then(|| {
             let (layer, io) = SocketIoServerLayer::new(&socketio_config);
-            self.state.insert(io);
+            state.insert(io);
             layer
         });
 
@@ -60,13 +47,10 @@ impl WebRouter {
 
     #[cfg(feature = "socketio-controllers")]
     fn apply_socketio_layer(
-        &self,
         mut router: Router<State>,
-        layer: socketioxide::layer::SocketIoLayer,
+        layer: SocketIoLayer,
         config: SocketIoServerConfig,
     ) -> Router<State> {
-        use axum::{extract::Request, middleware::Next};
-
         router = router.layer(layer);
 
         router = router.layer(axum::middleware::from_fn(
@@ -79,48 +63,52 @@ impl WebRouter {
         router
     }
 
-    /// Build the complete HTTP router with all controllers and layers
-    pub fn build(
-        self,
-        layers: LayerStack<State>,
-        controllers: &ControllerRegistry,
-    ) -> Router<State> {
+    /// Build the complete HTTP router with all framework controllers and layers.
+    pub(crate) fn build(self) -> Router<State> {
+        let app_config = self.config.get_or_default::<ApplicationConfig>();
+        let web_config = app_config.web.clone();
+
+        #[cfg(feature = "socketio-controllers")]
+        let socketio_config = self.config.get_or_default::<SocketIoServerConfig>();
+
         let mut router = Router::new();
 
         #[cfg(feature = "socketio-controllers")]
-        let (socketio_layer, socketio_config) = self.socketio_setup();
+        let (socketio_layer, socketio_config) = Self::socketio_setup(&self.state, &socketio_config);
 
-        router = self.apply_controllers(router, &controllers.read());
-        router = self.apply_web_layers(router);
+        router = Self::apply_controllers(&self.state, router, &self.controller_registry.read());
+        router = Self::apply_web_layers(router, &web_config);
 
         #[cfg(feature = "socketio-controllers")]
         if let Some(layer) = socketio_layer {
-            router = self.apply_socketio_layer(router, layer, socketio_config);
+            router = Self::apply_socketio_layer(router, layer, socketio_config);
         }
 
-        router = layers.apply(router);
+        router = self.layer_stack.apply(router);
 
-        router
+        if let Some(prefix) = &web_config.web_router_prefix {
+            router = Router::new().nest(prefix, router);
+        }
+
+        router.layer(NotFoundLayer::new())
     }
 
     /// Apply all controllers based on kind
     fn apply_controllers(
-        &self,
+        state: &State,
         mut router: Router<State>,
-        controllers: &HashMap<Controller, Vec<TypeId>>,
+        controllers: &ControllerMap,
     ) -> Router<State> {
-        for (kind, controller_ids) in controllers.iter() {
+        for (kind, ids) in controllers.iter() {
             match kind {
                 #[cfg(feature = "web-controllers")]
                 Controller::Web => {
-                    router = self.apply_http_controllers(router, controller_ids);
+                    router = Self::apply_web_controllers(state, router, ids);
                 }
-
                 #[cfg(feature = "socketio-controllers")]
                 Controller::SocketIo => {
-                    self.apply_socketio_handlers(controller_ids);
+                    Self::apply_socketio_controllers(state, ids);
                 }
-
                 #[cfg(feature = "grpc-controllers")]
                 Controller::Grpc => {}
             }
@@ -129,23 +117,33 @@ impl WebRouter {
         router
     }
 
-    fn apply_http_controllers(
-        &self,
+    fn apply_web_controllers(
+        state: &State,
         mut router: Router<State>,
-        controllers: &[TypeId],
+        controllers: &ControllerIds,
     ) -> Router<State> {
-        for controller_id in controllers {
-            let mut controller_routes = inventory::iter::<RouteRegistrar>()
-                .filter(|reg| &reg.controller_id == controller_id)
-                .peekable();
+        let controller_registrars: HashMap<TypeId, &WebControllerRegistrar> =
+            inventory::iter::<WebControllerRegistrar>()
+                .map(|reg| (reg.controller_id, reg))
+                .collect();
 
-            let controller_meta = controller_routes
-                .peek()
-                .map(|reg| ControllerMeta::from(*reg))
+        let mut routes_by_controller: HashMap<TypeId, Vec<&RouteRegistrar>> = HashMap::new();
+
+        for route in inventory::iter::<RouteRegistrar>() {
+            routes_by_controller
+                .entry(route.controller_id)
+                .or_default()
+                .push(route);
+        }
+
+        for controller_id in controllers {
+            let controller_registrar = controller_registrars
+                .get(controller_id)
+                .copied()
                 .unwrap_or_else(|| {
                     sword_error! {
-                        title: "Controller has no registered routes",
-                        reason: "No RouteRegistrar entries were found for controller",
+                        title: "Controller metadata not found",
+                        reason: "No WebControllerRegistrar entry was found for controller",
                         context: {
                             "controller_id" => format!("{controller_id:?}"),
                             "source" => "WebRouter::apply_http_controllers",
@@ -154,23 +152,36 @@ impl WebRouter {
                     }
                 });
 
+            (controller_registrar.build)(state);
+
+            let controller_routes = routes_by_controller
+                .get(controller_id)
+                .cloned()
+                .unwrap_or_default();
+
+            if controller_routes.is_empty() {
+                sword_error! {
+                    title: "Controller has no registered routes",
+                    reason: "No RouteRegistrar entries were found for controller",
+                    context: {
+                        "controller_id" => format!("{controller_id:?}"),
+                        "source" => "WebRouter::apply_http_controllers",
+                    },
+                    hints: ["This usually indicates a controller macro expansion issue"],
+                }
+            }
+
             let mut controller_router = Router::new();
 
             for route in controller_routes {
-                controller_router = controller_router
-                    .route(route.path, (route.handler)(self.state.clone()));
+                controller_router =
+                    controller_router.route(route.path, (route.handler)(state.clone()));
             }
 
-            controller_router = (controller_meta.apply_top_level_interceptors)(
-                controller_router,
-                self.state.clone(),
-            );
-
-            if controller_meta.controller_path == "/" {
+            if controller_registrar.controller_path == "/" {
                 router = router.merge(controller_router);
             } else {
-                router =
-                    router.nest(controller_meta.controller_path, controller_router);
+                router = router.nest(controller_registrar.controller_path, controller_router);
             }
         }
 
@@ -179,20 +190,21 @@ impl WebRouter {
 
     /// Apply SocketIO handlers by calling their setup functions
     #[cfg(feature = "socketio-controllers")]
-    fn apply_socketio_handlers(&self, handlers: &[TypeId]) {
-        use crate::controllers::socketio::{
-            HandlerRegistrar, SocketIoHandlerRegistrar,
-        };
+    fn apply_socketio_controllers(state: &State, handlers: &ControllerIds) {
+        let setup_fns: HashMap<TypeId, &SocketIoHandlerRegistrar> =
+            inventory::iter::<SocketIoHandlerRegistrar>()
+                .map(|setup| (setup.handler_type_id, setup))
+                .collect();
+
+        let handler_controllers: HashSet<TypeId> = inventory::iter::<HandlerRegistrar>()
+            .map(|handler| handler.controller_type_id)
+            .collect();
 
         for handler_id in handlers {
-            let setup_fn = inventory::iter::<SocketIoHandlerRegistrar>()
-                .find(|s| &s.handler_type_id == handler_id);
-
-            if let Some(setup) = setup_fn {
-                (setup.setup_fn)(&self.state);
+            if let Some(setup) = setup_fns.get(handler_id).copied() {
+                (setup.setup_fn)(state);
             } else {
-                let has_handlers = inventory::iter::<HandlerRegistrar>()
-                    .any(|h| &h.controller_type_id == handler_id);
+                let has_handlers = handler_controllers.contains(handler_id);
 
                 if has_handlers {
                     sword_error! {
@@ -213,13 +225,18 @@ impl WebRouter {
     ///
     /// These are applied BEFORE the SocketIO layer, so SocketIO traffic bypasses
     /// HTTP controller timeout semantics.
-    fn apply_web_layers(&self, mut router: Router<State>) -> Router<State> {
-        let server_config = self.web_config.clone();
-        let body_limit_config = server_config.body_limit;
+    fn apply_web_layers(
+        mut router: Router<State>,
+        web_config: &WebApplicationConfig,
+    ) -> Router<State> {
+        let body_limit_config = web_config.body_limit.clone();
 
-        if server_config.request_timeout.enabled {
-            let (timeout_service, response_mapper) =
-                RequestTimeoutLayer::new(&server_config.request_timeout);
+        router = router.layer(BodyLimitLayer::new(&body_limit_config));
+
+        if web_config.request_timeout.enabled {
+            let timeout_service: TimeoutLayer = web_config.request_timeout.clone().into();
+
+            let response_mapper = RequestTimeoutResponseLayer::new();
 
             router = router.layer(timeout_service);
             router = router.layer(response_mapper);

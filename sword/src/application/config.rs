@@ -19,9 +19,6 @@ pub struct ApplicationConfig {
     /// Whether to enable graceful shutdown of the server.
     /// If true, the server will finish processing ongoing requests
     /// before shutting down when a termination signal is received.
-    ///
-    /// If you want to use a custom signal handler, you can disable this
-    /// and implement your own signal with the `run_with_graceful_shutdown` method.
     /// Defaults `false`
     #[serde(rename = "graceful-shutdown")]
     pub graceful_shutdown: bool,

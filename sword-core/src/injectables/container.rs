@@ -1,6 +1,4 @@
-use crate::{
-    ComponentRegistry, DependencyInjectionError as DIError, ProviderRegistry, State,
-};
+use crate::{ComponentRegistry, DependencyInjectionError as DIError, ProviderRegistry, State};
 
 use std::{any::TypeId, collections::HashSet, sync::Arc};
 

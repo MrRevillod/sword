@@ -21,11 +21,10 @@ impl UserRepository {
     }
 
     pub async fn find_by_username(&self, username: &str) -> AppResult<Option<User>> {
-        let result =
-            sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
-                .bind(username)
-                .fetch_optional(self.db.get_pool())
-                .await?;
+        let result = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
+            .bind(username)
+            .fetch_optional(self.db.get_pool())
+            .await?;
 
         Ok(result)
     }

@@ -1,9 +1,14 @@
 mod config;
-#[doc(hidden)]
-pub mod error;
 mod injectables;
-pub mod layers;
 mod state;
+
+pub mod error {
+    #[macro_use]
+    mod macros;
+    mod diagnostic;
+
+    pub use diagnostic::{StartupDiagnostic, emit};
+}
 
 pub use config::*;
 pub use injectables::*;

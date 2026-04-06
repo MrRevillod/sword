@@ -1,13 +1,11 @@
 use crate::{DependencyInjectionError, HasDeps, Injectable, RwMap, State};
-
 use std::{
     any::{TypeId, type_name},
     collections::HashMap,
     sync::Arc,
 };
 
-type ComponentBuilderFn =
-    Box<dyn Fn(&State) -> Result<Injectable, DependencyInjectionError>>;
+type ComponentBuilderFn = Box<dyn Fn(&State) -> Result<Injectable, DependencyInjectionError>>;
 
 /// Trait for injectable components that can be automatically constructed
 /// by the dependency container with automatic dependency resolution.
@@ -38,10 +36,7 @@ impl ComponentRegistry {
         let component_builder = Box::new(move |state: &State| {
             T::build(state)
                 .map(|instance| Arc::new(instance) as Injectable)
-                .map_err(|e| DependencyInjectionError::BuildFailed {
-                    type_name: type_name.to_string(),
-                    reason: e.to_string(),
-                })
+                .map_err(|e| DependencyInjectionError::build_failed(type_name, e))
         });
 
         self.dependency_graph.write().insert(type_id, T::deps());

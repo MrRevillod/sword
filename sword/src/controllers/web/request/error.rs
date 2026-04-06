@@ -1,3 +1,5 @@
+use http_body_util::LengthLimitError;
+use std::error::Error as StdError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -46,21 +48,33 @@ pub enum RequestError {
 }
 
 impl RequestError {
-    pub fn parse_error(
-        message: impl Into<String>,
-        details: impl Into<String>,
-    ) -> Self {
+    pub fn parse_error(message: impl Into<String>, details: impl Into<String>) -> Self {
         RequestError::ParseError {
             message: message.into(),
             details: details.into(),
         }
     }
 
+    pub(crate) fn from_body_read_error(err: &(dyn StdError + 'static)) -> Self {
+        if err.is::<LengthLimitError>() {
+            return Self::BodyTooLarge;
+        }
+
+        let mut source = err.source();
+
+        while let Some(current) = source {
+            if current.is::<LengthLimitError>() {
+                return Self::BodyTooLarge;
+            }
+
+            source = current.source();
+        }
+
+        Self::parse_error("Failed to read request body", "Error reading body")
+    }
+
     #[cfg(feature = "validation-validator")]
-    pub fn validator_error(
-        message: &'static str,
-        details: serde_json::Value,
-    ) -> Self {
+    pub fn validator_error(message: &'static str, details: serde_json::Value) -> Self {
         RequestError::ValidatorError { message, details }
     }
 

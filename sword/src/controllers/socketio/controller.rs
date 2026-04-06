@@ -4,8 +4,8 @@ pub use socketioxide::{
     ProtocolVersion, SocketIo, TransportType,
     adapter::LocalAdapter,
     extract::{
-        AckSender, Data, Event, Extension, HttpExtension, MaybeExtension,
-        MaybeHttpExtension, SocketRef, TryData,
+        AckSender, Data, Event, Extension, HttpExtension, MaybeExtension, MaybeHttpExtension,
+        SocketRef, TryData,
     },
     socket::DisconnectReason,
 };

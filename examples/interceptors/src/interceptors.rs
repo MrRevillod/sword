@@ -4,7 +4,7 @@ use sword::prelude::*;
 pub struct LoggingInterceptor;
 
 impl OnRequest for LoggingInterceptor {
-    async fn on_request(&self, req: Request) -> HttpInterceptorResult {
+    async fn on_request(&self, req: Request) -> WebInterceptorResult {
         println!(
             "[REST] - Incoming request: ID: {} - [{}] {}",
             req.id(),

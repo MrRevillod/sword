@@ -14,7 +14,6 @@ pub use components::{Component, ComponentRegistry};
 pub use container::DependencyContainer;
 pub use error::DependencyInjectionError;
 pub use providers::{Provider, ProviderRegistry};
-pub use sword_macros::injectable;
 
 /// Base trait for any component that can be constructed from the application State.
 pub trait Build: Clone + Send + Sync + 'static {

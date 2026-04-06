@@ -6,7 +6,7 @@ use axum::{
     http::request::Parts,
 };
 use std::collections::HashMap;
-use sword_core::layers::BodyLimitValue;
+use sword_layers::body_limit::BodyLimitValue;
 
 pub(super) struct PreparedRequestParts {
     pub params: HashMap<String, String>,
@@ -18,11 +18,8 @@ pub(super) struct PreparedRequestParts {
 #[allow(async_fn_in_trait)]
 pub(super) trait PartsExtractionExt {
     fn body_limit(&self) -> usize;
-    fn validate_content_length(&self, body_limit: usize)
-    -> Result<(), RequestError>;
-    async fn extract_path_params(
-        &mut self,
-    ) -> Result<HashMap<String, String>, JsonResponse>;
+    fn validate_content_length(&self, body_limit: usize) -> Result<(), RequestError>;
+    async fn extract_path_params(&mut self) -> Result<HashMap<String, String>, JsonResponse>;
 }
 
 impl PartsExtractionExt for Parts {
@@ -34,10 +31,7 @@ impl PartsExtractionExt for Parts {
             .0
     }
 
-    fn validate_content_length(
-        &self,
-        body_limit: usize,
-    ) -> Result<(), RequestError> {
+    fn validate_content_length(&self, body_limit: usize) -> Result<(), RequestError> {
         let Some(content_length) = self.headers.get("content-length") else {
             return Ok(());
         };
@@ -63,9 +57,7 @@ impl PartsExtractionExt for Parts {
         Ok(())
     }
 
-    async fn extract_path_params(
-        &mut self,
-    ) -> Result<HashMap<String, String>, JsonResponse> {
+    async fn extract_path_params(&mut self) -> Result<HashMap<String, String>, JsonResponse> {
         let path_params = self
             .extract::<Path<HashMap<String, String>>>()
             .await

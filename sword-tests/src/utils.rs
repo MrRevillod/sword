@@ -10,8 +10,7 @@ impl TempFile {
             .unwrap()
             .as_nanos();
 
-        let project_root =
-            std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+        let project_root = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
         let file_path = format!("{project_root}/files/test_file_{timestamp}.txt");
 
         let content = vec![b'x'; size];

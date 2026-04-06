@@ -4,16 +4,12 @@ use crate::controllers::ControllerRegistry;
 use crate::interceptor::InterceptorRegistrar;
 use crate::module::Module;
 
-use axum::{
-    extract::Request as AxumRequest, response::IntoResponse, routing::Route,
-};
+use axum::{extract::Request as AxumRequest, response::IntoResponse, routing::Route};
 
 use std::convert::Infallible;
 use std::path::Path;
-use sword_core::{
-    Config, ConfigRegistrar, DependencyContainer, Provider, State,
-    layers::LayerStack, sword_error,
-};
+use sword_core::{Config, ConfigRegistrar, DependencyContainer, Provider, State, sword_error};
+use sword_layers::layer_stack::LayerStack;
 use sword_layers::tracing::{TracingConfig, TracingSubscriber};
 
 use tower::{Layer, Service};
@@ -50,7 +46,7 @@ impl ApplicationBuilder {
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
-    /// modules, add middleware layers, and set up dependency injection.
+    /// modules, add Tower layers, and set up dependency injection.
     ///
     /// # Example
     ///
@@ -64,10 +60,7 @@ impl ApplicationBuilder {
     /// app.run().await;
     /// ```
     pub fn new() -> Self {
-        let config = Self::load_required_config(
-            DEFAULT_CONFIG_PATH,
-            "ApplicationBuilder::new",
-        );
+        let config = Self::load_required_config(DEFAULT_CONFIG_PATH, "ApplicationBuilder::new");
 
         Self::from_config(config)
     }
@@ -76,7 +69,7 @@ impl ApplicationBuilder {
     ///
     /// `ApplicationBuilder` provides a fluent interface for configuring a Sword application
     /// before building the final `Application` instance. It allows you to register
-    /// modules, add middleware layers, and set up dependency injection.
+    /// modules, add Tower layers, and set up dependency injection.
     ///
     /// The builder follows this configuration pattern:
     /// 1. Create with `Application::builder()`
@@ -106,8 +99,19 @@ impl ApplicationBuilder {
         state.insert(config.clone());
 
         let tracing_config = config.get_or_default::<TracingConfig>();
-        let tracing_status = TracingSubscriber::init_once(tracing_config.clone());
-        TracingSubscriber::emit_init_status_log(tracing_status, &tracing_config);
+        TracingSubscriber::from(tracing_config.clone())
+            .init()
+            .unwrap_or_else(|err| {
+                sword_error! {
+                    title: "Failed to initialize tracing subscriber",
+                    reason: err,
+                    source: "ApplicationBuilder::from_config",
+                    hints: [
+                        "Ensure tracing is initialized only once per process",
+                        "Avoid initializing tracing manually before building the app when using Sword bootstrap",
+                    ],
+                }
+            });
 
         for ConfigRegistrar { register } in inventory::iter::<ConfigRegistrar> {
             register(&state, &config)
@@ -142,10 +146,10 @@ impl ApplicationBuilder {
     /// Adds a `tower::Layer` to the application builder.
     ///
     /// This method is equivalent to Axum's `Router::layer` method, allowing you to
-    /// apply middleware layers to the application's router.
+    /// apply Tower layers to the application's router.
     ///
-    /// Custom layers are applied **after** all built-in Sword middlewares,
-    /// making them the outermost layer in the middleware stack.
+    /// Custom layers are applied **after** all built-in Sword layers,
+    /// making them the outermost layer in the layer stack.
     /// This means custom layers execute first on incoming requests and last on outgoing responses.
     pub fn with_layer<L>(mut self, layer: L) -> Self
     where
@@ -191,19 +195,32 @@ impl ApplicationBuilder {
         }
 
         self.container.build_all(&self.state).unwrap_or_else(|err| {
-            sword_error! {
-                title: "Failed to build dependency injection container",
-                reason: err,
-                context: {
-                    "source" => "ApplicationBuilder::build",
-                },
-                hints: ["Check that all required components and providers are registered"],
+            match (err.dependency_path(), err.missing_dependency_path()) {
+                (Some(dependency_path), Some(missing_dependency_path)) => {
+                    sword_error! {
+                        title: "Failed to Build DI Container",
+                        reason: err,
+                        source: "ApplicationBuilder::build",
+                        fields: {
+                            dependency_path = dependency_path,
+                            missing_dependency_path = missing_dependency_path,
+                        },
+                        hints: ["Check that all required components and providers are registered"],
+                    }
+                }
+                _ => {
+                    sword_error! {
+                        title: "Failed to Build DI Container",
+                        reason: err,
+                        source: "ApplicationBuilder::build",
+                        extra_context: err.diagnostic_context(),
+                        hints: ["Check that all required components and providers are registered"],
+                    }
+                }
             }
         });
 
-        for InterceptorRegistrar { register } in
-            inventory::iter::<InterceptorRegistrar>
-        {
+        for InterceptorRegistrar { register } in inventory::iter::<InterceptorRegistrar> {
             register(&self.state);
         }
 

@@ -1,15 +1,24 @@
-use crate::shared::{CommonControllerInput, gen_build, gen_clone, gen_deps};
+use crate::{
+    controllers::shared::{ControllerStruct, ParsedControllerKind},
+    shared::{gen_build, gen_clone, gen_deps},
+};
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Path;
+use syn::{Error, Path};
 
 pub fn generate_socketio_controller_builder(
-    input: &CommonControllerInput,
+    input: &ControllerStruct,
     interceptors: &[Path],
-) -> TokenStream {
-    let namespace = &input.base_path;
-    let self_name = &input.struct_name;
+) -> syn::Result<TokenStream> {
+    let ParsedControllerKind::SocketIo { namespace } = &input.kind else {
+        return Err(Error::new_spanned(
+            &input.name,
+            "Expected a Socket.IO controller struct",
+        ));
+    };
+
+    let self_name = &input.name;
     let self_fields = &input.fields;
     let controller_name_str = self_name.to_string();
 
@@ -19,20 +28,17 @@ pub fn generate_socketio_controller_builder(
 
     let interceptor_applications = interceptors.iter().map(|interceptor_path| {
         quote! {
-            let interceptor = ::std::sync::Arc::new(
-                state.borrow::<#interceptor_path>()
-                    .unwrap_or_else(|err| {
-                        ::sword::internal::core::sword_error!(
-                            title: "Failed to retrieve Socket.IO interceptor from State",
-                            reason: err,
-                            context: {
-                                "interceptor" => stringify!(#interceptor_path),
-                            },
-                            hints: ["Ensure the interceptor is registered and built before controller setup"],
-                        )
-                    })
-                    .clone()
-            );
+            let interceptor = state.borrow::<#interceptor_path>()
+                .unwrap_or_else(|err| {
+                    ::sword::internal::core::sword_error!(
+                        title: "Failed to retrieve Socket.IO interceptor from State",
+                        reason: err,
+                        context: {
+                            "interceptor" => stringify!(#interceptor_path),
+                        },
+                        hints: ["Ensure the interceptor is registered and built before controller setup"],
+                    )
+                });
 
             let handler = handler.with(move |ctx: ::sword::prelude::SocketContext| {
                 let interceptor = ::std::sync::Arc::clone(&interceptor);
@@ -147,7 +153,7 @@ pub fn generate_socketio_controller_builder(
         };
     };
 
-    quote! {
+    let expanded = quote! {
         #build_impl
         #deps_impl
         #clone_impl
@@ -173,5 +179,7 @@ pub fn generate_socketio_controller_builder(
         }
 
         #setup_registration
-    }
+    };
+
+    Ok(expanded)
 }

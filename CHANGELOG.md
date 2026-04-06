@@ -32,10 +32,13 @@
 
 ### Changed
 
+- Aligned current naming across docs/examples/changelog: the canonical config section is `[application]`, the router prefix key is `web-router-prefix`, Socket.IO transport configuration uses `transports`, and Sword terminology now distinguishes Tower `layers` from typed `interceptors`.
+- **BREAKING:** Renamed web interceptor return alias from `HttpInterceptorResult` to `WebInterceptorResult`.
+- **BREAKING:** Renamed web controller result alias from `Result` to `WebResult`.
 - Renamed adapter/runtime naming across the codebase: HTTP controllers now use `controllers` naming, and the primary application module is now `application::web`.
 - Refactored server config to use `[server]` with `web-router-prefix`, `body-limit`, and `request-timeout`.
 - Runtime now applies only mandatory built-ins by default (`not_found`, `body_limit`, `request_timeout`); optional layers are explicit via `.with_layer(...)`.
-- Replaced `HttpResult` usage with `Result` alias (`Result<T = JsonResponse, E = JsonResponse>`) in controller APIs.
+- Replaced `HttpResult` usage with `WebResult` alias (`WebResult<T = JsonResponse, E = JsonResponse>`) in controller APIs.
 - Updated macros/docs/examples to match new naming and APIs, including workspace/metadata consistency fixes.
 
 - Replaced native `RwLock` with `parking_lot::RwLock` for better performance.

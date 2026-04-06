@@ -50,6 +50,12 @@ where
     /// The `TryData<T>` extractor equivalent method.
     ///
     /// Deserializes message data to the specified type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the payload has already been consumed by a previous
+    /// call to `try_data`, or if the incoming payload cannot be decoded using
+    /// the parser configured for the current Socket.IO server.
     pub fn try_data<T: DeserializeOwned>(&self) -> Result<T, SocketError> {
         let mut data = self.data.write().take().ok_or(ParseError::InvalidData)?;
 
@@ -63,6 +69,11 @@ where
     }
 
     #[cfg(feature = "validation-validator")]
+    /// # Errors
+    ///
+    /// Returns an error if payload decoding fails, if the payload was already
+    /// consumed, or if the decoded value does not satisfy its `validator`
+    /// constraints.
     pub fn try_validated_data<T>(&self) -> Result<T, SocketError>
     where
         T: DeserializeOwned + Validate,
@@ -81,6 +92,11 @@ where
     }
 
     /// Sends an acknowledgment response to the client.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the current event does not support acknowledgments
+    /// or if the underlying socket cannot send the acknowledgment payload.
     pub fn ack<D>(self, data: &D) -> Result<(), SendError>
     where
         D: Serialize + ?Sized,
@@ -126,6 +142,10 @@ where
         self.socket.transport_type()
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the underlying Socket.IO connection cannot be
+    /// closed cleanly.
     pub fn disconnect(self) -> Result<(), SocketError> {
         self.socket.disconnect().map_err(SocketError::from)
     }
@@ -155,8 +175,7 @@ where
         v: &mut Value,
         ack_id: &Option<i64>,
     ) -> Result<Self, Self::Error> {
-        let ack = ack_id
-            .and_then(|id| AckSender::from_message_parts(s, v, &Some(id)).ok());
+        let ack = ack_id.and_then(|id| AckSender::from_message_parts(s, v, &Some(id)).ok());
 
         let event = Event::from_message_parts(s, v, ack_id)
             .ok()
@@ -181,10 +200,7 @@ where
 {
     type Error = Infallible;
 
-    fn from_connect_parts(
-        s: &Arc<Socket<A>>,
-        auth: &Option<Value>,
-    ) -> Result<Self, Self::Error> {
+    fn from_connect_parts(s: &Arc<Socket<A>>, auth: &Option<Value>) -> Result<Self, Self::Error> {
         Ok(SocketContext {
             socket: SocketRef::from_connect_parts(s, auth)?,
             data: RwLock::new(auth.clone()),

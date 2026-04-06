@@ -3,7 +3,6 @@
 		"**/.git": true,
 		"target": true
 	},
-	"errorLens.enabled": true,
 	"[rust]": {
 		"editor.defaultFormatter": "rust-lang.rust-analyzer",
 	},

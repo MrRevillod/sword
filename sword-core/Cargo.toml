@@ -18,13 +18,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-axum = { workspace = true }
-axum_responses = { workspace = true }
-tower = { workspace = true }
-
-sword-layers = { workspace = true }
-sword-macros = { workspace = true }
-
 thiserror = { workspace = true }
 tracing = { workspace = true }
 

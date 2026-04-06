@@ -1,3 +1,5 @@
+#![allow(async_fn_in_trait)]
+
 mod application;
 mod controllers;
 mod interceptor;
@@ -11,18 +13,13 @@ pub use sword_macros::main;
 pub mod internal {
     pub mod axum {
         pub use axum::body::{Body as AxumBody, HttpBody as AxumHttpBody};
-        pub use axum::extract::{
-            FromRequest, FromRequestParts, Request as AxumRequest,
-        };
-        pub use axum::middleware::{
-            Next as AxumNext, from_fn_with_state as mw_with_state,
-        };
+        pub use axum::extract::{FromRequest, FromRequestParts, Request as AxumRequest};
+        pub use axum::middleware::{Next as AxumNext, from_fn_with_state as mw_with_state};
         pub use axum::response::{IntoResponse, Response as AxumResponse};
         pub use axum::routing;
         pub use axum::routing::{
-            MethodRouter, Router as AxumRouter, delete, delete as delete_fn, get,
-            get as get_fn, patch, patch as patch_fn, post, post as post_fn, put,
-            put as put_fn,
+            MethodRouter, Router as AxumRouter, delete, delete as delete_fn, get, get as get_fn,
+            patch, patch as patch_fn, post, post as post_fn, put, put as put_fn,
         };
     }
 
@@ -51,6 +48,7 @@ pub mod internal {
     #[cfg(feature = "web-controllers")]
     pub mod controllers {
         pub use crate::controllers::web::RouteRegistrar;
+        pub use crate::controllers::web::WebControllerRegistrar;
     }
 
     pub use inventory;

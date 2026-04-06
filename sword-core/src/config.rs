@@ -1,6 +1,5 @@
 use crate::State;
 
-pub use sword_macros::config;
 pub use thisconfig::{ByteConfig, Config, ConfigItem, TimeConfig};
 
 /// A struct that holds a function to register a config type.

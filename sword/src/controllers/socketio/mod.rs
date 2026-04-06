@@ -15,6 +15,8 @@ pub use error::*;
 pub use extract::*;
 pub use interceptor::*;
 
+pub(crate) use socketioxide::layer::SocketIoLayer;
+
 #[derive(Clone, Debug)]
 pub enum SocketEventKind {
     Connection,
@@ -23,10 +25,8 @@ pub enum SocketEventKind {
     Fallback,
 }
 
-type SocketCallFn = fn(
-    Arc<dyn Any + Send + Sync>,
-    SocketContext,
-) -> Pin<Box<dyn Future<Output = ()> + Send>>;
+type SocketCallFn =
+    fn(Arc<dyn Any + Send + Sync>, SocketContext) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 
 /// Metadata for a SocketIO event handler registered via the `#[on]` attribute.
 ///

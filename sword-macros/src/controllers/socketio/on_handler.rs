@@ -1,12 +1,9 @@
-use crate::shared::CMetaStack;
+use crate::controllers::shared::CMetaStack;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{ItemFn, LitStr};
 
-pub fn expand_on_handler(
-    attr: TokenStream,
-    item: TokenStream,
-) -> syn::Result<TokenStream> {
+pub fn expand_on_handler(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
     let event_lit = syn::parse::<LitStr>(attr)?;
     let event_name = event_lit.value();
     let input_fn = syn::parse::<ItemFn>(item)?;

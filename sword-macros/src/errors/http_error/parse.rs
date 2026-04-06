@@ -1,7 +1,6 @@
 use axum::http::StatusCode;
 use syn::{
-    Attribute, Error, Ident, LitInt, LitStr, Token, meta::ParseNestedMeta,
-    spanned::Spanned,
+    Attribute, Error, Ident, LitInt, LitStr, Token, meta::ParseNestedMeta, spanned::Spanned,
 };
 
 #[derive(Debug, Clone)]
@@ -37,9 +36,10 @@ impl HttpErrorConfig {
 
         for attr in attrs.iter().filter(|a| a.path().is_ident("tracing")) {
             attr.parse_nested_meta(|meta| {
-                let level_ident = meta.path.get_ident().ok_or_else(|| {
-                    Error::new(meta.path.span(), "expected identifier")
-                })?;
+                let level_ident = meta
+                    .path
+                    .get_ident()
+                    .ok_or_else(|| Error::new(meta.path.span(), "expected identifier"))?;
 
                 let level_str = level_ident.to_string();
 
@@ -56,7 +56,6 @@ impl HttpErrorConfig {
                 }
 
                 Ok(())
-
             })?;
         }
 
@@ -67,9 +66,10 @@ impl HttpErrorConfig {
 
     fn parse_http_attr(&mut self, attr: &Attribute) -> syn::Result<()> {
         attr.parse_nested_meta(|meta| {
-            let ident = meta.path.get_ident().ok_or_else(|| {
-                Error::new(meta.path.span(), "expected identifier")
-            })?;
+            let ident = meta
+                .path
+                .get_ident()
+                .ok_or_else(|| Error::new(meta.path.span(), "expected identifier"))?;
 
             match ident.to_string().as_str() {
                 "transparent" => {
@@ -142,10 +142,7 @@ impl HttpErrorConfig {
             .to_string()
     }
 
-    fn parse_message_value(
-        ident: &Ident,
-        meta: &ParseNestedMeta,
-    ) -> syn::Result<MessageValue> {
+    fn parse_message_value(ident: &Ident, meta: &ParseNestedMeta) -> syn::Result<MessageValue> {
         if !meta.input.peek(Token![=]) {
             return Err(Error::new(ident.span(), "expected '=' after 'message'"));
         }
@@ -166,10 +163,7 @@ impl HttpErrorConfig {
         ))
     }
 
-    fn parse_status_code_value(
-        ident: &Ident,
-        meta: &ParseNestedMeta,
-    ) -> syn::Result<StatusCode> {
+    fn parse_status_code_value(ident: &Ident, meta: &ParseNestedMeta) -> syn::Result<StatusCode> {
         if !meta.input.peek(Token![=]) {
             return Err(Error::new(ident.span(), "expected '=' after 'code'"));
         }

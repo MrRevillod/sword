@@ -19,12 +19,10 @@ pub fn extract_arc_inner_type(ty: &Type) -> Option<&Type> {
     }
 
     match &last_segment.arguments {
-        syn::PathArguments::AngleBracketed(args) => {
-            args.args.first().and_then(|arg| match arg {
-                syn::GenericArgument::Type(inner) => Some(inner),
-                _ => None,
-            })
-        }
+        syn::PathArguments::AngleBracketed(args) => args.args.first().and_then(|arg| match arg {
+            syn::GenericArgument::Type(inner) => Some(inner),
+            _ => None,
+        }),
         _ => None,
     }
 }

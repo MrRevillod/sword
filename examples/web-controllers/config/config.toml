@@ -13,6 +13,13 @@ display = true
 max-size = "5MB"
 display = true
 
+[tracing]
+enabled = true
+default-filter = "info,sword=debug,sqlx=error"
+format = "dev"
+time-style = "none"
+with-fields = []
+
 [database]
 uri = "${POSTGRES_DATABASE_URL}"
 migrations_path = "config/migrations"
