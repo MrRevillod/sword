@@ -1,8 +1,13 @@
+#![allow(unused)]
+
 #[cfg(feature = "web-controllers")]
 pub mod web;
 
 #[cfg(feature = "socketio-controllers")]
 pub mod socketio;
+
+#[cfg(feature = "grpc-controllers")]
+pub mod grpc;
 
 use parking_lot::{RawRwLock, RwLock, lock_api::RwLockReadGuard};
 use std::{
@@ -102,6 +107,11 @@ impl ControllerRegistry {
         &self,
     ) -> RwLockReadGuard<'_, RawRwLock, HashMap<Controller, HashSet<TypeId>>> {
         self.controllers.read()
+    }
+
+    #[cfg(feature = "grpc-controllers")]
+    pub(crate) fn snapshot(&self) -> ControllerMap {
+        self.controllers.read().clone()
     }
 }
 

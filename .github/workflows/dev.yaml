@@ -8,14 +8,20 @@ on:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        toolchain: [stable]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install stable Rust
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: ${{ matrix.toolchain }}
           components: rustfmt, clippy
 
       - name: Cache cargo registry
@@ -29,11 +35,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Run clippy (web/socketio set)
+        run: cargo clippy --workspace --exclude grpc-controllers --all-targets --all-features -- -D warnings
 
-      - name: Run tests
-        run: cargo test --workspace
+      - name: Check web/socketio feature set
+        run: cargo check --workspace --exclude grpc-controllers
+
+      - name: Run tests (all except grpc example)
+        run: cargo test --workspace --exclude grpc-controllers
+
+      - name: Check gRPC engine feature set
+        run: cargo check -p sword --no-default-features --features grpc-controllers
+
+      - name: Check gRPC example
+        run: cargo check -p grpc-controllers
+
+      - name: Build docs
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --workspace --exclude grpc-controllers --no-deps --all-features

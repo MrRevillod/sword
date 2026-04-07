@@ -3,11 +3,10 @@ mod dtos;
 mod entity;
 
 use controller::ChatController;
+use sword::prelude::*;
 
 pub use dtos::IncommingMessageDto;
 pub use entity::Message;
-
-use sword::prelude::*;
 
 pub struct ChatModule;
 

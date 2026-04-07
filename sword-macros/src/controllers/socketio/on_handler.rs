@@ -68,7 +68,7 @@ pub fn expand_on_handler(attr: TokenStream, item: TokenStream) -> syn::Result<To
     let handler_impl = quote! {
         pub fn register_handler(
             controller_any: ::std::sync::Arc<dyn ::std::any::Any + Send + Sync>,
-            socket: ::sword::prelude::SocketRef,
+            socket: ::sword::socketio::SocketRef,
         ) {
             let controller = controller_any
                 .downcast::<#controller_ident>()
@@ -86,7 +86,7 @@ pub fn expand_on_handler(attr: TokenStream, item: TokenStream) -> syn::Result<To
                     )
                 });
 
-            socket.on(#event_name, move |ctx: ::sword::prelude::SocketContext| {
+            socket.on(#event_name, move |ctx: ::sword::socketio::SocketContext| {
                 let controller = ::std::sync::Arc::clone(&controller);
                 async move {
                     controller.#fn_name(ctx).await;
@@ -96,7 +96,7 @@ pub fn expand_on_handler(attr: TokenStream, item: TokenStream) -> syn::Result<To
 
         pub fn call_handler(
             controller_any: ::std::sync::Arc<dyn ::std::any::Any + Send + Sync>,
-            ctx: ::sword::prelude::SocketContext,
+            ctx: ::sword::socketio::SocketContext,
         ) -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ()> + Send>> {
             let controller = controller_any
                 .downcast::<#controller_ident>()

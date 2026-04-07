@@ -1,4 +1,6 @@
 use sword::prelude::*;
+use sword::socketio::*;
+use sword::web::*;
 
 #[derive(Interceptor)]
 pub struct LoggingInterceptor;

@@ -22,7 +22,6 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 ## Coming Soon
 
 - **GraphQL Controller** - Support for GraphQL endpoints on the web application type
-- **gRPC Application Type** - Support for gRPC services with Tonic
 - **RabbitMQ Integration** - Built-in support for RabbitMQ messaging
 
 ## Controller Example

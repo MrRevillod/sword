@@ -4,6 +4,7 @@ mod router;
 use crate::{application::ApplicationConfig, controllers::ControllerRegistry};
 
 use axum::Router;
+use std::net::SocketAddr;
 use sword_core::{Config, State, sword_error};
 use sword_layers::layer_stack::LayerStack;
 use tokio::net::TcpListener;
@@ -57,12 +58,19 @@ impl WebApplication {
 
         let app = self.router.clone().with_state(self.state.clone());
 
-        let listener = TcpListener::bind(&format!(
-            "{}:{}",
-            self.app_config.web.host, self.app_config.web.port
-        ))
-        .await
-        .unwrap_or_else(|err| {
+        let bind_addr: SocketAddr = bind.parse::<SocketAddr>().unwrap_or_else(|err| {
+            sword_error! {
+                title: "Invalid web bind address",
+                reason: err,
+                context: {
+                    "bind" => bind,
+                    "source" => "WebApplication::start",
+                },
+                hints: ["Ensure host and port values are valid"],
+            }
+        });
+
+        let listener = TcpListener::bind(bind_addr).await.unwrap_or_else(|err| {
             sword_error! {
                 title: "Failed to bind HTTP listener",
                 reason: err,

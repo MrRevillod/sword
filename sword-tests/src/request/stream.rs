@@ -2,6 +2,7 @@ use axum::body::to_bytes;
 use axum_test::TestServer;
 use serde_json::json;
 use sword::prelude::*;
+use sword::web::*;
 
 #[derive(Interceptor)]
 struct StreamTagInterceptor;

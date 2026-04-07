@@ -4,8 +4,8 @@ use sword::prelude::*;
 
 use crate::shared::errors::AppResult;
 
-#[derive(Clone, Deserialize)]
 #[config(key = "hasher")]
+#[derive(Clone, Deserialize)]
 pub struct HasherConfig {
     pub cost: u32,
 }

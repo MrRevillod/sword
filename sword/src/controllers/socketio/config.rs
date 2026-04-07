@@ -162,6 +162,20 @@ impl SocketIoServerLayer {
         }
 
         if let Some(transports) = &config.transports {
+            let invalid_transports: Vec<&str> = transports
+                .iter()
+                .map(String::as_str)
+                .filter(|t| !matches!(*t, "polling" | "websocket"))
+                .collect();
+
+            if !invalid_transports.is_empty() {
+                tracing::warn!(
+                    target: "sword.socketio.config",
+                    invalid_transports = ?invalid_transports,
+                    "Ignoring invalid socket.io transports; valid values are 'polling' and 'websocket'"
+                );
+            }
+
             let parsed_transports = transports
                 .iter()
                 .collect::<HashSet<_>>()

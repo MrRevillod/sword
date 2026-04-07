@@ -1,3 +1,6 @@
+#[cfg(feature = "grpc-controllers")]
+use super::engines::grpc::GrpcApplicationConfig;
+#[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
 use super::engines::web::WebApplicationConfig;
 use serde::{Deserialize, Serialize};
 use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
@@ -27,8 +30,14 @@ pub struct ApplicationConfig {
     ///
     /// This keeps the TOML ergonomic while still using a dedicated struct
     /// for web-specific configuration.
+    #[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
     #[serde(flatten)]
     pub web: WebApplicationConfig,
+
+    /// gRPC server settings flattened into `[application]`.
+    #[cfg(feature = "grpc-controllers")]
+    #[serde(flatten)]
+    pub grpc: GrpcApplicationConfig,
 }
 
 impl ConfigItem for ApplicationConfig {

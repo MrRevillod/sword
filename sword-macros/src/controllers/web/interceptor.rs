@@ -40,14 +40,14 @@ impl ModeTokens {
     fn from_request_mode(request_mode: RequestMode) -> Self {
         match request_mode {
             RequestMode::Streaming => Self {
-                req_ty: quote! { ::sword::prelude::StreamRequest },
-                simple_trait: quote! { ::sword::prelude::OnRequestStream },
-                configured_trait: quote! { ::sword::prelude::OnRequestStreamWithConfig },
+                req_ty: quote! { ::sword::web::StreamRequest },
+                simple_trait: quote! { ::sword::web::OnRequestStream },
+                configured_trait: quote! { ::sword::web::OnRequestStreamWithConfig },
             },
             _ => Self {
-                req_ty: quote! { ::sword::prelude::Request },
-                simple_trait: quote! { ::sword::prelude::OnRequest },
-                configured_trait: quote! { ::sword::prelude::OnRequestWithConfig },
+                req_ty: quote! { ::sword::web::Request },
+                simple_trait: quote! { ::sword::web::OnRequest },
+                configured_trait: quote! { ::sword::web::OnRequestWithConfig },
             },
         }
     }
@@ -77,7 +77,7 @@ fn generate_sword_simple(path: &syn::Path, mode: &ModeTokens) -> TokenStream {
 
             ::sword::internal::axum::mw_with_state(
                 state.clone(),
-                move |mut req: #req_ty, next: ::sword::prelude::Next| {
+                move |mut req: #req_ty, next: ::sword::web::Next| {
                     req.set_next(next);
 
                     let mw = ::std::sync::Arc::clone(&middleware);
@@ -123,7 +123,7 @@ fn generate_sword_configured(
 
             ::sword::internal::axum::mw_with_state(
                 state.clone(),
-                move |mut req: #req_ty, next: ::sword::prelude::Next| {
+                move |mut req: #req_ty, next: ::sword::web::Next| {
                     req.set_next(next);
                     let mw = ::std::sync::Arc::clone(&middleware);
                     async move {

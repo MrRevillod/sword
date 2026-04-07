@@ -40,11 +40,11 @@ impl UserRepository {
     pub async fn save(&self, user: &User) -> AppResult<()> {
         sqlx::query(
             r#"
-            INSERT INTO users (id, username, password) 
-            VALUES ($1, $2, $3) 
-            ON CONFLICT (id) 
-            DO UPDATE SET 
-                username = EXCLUDED.username, 
+            INSERT INTO users (id, username, password)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (id)
+            DO UPDATE SET
+                username = EXCLUDED.username,
                 password = EXCLUDED.password
         "#,
         )

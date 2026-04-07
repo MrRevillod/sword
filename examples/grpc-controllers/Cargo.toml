@@ -1,0 +1,20 @@
+[package]
+name = "grpc-controllers"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+sword = { path = "../../sword", default-features = false, features = ["grpc-controllers"] }
+serde = { workspace = true, features = ["derive"] }
+tonic = { workspace = true }
+tonic-prost = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = "0.1.17"
+prost = "0.14.1"
+thiserror = "2.0.11"
+tracing = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+sword-layers = { workspace = true, features = ["cors"] }
+
+[build-dependencies]
+tonic-prost-build = "0.14.2"
