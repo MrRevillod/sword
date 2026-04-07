@@ -1,6 +1,6 @@
-# Sword
-
-> <img src="https://avatars.githubusercontent.com/u/228345998?s=200&v=4" align="right" width="120"/>
+<div align="center">
+  <img src="https://sword-web.github.io/logo-new.png" width="500" />
+</div>
 
 Structured web framework for Rust built on top of the Tokio ecosystem.
 Designed to build server applications with less boilerplate and more simplicity.
@@ -11,6 +11,7 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 ## Features
 
 - **Web Application Type** - Axum-based application stack with web and Socket.IO controllers
+- **gRPC Application Type** - Tonic based application with built-in error handling based on `thiserror`
 - **Macro-based routing** - Clean and intuitive route definitions
 - **JSON-first design** - Built with JSON formats as priority
 - **Built-in validation** - Support `validator` crate and extensible validation system
@@ -19,15 +20,11 @@ It takes advantage of the tokio ecosystem to bring you performance with nice DX.
 - **Tower layers + interceptors** - Compose global layers and typed interceptors
 - **TOML config loader** - Built-in support for loading configuration from TOML files
 
-## Coming Soon
-
-- **GraphQL Controller** - Support for GraphQL endpoints on the web application type
-- **RabbitMQ Integration** - Built-in support for RabbitMQ messaging
-
 ## Controller Example
 
 ```rust
 use sword::prelude::*;
+use sword::web::*;
 
 #[controller(kind = Controller::Web, path = "/users")]
 pub struct UsersController {
