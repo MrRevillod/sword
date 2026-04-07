@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        toolchain: [stable, "1.85.0"]
+        toolchain: [stable]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,6 +34,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       - name: Check formatting
         run: cargo fmt --all -- --check
