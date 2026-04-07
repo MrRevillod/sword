@@ -38,15 +38,9 @@ pub trait GrpcController: ControllerSpec {
 pub struct GrpcControllerRegistrar {
     pub controller_id: TypeId,
     pub service_name: &'static str,
+    pub reflection_descriptor_set: Option<&'static [u8]>,
     pub build: fn(&State),
     pub register: fn(&State, &mut GrpcServiceRegistry),
 }
 
 inventory::collect!(GrpcControllerRegistrar);
-
-#[derive(Clone, Copy)]
-pub struct GrpcReflectionDescriptorRegistrar {
-    pub encoded_file_descriptor_set: &'static [u8],
-}
-
-inventory::collect!(GrpcReflectionDescriptorRegistrar);

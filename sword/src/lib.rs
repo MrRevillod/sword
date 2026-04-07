@@ -102,8 +102,7 @@ pub mod internal {
     pub mod grpc {
         pub use crate::application::engines::grpc::GrpcServiceRegistry;
         pub use crate::controllers::grpc::{
-            GrpcBodyLimitValue, GrpcControllerRegistrar, GrpcReflectionDescriptorRegistrar,
-            OnRequest, OnRequestWithConfig,
+            GrpcBodyLimitValue, GrpcControllerRegistrar, OnRequest, OnRequestWithConfig,
         };
     }
 

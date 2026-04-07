@@ -5,14 +5,7 @@ mod repository;
 
 pub mod proto {
     tonic::include_proto!("users");
-    pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("users_descriptor");
     pub use user_service_server::*;
-}
-
-::sword::internal::inventory::submit! {
-    ::sword::internal::grpc::GrpcReflectionDescriptorRegistrar {
-        encoded_file_descriptor_set: proto::FILE_DESCRIPTOR_SET,
-    }
 }
 
 use controller::UsersController;

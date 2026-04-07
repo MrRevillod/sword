@@ -3,9 +3,7 @@ mod registry;
 
 use crate::{
     application::ApplicationConfig,
-    controllers::grpc::{
-        GrpcBodyLimitValue, GrpcControllerRegistrar, GrpcReflectionDescriptorRegistrar,
-    },
+    controllers::grpc::{GrpcBodyLimitValue, GrpcControllerRegistrar},
     controllers::{Controller, ControllerMap, ControllerRegistry},
 };
 
@@ -81,6 +79,7 @@ impl GrpcApplication {
         }
 
         let mut grpc_registry = GrpcServiceRegistry::new();
+        let mut reflection_descriptor_sets: Vec<&'static [u8]> = Vec::new();
 
         let body_limit = self.app_config.grpc.body_limit.clone();
 
@@ -106,6 +105,10 @@ impl GrpcApplication {
 
             (registrar.build)(&self.state);
             (registrar.register)(&self.state, &mut grpc_registry);
+
+            if let Some(descriptor) = registrar.reflection_descriptor_set {
+                reflection_descriptor_sets.push(descriptor);
+            }
         }
 
         if grpc_registry.services_count() == 0 {
@@ -139,9 +142,9 @@ impl GrpcApplication {
             let mut reflection_builder = tonic_reflection::server::Builder::configure()
                 .register_encoded_file_descriptor_set(tonic_health::pb::FILE_DESCRIPTOR_SET);
 
-            for descriptor in inventory::iter::<GrpcReflectionDescriptorRegistrar>() {
-                reflection_builder = reflection_builder
-                    .register_encoded_file_descriptor_set(descriptor.encoded_file_descriptor_set);
+            for descriptor in reflection_descriptor_sets {
+                reflection_builder =
+                    reflection_builder.register_encoded_file_descriptor_set(descriptor);
             }
 
             Some(reflection_builder.build_v1().unwrap_or_else(|err| {
@@ -151,7 +154,7 @@ impl GrpcApplication {
                     context: {
                         "source" => "GrpcApplication::start",
                     },
-                    hints: ["Register at least one encoded descriptor set with inventory when enable-tonic-reflection is true"],
+                    hints: ["Ensure build.rs generates `sword_descriptor_set.bin` when enable-tonic-reflection is true"],
                 }
             }))
         } else {

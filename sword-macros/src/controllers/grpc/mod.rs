@@ -103,6 +103,7 @@ pub fn expand_grpc_controller(input: &ControllerStruct) -> syn::Result<TokenStre
             ::sword::internal::grpc::GrpcControllerRegistrar {
                 controller_id: ::std::any::TypeId::of::<#self_name>(),
                 service_name: stringify!(#service),
+                reflection_descriptor_set: Some(include_bytes!(concat!(env!("OUT_DIR"), "/sword_descriptor_set.bin"))),
                 build: |state: &::sword::internal::core::State| {
                     state.insert::<#self_name>(#self_name::build(state).unwrap_or_else(|e| {
                         ::sword::internal::core::sword_error! {

@@ -29,3 +29,4 @@ cargo run -p grpc-controllers
 - UserService methods expect `authorization` metadata.
 - Server default address is `127.0.0.1:50051`.
 - If `application.enable-tonic-reflection = true`, `grpcurl list` includes health and users services.
+- Reflection metadata is registered automatically by Sword from `build.rs` when generating `sword_descriptor_set.bin`.
