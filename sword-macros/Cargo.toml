@@ -1,6 +1,6 @@
 [package]
 name = "sword-macros"
-version = "0.2.1"
+version.workspace = true
 edition.workspace = true
 authors = ["Luciano Revillod <lrevillod2022@alu.uct.cl>"]
 description = "Structured web framework built on top of tokio ecosystem, providing powerful features for building robust web applications."

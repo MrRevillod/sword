@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sword_layers::grpc_body_limit::GrpcBodyLimitConfig;
+use sword_layers::body_limit::GrpcBodyLimitConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrpcApplicationConfig {

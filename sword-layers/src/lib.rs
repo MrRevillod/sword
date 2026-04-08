@@ -3,10 +3,13 @@
 pub mod layer_stack;
 
 #[cfg(feature = "body-limit")]
-pub mod body_limit;
+pub mod body_limit {
+    mod grpc;
+    mod web;
 
-#[cfg(feature = "body-limit")]
-pub mod grpc_body_limit;
+    pub use grpc::*;
+    pub use web::*;
+}
 
 #[cfg(feature = "compression")]
 pub mod compression;
@@ -27,20 +30,13 @@ pub mod not_found;
 
 pub mod prelude;
 
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-use axum::{body::Body, response::Response};
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-use tower::{ServiceBuilder, util::MapResponseLayer as TowerMapResponseLayer};
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-use tower_layer::{Identity, Stack};
+pub(crate) type ServiceLayer<Inner, Outer> = tower::ServiceBuilder<
+    tower_layer::Stack<Inner, tower_layer::Stack<Outer, tower_layer::Identity>>,
+>;
 
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-pub(crate) type ServiceLayer<Inner, Outer> = ServiceBuilder<Stack<Inner, Stack<Outer, Identity>>>;
-
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-pub(crate) type MapResponseLayer = TowerMapResponseLayer<ResponseFnMapper>;
-#[cfg(any(feature = "body-limit", feature = "not-found", feature = "req-timeout"))]
-pub(crate) type ResponseFnMapper = fn(Response<Body>) -> Response<Body>;
+pub(crate) type MapResponseLayer = tower::util::MapResponseLayer<ResponseFnMapper>;
+pub(crate) type ResponseFnMapper =
+    fn(axum::response::Response<axum::body::Body>) -> axum::response::Response<axum::body::Body>;
 
 #[cfg(feature = "request-id")]
 pub mod request_id;

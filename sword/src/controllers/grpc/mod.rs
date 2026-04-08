@@ -1,33 +1,27 @@
 mod interceptor;
+mod response;
 
 pub use interceptor::*;
 pub use sword_macros::GrpcError;
 
 use std::any::TypeId;
+use std::pin::Pin;
+use stream::Stream;
 use sword_core::State;
 
-pub use tonic;
-pub use tonic::{Code, Request, Response, Status, Streaming};
+pub mod stream {
+    pub use tokio_stream::{Stream, StreamExt, wrappers::ReceiverStream};
+}
+
+pub use response::GrpcResponse;
+pub use sword_layers::body_limit::GrpcBodyLimitValue;
+pub use tonic::{Code, Extensions, Request, Response, Status, Streaming, include_proto};
 
 use crate::application::engines::grpc::GrpcServiceRegistry;
 use crate::prelude::ControllerSpec;
 
 pub type GrpcResult<T> = Result<Response<T>, Status>;
-
-#[derive(Clone)]
-pub struct GrpcBodyLimitValue {
-    pub max_decoding_message_size: usize,
-    pub max_encoding_message_size: usize,
-}
-
-impl Default for GrpcBodyLimitValue {
-    fn default() -> Self {
-        Self {
-            max_decoding_message_size: 4 * 1024 * 1024,
-            max_encoding_message_size: 4 * 1024 * 1024,
-        }
-    }
-}
+pub type GrpcStream<T> = Pin<Box<dyn Stream<Item = Result<T, Status>> + Send + 'static>>;
 
 /// Trait implemented by gRPC controllers declared with `#[controller(kind = Controller::Grpc, ...)]`.
 pub trait GrpcController: ControllerSpec {

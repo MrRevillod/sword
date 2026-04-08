@@ -1,6 +1,6 @@
 [package]
 name = "sword"
-version = "0.2.1"
+version.workspace = true
 edition.workspace = true
 authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
 description = "Structured web framework built on top of tokio ecosystem, providing powerful features for building robust web applications."
@@ -46,9 +46,9 @@ socketioxide = { workspace = true, optional = true, features = [
 socketioxide-parser-common = { workspace = true, optional = true }
 socketioxide-parser-msgpack = { workspace = true, optional = true }
 tonic = { workspace = true, optional = true }
-tonic-prost = { workspace = true, optional = true }
 tonic-async-interceptor = { workspace = true, optional = true }
 tonic-health = { version = "0.14.2", optional = true }
+tokio-stream = { version = "0.1.18", optional = true }
 tonic-reflection = { version = "0.14.2", optional = true }
 
 tower = { workspace = true }
@@ -86,12 +86,13 @@ socketio-controllers = [
 ]
 
 grpc-controllers = [
+    "sword-layers/body-limit",
     "sword-macros/grpc-controllers",
     "dep:tonic",
-    "dep:tonic-prost",
     "dep:tonic-async-interceptor",
     "dep:tonic-health",
     "dep:tonic-reflection",
+    "dep:tokio-stream",
 ]
 
 multipart = ["axum/multipart", "axum_responses/multipart"]

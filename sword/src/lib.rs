@@ -35,8 +35,8 @@ pub mod socketio {
 #[cfg(feature = "grpc-controllers")]
 pub mod grpc {
     pub use crate::controllers::grpc::{
-        Code, GrpcError, GrpcInterceptorResult, GrpcResult, OnRequest, OnRequestWithConfig,
-        Request, Response, Status,
+        Code, Extensions, GrpcError, GrpcInterceptorResult, GrpcResponse, GrpcResult, GrpcStream,
+        OnRequest, OnRequestWithConfig, Request, Response, Status, include_proto, stream,
     };
     pub use tonic::async_trait;
 }
@@ -102,8 +102,9 @@ pub mod internal {
     pub mod grpc {
         pub use crate::application::engines::grpc::GrpcServiceRegistry;
         pub use crate::controllers::grpc::{
-            GrpcBodyLimitValue, GrpcControllerRegistrar, OnRequest, OnRequestWithConfig,
+            GrpcControllerRegistrar, OnRequest, OnRequestWithConfig,
         };
+        pub use sword_layers::body_limit::GrpcBodyLimitValue;
     }
 
     pub use inventory;

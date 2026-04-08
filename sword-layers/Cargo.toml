@@ -1,6 +1,6 @@
 [package]
 name = "sword-layers"
-version = "0.1.6"
+version.workspace = true
 edition = "2024"
 authors = ["luciano revillod <lrevillod2022@alu.uct.cl>"]
 description = "Tower layers for the Sword web framework"

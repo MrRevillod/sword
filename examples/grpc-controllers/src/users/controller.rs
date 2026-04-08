@@ -1,10 +1,8 @@
-use std::pin::Pin;
+use async_stream::try_stream;
 use std::sync::Arc;
 use sword::grpc::*;
 use sword::prelude::*;
-use tokio::sync::mpsc;
-use tokio_stream::Stream;
-use tokio_stream::wrappers::ReceiverStream;
+use tokio::time::{self, Duration};
 
 use crate::{
     shared::AuthInterceptor,
@@ -19,9 +17,9 @@ pub struct UsersController {
 
 #[sword::grpc::async_trait]
 impl UserService for UsersController {
-    type StreamUsersStream = Pin<Box<dyn Stream<Item = Result<UserItem, Status>> + Send>>;
+    type StreamUsersStream = GrpcStream<UserItem>;
 
-    async fn list_users(&self, _req: Request<ListUsersRequest>) -> GrpcResult<ListUsersReply> {
+    async fn list_users(&self, _: Request<ListUsersRequest>) -> GrpcResult<ListUsersReply> {
         let users = self.users.find_all().await;
 
         let users = users
@@ -32,33 +30,27 @@ impl UserService for UsersController {
             })
             .collect();
 
-        Ok(Response::new(ListUsersReply { users }))
+        Ok(GrpcResponse::message(ListUsersReply { users }))
     }
 
     async fn stream_users(
         &self,
-        _req: Request<StreamUsersRequest>,
+        _: Request<StreamUsersRequest>,
     ) -> GrpcResult<Self::StreamUsersStream> {
         let users = self.users.find_all().await;
 
-        let (tx, rx) = mpsc::channel(32);
-
-        tokio::spawn(async move {
+        let output = try_stream! {
             for user in users {
-                let item = UserItem {
+                yield UserItem {
                     id: user.id,
                     username: user.username,
                 };
 
-                if tx.send(Ok(item)).await.is_err() {
-                    break;
-                }
+                time::sleep(Duration::from_secs(1)).await;
             }
-        });
+        };
 
-        Ok(Response::new(
-            Box::pin(ReceiverStream::new(rx)) as Self::StreamUsersStream
-        ))
+        Ok(GrpcResponse::stream(output))
     }
 
     async fn create_user(&self, req: Request<CreateUserRequest>) -> GrpcResult<UserReply> {
@@ -71,11 +63,13 @@ impl UserService for UsersController {
 
         let user = self.users.create(dto).await?;
 
-        Ok(Response::new(UserReply {
-            user: Some(UserItem {
-                id: user.id,
-                username: user.username,
-            }),
+        let user_item = UserItem {
+            id: user.id,
+            username: user.username.clone(),
+        };
+
+        Ok(GrpcResponse::message(UserReply {
+            user: Some(user_item),
         }))
     }
 
@@ -83,11 +77,13 @@ impl UserService for UsersController {
         let id = req.into_inner().id;
         let user = self.users.find_by_id(&id).await?;
 
-        Ok(Response::new(UserReply {
-            user: Some(UserItem {
-                id: user.id,
-                username: user.username,
-            }),
+        let user_item = UserItem {
+            id: user.id,
+            username: user.username.clone(),
+        };
+
+        Ok(GrpcResponse::message(UserReply {
+            user: Some(user_item),
         }))
     }
 
@@ -102,11 +98,13 @@ impl UserService for UsersController {
 
         let user = self.users.update(dto).await?;
 
-        Ok(Response::new(UserReply {
-            user: Some(UserItem {
-                id: user.id,
-                username: user.username,
-            }),
+        let user_item = UserItem {
+            id: user.id,
+            username: user.username.clone(),
+        };
+
+        Ok(GrpcResponse::message(UserReply {
+            user: Some(user_item),
         }))
     }
 
@@ -115,8 +113,8 @@ impl UserService for UsersController {
 
         self.users.delete(&id).await?;
 
-        Ok(Response::new(DeleteUserReply {
-            message: "User deleted".to_string(),
+        Ok(GrpcResponse::message(DeleteUserReply {
+            message: "User deleted".into(),
         }))
     }
 }

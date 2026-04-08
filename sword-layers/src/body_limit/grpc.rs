@@ -26,6 +26,21 @@ pub struct GrpcBodyLimitConfig {
     pub display: bool,
 }
 
+#[derive(Clone)]
+pub struct GrpcBodyLimitValue {
+    pub max_decoding_message_size: usize,
+    pub max_encoding_message_size: usize,
+}
+
+impl Default for GrpcBodyLimitValue {
+    fn default() -> Self {
+        Self {
+            max_decoding_message_size: 4 * 1024 * 1024, // Default to 4MB, matching tonic's default.
+            max_encoding_message_size: 4 * 1024 * 1024, // Default to 4MB, matching tonic's default.
+        }
+    }
+}
+
 impl DisplayConfig for GrpcBodyLimitConfig {
     fn display(&self) {
         if !self.display {
