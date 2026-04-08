@@ -3,8 +3,26 @@ name: Dev Checks
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - ".editorconfig"
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".github/workflows/**"
+      - "*.md"
+      - ".vscode/**"
+      - ".zed/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - ".editorconfig"
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".github/workflows/**"
+      - "*.md"
+      - ".vscode/**"
+      - ".zed/**"
 
 jobs:
   checks:
@@ -12,8 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        toolchain: [stable]
+        os: [ ubuntu-latest ]
+        toolchain: [ stable ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
