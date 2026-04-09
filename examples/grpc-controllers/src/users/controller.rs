@@ -4,12 +4,14 @@ use sword::grpc::*;
 use sword::prelude::*;
 use tokio::time::{self, Duration};
 
+use crate::shared::LoggingInterceptor;
 use crate::{
     shared::AuthInterceptor,
     users::{CreateUserDto, UpdateUserDto, UserRepository, proto::*},
 };
 
 #[controller(kind = Controller::Grpc, service = UserServiceServer)]
+#[interceptor(LoggingInterceptor, config = "UsersController")]
 #[interceptor(AuthInterceptor)]
 pub struct UsersController {
     users: Arc<UserRepository>,
