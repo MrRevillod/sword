@@ -196,10 +196,10 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
 
                 #[cfg(not(feature = "socketio-controllers"))]
                 {
-                    return Err(Error::new(
+                    Err(Error::new(
                         Span::call_site(),
                         "Socket.IO controllers require enabling the `socketio-controllers` feature",
-                    ));
+                    ))
                 }
 
                 #[cfg(feature = "socketio-controllers")]
@@ -221,10 +221,10 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
                 #[cfg(not(feature = "grpc-controllers"))]
                 {
                     let _ = args.service;
-                    return Err(Error::new(
+                    Err(Error::new(
                         Span::call_site(),
                         "gRPC controllers require enabling the `grpc-controllers` feature",
-                    ));
+                    ))
                 }
 
                 #[cfg(feature = "grpc-controllers")]
