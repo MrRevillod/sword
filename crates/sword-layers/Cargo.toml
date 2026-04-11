@@ -13,13 +13,8 @@ readme = "../README.md"
 license = "MIT"
 
 [features]
-default = [
-    "body-limit",
-    "not-found",
-    "req-timeout",
-    "request-id",
-    "tracing",
-]
+default = []
+
 body-limit = [
     "dep:axum_responses",
     "dep:byte-unit",

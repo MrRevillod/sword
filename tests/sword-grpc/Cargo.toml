@@ -5,7 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-sword = { workspace = true, features = ["grpc-controllers"] }
+sword = { workspace = true, features = ["grpc-controllers", "grpc-reflection"] }
 sword-grpc = { workspace = true }
 tokio = { workspace = true }
 tonic = { workspace = true }

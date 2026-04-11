@@ -190,7 +190,6 @@ impl ApplicationBuilder {
             let app_config = self.config.get_or_default::<ApplicationConfig>();
             let grpc_application = GrpcApplication::new(
                 self.state.clone(),
-                &self.config,
                 app_config.grpc.clone(),
                 app_config.graceful_shutdown,
                 &self.controller_registry,

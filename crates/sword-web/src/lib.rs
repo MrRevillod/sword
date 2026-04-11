@@ -21,7 +21,6 @@ pub mod prelude {
     #[cfg(feature = "validation-validator")]
     pub use crate::request::ValidatorRequestValidation;
 
-    #[cfg(feature = "web-controllers")]
     pub use sword_layers::cookies::{
         Cookies, Key as CookiesKey, PrivateCookies, SignedCookies,
         cookie::{

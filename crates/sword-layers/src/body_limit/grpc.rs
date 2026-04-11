@@ -41,6 +41,15 @@ impl Default for GrpcBodyLimitValue {
     }
 }
 
+impl From<GrpcBodyLimitConfig> for GrpcBodyLimitValue {
+    fn from(config: GrpcBodyLimitConfig) -> Self {
+        Self {
+            max_decoding_message_size: config.max_decoding_message_size.parsed,
+            max_encoding_message_size: config.max_encoding_message_size.parsed,
+        }
+    }
+}
+
 impl DisplayConfig for GrpcBodyLimitConfig {
     fn display(&self) {
         if !self.display {

@@ -3,7 +3,6 @@ name = "gRPC Test App"
 host = "127.0.0.1"
 port = 50051
 graceful-shutdown = false
-enable-tonic-reflection = true
 
 [application.body-limit]
 max-decoding-message-size = "2 MiB"
