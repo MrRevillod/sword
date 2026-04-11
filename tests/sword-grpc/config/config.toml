@@ -1,10 +1,12 @@
 [application]
 name = "gRPC Test App"
-host = "127.0.0.1"
-port = 50051
 graceful-shutdown = false
 
-[application.body-limit]
+[grpc]
+host = "127.0.0.1"
+port = 50051
+
+[grpc.body-limit]
 max-decoding-message-size = "2 MiB"
 max-encoding-message-size = "2 MiB"
 display = false

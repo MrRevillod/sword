@@ -2,11 +2,18 @@ use crate::application::{Application, ApplicationConfig, ApplicationEngine};
 use crate::module::Module;
 #[cfg(feature = "grpc-controllers")]
 use sword_grpc::application::GrpcApplication;
+#[cfg(feature = "grpc-controllers")]
+use sword_grpc::config::GrpcApplicationConfig;
 #[cfg(all(
     any(feature = "web-controllers", feature = "socketio-controllers"),
     not(feature = "grpc-controllers")
 ))]
 use sword_web::application::WebApplication;
+#[cfg(all(
+    any(feature = "web-controllers", feature = "socketio-controllers"),
+    not(feature = "grpc-controllers")
+))]
+use sword_web::config::WebApplicationConfig;
 
 use axum::{extract::Request as AxumRequest, response::IntoResponse, routing::Route};
 use std::convert::Infallible;
@@ -188,9 +195,10 @@ impl ApplicationBuilder {
         #[cfg(feature = "grpc-controllers")]
         {
             let app_config = self.config.get_or_default::<ApplicationConfig>();
+            let grpc_config = self.config.get_or_default::<GrpcApplicationConfig>();
             let grpc_application = GrpcApplication::new(
                 self.state.clone(),
-                app_config.grpc.clone(),
+                grpc_config,
                 app_config.graceful_shutdown,
                 &self.controller_registry,
             );
@@ -204,10 +212,11 @@ impl ApplicationBuilder {
         ))]
         {
             let app_config = self.config.get_or_default::<ApplicationConfig>();
+            let web_config = self.config.get_or_default::<WebApplicationConfig>();
             let web_application = WebApplication::new(
                 self.state.clone(),
                 &self.config,
-                app_config.web.clone(),
+                web_config,
                 app_config.graceful_shutdown,
                 self.layer_stack,
                 &self.controller_registry,

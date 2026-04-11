@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
 use sword_layers::body_limit::GrpcBodyLimitConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,3 +24,15 @@ impl Default for GrpcApplicationConfig {
         }
     }
 }
+
+impl ConfigItem for GrpcApplicationConfig {
+    fn key() -> &'static str {
+        "grpc"
+    }
+}
+
+inventory_submit! {[
+    ConfigRegistrar::new(|state, config| {
+        state.insert(config.get_or_default::<GrpcApplicationConfig>());
+    })
+]}

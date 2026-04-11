@@ -44,7 +44,7 @@ impl<'a> WebRouter<'a> {
 
         router = self.layer_stack.apply(router);
 
-        if let Some(prefix) = &self.web_config.web_router_prefix {
+        if let Some(prefix) = &self.web_config.router_prefix {
             router = Router::new().nest(prefix, router);
         }
 

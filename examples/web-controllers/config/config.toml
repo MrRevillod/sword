@@ -1,15 +1,17 @@
 [application]
 name = "REST Adapter Example"
-host = "0.0.0.0"
-port = 8081
 graceful-shutdown = false
 
-[application.request-timeout]
+[web]
+host = "0.0.0.0"
+port = 8081
+
+[web.request-timeout]
 enabled = true
 timeout = "15s"
 display = true
 
-[application.body-limit]
+[web.body-limit]
 max-size = "5MB"
 display = true
 

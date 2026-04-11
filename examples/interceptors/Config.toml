@@ -1,15 +1,17 @@
 [application]
 graceful-shutdown = false
 name = "Interceptors Example"
+
+[web]
 host = "0.0.0.0"
 port = 8081
 
-[application.request-timeout]
+[web.request-timeout]
 enabled = true
 timeout = "15s"
 display = true
 
-[application.body-limit]
+[web.body-limit]
 max-size = "5MB"
 display = true
 

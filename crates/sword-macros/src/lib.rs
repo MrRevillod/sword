@@ -20,32 +20,10 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("GET", attr, item)
 }
 
-#[cfg(not(feature = "web-controllers"))]
-#[proc_macro_attribute]
-pub fn get(_attr: TokenStream, _item: TokenStream) -> TokenStream {
-    syn::Error::new(
-        proc_macro2::Span::call_site(),
-        "#[get] requires enabling the `web-controllers` feature",
-    )
-    .to_compile_error()
-    .into()
-}
-
 #[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("POST", attr, item)
-}
-
-#[cfg(not(feature = "web-controllers"))]
-#[proc_macro_attribute]
-pub fn post(_attr: TokenStream, _item: TokenStream) -> TokenStream {
-    syn::Error::new(
-        proc_macro2::Span::call_site(),
-        "#[post] requires enabling the `web-controllers` feature",
-    )
-    .to_compile_error()
-    .into()
 }
 
 #[cfg(feature = "web-controllers")]
@@ -54,49 +32,16 @@ pub fn put(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PUT", attr, item)
 }
 
-#[cfg(not(feature = "web-controllers"))]
-#[proc_macro_attribute]
-pub fn put(_attr: TokenStream, _item: TokenStream) -> TokenStream {
-    syn::Error::new(
-        proc_macro2::Span::call_site(),
-        "#[put] requires enabling the `web-controllers` feature",
-    )
-    .to_compile_error()
-    .into()
-}
-
 #[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("DELETE", attr, item)
 }
 
-#[cfg(not(feature = "web-controllers"))]
-#[proc_macro_attribute]
-pub fn delete(_attr: TokenStream, _item: TokenStream) -> TokenStream {
-    syn::Error::new(
-        proc_macro2::Span::call_site(),
-        "#[delete] requires enabling the `web-controllers` feature",
-    )
-    .to_compile_error()
-    .into()
-}
-
 #[cfg(feature = "web-controllers")]
 #[proc_macro_attribute]
 pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PATCH", attr, item)
-}
-
-#[cfg(not(feature = "web-controllers"))]
-#[proc_macro_attribute]
-pub fn patch(_attr: TokenStream, _item: TokenStream) -> TokenStream {
-    syn::Error::new(
-        proc_macro2::Span::call_site(),
-        "#[patch] requires enabling the `web-controllers` feature",
-    )
-    .to_compile_error()
-    .into()
 }
 
 /// Defines a Sword controller.
@@ -336,6 +281,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_derive(HttpError, attributes(http, tracing))]
+#[cfg(feature = "web-controllers")]
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
