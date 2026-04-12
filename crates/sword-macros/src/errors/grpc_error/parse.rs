@@ -1,10 +1,6 @@
 use syn::{Attribute, Error, Ident, LitStr, Token, meta::ParseNestedMeta, spanned::Spanned};
 
-#[derive(Debug, Clone)]
-pub enum MessageValue {
-    Static(String),
-    Field(String),
-}
+use crate::errors::MessageValue;
 
 #[derive(Debug, Clone, Default)]
 pub struct GrpcErrorConfig {
