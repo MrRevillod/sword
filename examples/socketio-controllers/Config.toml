@@ -9,7 +9,6 @@ request-timeout = { enabled = true, timeout = "15s", display = true }
 body-limit = { enabled = true, max-size = "5MB", display = true }
 
 [socketio]
-enabled = true
 parser = "common"
 transports = ["websocket", "polling"]
 

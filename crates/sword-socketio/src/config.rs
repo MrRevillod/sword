@@ -9,10 +9,6 @@ use sword_core::{ByteConfig, ConfigItem, ConfigRegistrar, TimeConfig, inventory_
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct SocketIoServerConfig {
-    /// Whether to enable the Socket.IO server.
-    /// Defaults to false.
-    pub enabled: bool,
-
     /// The amount of time the server will wait for an acknowledgement
     /// from the client before closing the connection.
     ///
