@@ -60,3 +60,4 @@ tower-http = { workspace = true, optional = true }
 tower-layer = { version = "0.3.3", optional = true }
 
 uuid = { workspace = true, features = ["v4"], optional = true }
+serde_json.workspace = true

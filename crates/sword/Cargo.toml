@@ -42,14 +42,9 @@ dioxus-devtools = { workspace = true, optional = true }
 [features]
 default = []
 
-web-controllers = ["dep:sword-web"]
-
-socketio-controllers = [
-    "web-controllers",
-    "dep:sword-socketio",
-]
-
-grpc-controllers = ["dep:sword-grpc"]
+web = ["dep:sword-web"]
+socketio = ["web", "dep:sword-socketio"]
+grpc = ["dep:sword-grpc"]
 grpc-reflection = ["dep:sword-grpc", "sword-grpc/reflection"]
 
 multipart = ["sword-web/multipart"]

@@ -1,18 +1,15 @@
 use crate::application::{Application, ApplicationConfig, ApplicationEngine};
 use crate::module::Module;
-#[cfg(feature = "grpc-controllers")]
+
+#[cfg(feature = "grpc")]
 use sword_grpc::application::GrpcApplication;
-#[cfg(feature = "grpc-controllers")]
+#[cfg(feature = "grpc")]
 use sword_grpc::config::GrpcApplicationConfig;
-#[cfg(all(
-    any(feature = "web-controllers", feature = "socketio-controllers"),
-    not(feature = "grpc-controllers")
-))]
+
+#[cfg(all(any(feature = "web", feature = "socketio"), not(feature = "grpc")))]
 use sword_web::application::WebApplication;
-#[cfg(all(
-    any(feature = "web-controllers", feature = "socketio-controllers"),
-    not(feature = "grpc-controllers")
-))]
+
+#[cfg(all(any(feature = "web", feature = "socketio"), not(feature = "grpc")))]
 use sword_web::config::WebApplicationConfig;
 
 use axum::{extract::Request as AxumRequest, response::IntoResponse, routing::Route};
@@ -149,9 +146,7 @@ impl ApplicationBuilder {
     /// This method ends the builder pattern and constructs the final `Application`
     /// instance ready to run.
     pub fn build(self) -> Application {
-        if cfg!(feature = "grpc-controllers")
-            && (cfg!(feature = "web-controllers") || cfg!(feature = "socketio-controllers"))
-        {
+        if cfg!(feature = "grpc") && (cfg!(feature = "web") || cfg!(feature = "socketio")) {
             sword_error! {
                 title: "Multiple application types enabled",
                 reason: "Only one app type feature can be enabled at a time",
@@ -192,7 +187,7 @@ impl ApplicationBuilder {
             register(&self.state);
         }
 
-        #[cfg(feature = "grpc-controllers")]
+        #[cfg(feature = "grpc")]
         {
             let app_config = self.config.get_or_default::<ApplicationConfig>();
             let grpc_config = self.config.get_or_default::<GrpcApplicationConfig>();
@@ -206,10 +201,7 @@ impl ApplicationBuilder {
             Application::new(ApplicationEngine::Grpc(grpc_application), self.config)
         }
 
-        #[cfg(all(
-            any(feature = "web-controllers", feature = "socketio-controllers"),
-            not(feature = "grpc-controllers")
-        ))]
+        #[cfg(all(any(feature = "web", feature = "socketio"), not(feature = "grpc")))]
         {
             let app_config = self.config.get_or_default::<ApplicationConfig>();
             let web_config = self.config.get_or_default::<WebApplicationConfig>();
@@ -225,11 +217,7 @@ impl ApplicationBuilder {
             Application::new(ApplicationEngine::Web(web_application), self.config)
         }
 
-        #[cfg(not(any(
-            feature = "web-controllers",
-            feature = "socketio-controllers",
-            feature = "grpc-controllers"
-        )))]
+        #[cfg(not(any(feature = "web", feature = "socketio", feature = "grpc")))]
         sword_error! {
             title: "No application engine available",
             reason: "No supported controller feature is enabled",

@@ -2,10 +2,10 @@ use serde::{Deserialize, Serialize};
 use sword_core::{ConfigItem, ConfigRegistrar, inventory_submit};
 
 pub enum ApplicationEngine {
-    #[cfg(any(feature = "web-controllers", feature = "socketio-controllers"))]
+    #[cfg(any(feature = "web", feature = "socketio"))]
     Web(sword_web::application::WebApplication),
 
-    #[cfg(feature = "grpc-controllers")]
+    #[cfg(feature = "grpc")]
     Grpc(sword_grpc::application::GrpcApplication),
 }
 

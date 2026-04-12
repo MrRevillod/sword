@@ -1,6 +1,8 @@
 mod parse;
 
-use parse::{GrpcErrorConfig, MessageValue};
+use parse::{
+    GrpcErrorConfig, MessageValue, parse_enum_grpc_error_config, parse_variant_grpc_error_config,
+};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{Data, DeriveInput, Error, Fields, Ident};
@@ -15,37 +17,27 @@ pub fn derive_grpc_error(input: DeriveInput) -> syn::Result<TokenStream> {
         ));
     };
 
+    let defaults = parse_enum_grpc_error_config(&input.attrs)?;
     let mut from_arms = Vec::new();
 
     for variant in &data.variants {
-        let config = GrpcErrorConfig::from_attrs(&variant.ident, &variant.attrs)?;
+        let variant_config = parse_variant_grpc_error_config(&variant.ident, &variant.attrs)?;
+        let merged = variant_config.merged(&defaults);
 
-        if config.transparent {
-            let is_single_unnamed_field = matches!(
-                &variant.fields,
-                Fields::Unnamed(f) if f.unnamed.len() == 1
-            );
-
-            if !is_single_unnamed_field {
-                return Err(Error::new_spanned(
-                    &variant.ident,
-                    "transparent variants must have exactly one unnamed field",
-                ));
-            }
-        }
+        validate_variant_config(enum_name, &variant.ident, &variant.fields, &merged)?;
 
         from_arms.push(generate_from_arm(
             enum_name,
             &variant.ident,
             &variant.fields,
-            &config,
+            &merged,
         )?);
     }
 
     Ok(quote! {
         impl From<#enum_name> for ::sword::grpc::Status {
             fn from(err: #enum_name) -> Self {
-                let __display_message = err.to_string();
+                let __sword_internal_error = err.to_string();
 
                 match err {
                     #(#from_arms)*
@@ -53,6 +45,73 @@ pub fn derive_grpc_error(input: DeriveInput) -> syn::Result<TokenStream> {
             }
         }
     })
+}
+
+fn validate_variant_config(
+    enum_name: &Ident,
+    variant_name: &Ident,
+    fields: &Fields,
+    config: &GrpcErrorConfig,
+) -> syn::Result<()> {
+    if config.transparent {
+        let is_single_unnamed =
+            matches!(fields, Fields::Unnamed(unnamed) if unnamed.unnamed.len() == 1);
+
+        if !is_single_unnamed {
+            return Err(Error::new_spanned(
+                variant_name,
+                "transparent variants must have exactly one unnamed field",
+            ));
+        }
+
+        return Ok(());
+    }
+
+    match fields {
+        Fields::Named(named) => {
+            if let Some(MessageValue::Field(field_name)) = &config.message {
+                let exists = named
+                    .named
+                    .iter()
+                    .filter_map(|field| field.ident.as_ref())
+                    .any(|ident| ident == field_name);
+
+                if !exists {
+                    return Err(Error::new_spanned(
+                        variant_name,
+                        format!(
+                            "`message = {field_name}` references a missing field on {enum_name}::{variant_name}`"
+                        ),
+                    ));
+                }
+            }
+        }
+        Fields::Unnamed(unnamed) => {
+            if unnamed.unnamed.len() != 1 {
+                return Err(Error::new_spanned(
+                    variant_name,
+                    "non-transparent tuple variants are only supported with exactly one field",
+                ));
+            }
+
+            if matches!(config.message, Some(MessageValue::Field(_))) {
+                return Err(Error::new_spanned(
+                    variant_name,
+                    "tuple variants do not support `message = field`; use a named-field variant or build the final client message before creating the error",
+                ));
+            }
+        }
+        Fields::Unit => {
+            if matches!(config.message, Some(MessageValue::Field(_))) {
+                return Err(Error::new_spanned(
+                    variant_name,
+                    "unit variants do not support field-based `message`",
+                ));
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn generate_from_arm(
@@ -67,8 +126,7 @@ fn generate_from_arm(
         });
     }
 
-    let code_variant =
-        parse_code_to_tonic_variant(config.code().unwrap_or_default(), variant_name)?;
+    let code_variant = parse_code_to_tonic_variant(config.default_code(), variant_name)?;
     let pattern = generate_pattern(enum_name, variant_name, fields);
     let message_expr = generate_message_expr(config, fields);
     let tracing_stmt = generate_tracing_stmt(variant_name, config, fields, &code_variant);
@@ -123,15 +181,15 @@ fn generate_pattern(enum_name: &Ident, variant_name: &Ident, fields: &Fields) ->
 }
 
 fn generate_message_expr(config: &GrpcErrorConfig, fields: &Fields) -> TokenStream {
-    match config.message() {
-        Some(MessageValue::Static(msg)) => quote! { #msg },
+    match &config.message {
+        Some(MessageValue::Static(message)) => quote! { #message },
         Some(MessageValue::Field(field_name)) => {
-            let field_ident = Ident::new(&field_name, Span::call_site());
+            let field_ident = Ident::new(field_name, Span::call_site());
             quote! { format!("{}", #field_ident) }
         }
         None => match fields {
             Fields::Unnamed(_) => quote! { format!("{}", _inner) },
-            _ => quote! { __display_message.clone() },
+            _ => quote! { __sword_internal_error.clone() },
         },
     }
 }
@@ -162,6 +220,7 @@ fn generate_tracing_stmt(
         Fields::Unit => {
             quote! {
                 #tracing_macro!(
+                    error = %__sword_internal_error,
                     error_type = #variant_str,
                     grpc_code = #code_str,
                     "gRPC error response"
@@ -171,7 +230,8 @@ fn generate_tracing_stmt(
         Fields::Unnamed(_) => {
             quote! {
                 #tracing_macro!(
-                    error = ?_inner,
+                    error = %__sword_internal_error,
+                    inner = ?_inner,
                     error_type = #variant_str,
                     grpc_code = #code_str,
                     "gRPC error response"
@@ -186,6 +246,7 @@ fn generate_tracing_stmt(
 
             quote! {
                 #tracing_macro!(
+                    error = %__sword_internal_error,
                     #(#field_logs)*
                     error_type = #variant_str,
                     grpc_code = #code_str,

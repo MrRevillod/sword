@@ -5,15 +5,8 @@ graceful-shutdown = false
 [web]
 host = "0.0.0.0"
 port = 8081
-
-[web.request-timeout]
-enabled = true
-timeout = "15s"
-display = true
-
-[web.body-limit]
-max-size = "5MB"
-display = true
+request-timeout = { enabled = true, timeout = "15s", display = true }
+body-limit = { enabled = true, max-size = "5MB", display = true }
 
 [socketio]
 enabled = true

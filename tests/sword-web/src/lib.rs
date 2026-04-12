@@ -17,6 +17,9 @@ mod request {
 }
 
 #[cfg(test)]
+mod errors;
+
+#[cfg(test)]
 mod interceptors {
     mod built_in;
     mod controller_level;

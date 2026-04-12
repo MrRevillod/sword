@@ -226,11 +226,13 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Attributes
 ///
-/// Each variant must have `#[http(...)]` with one of:
+/// Enum-level defaults can be declared with `#[http_error(...)]` and overridden per
+/// variant with `#[http(...)]`.
 ///
 /// **For direct responses:**
 /// - `code = <u16>`: HTTP status code (required)
-/// - `message = "<string>"`: Custom message (optional, defaults to canonical reason)
+/// - `message = "<string>"`: Static client message (optional)
+/// - `message = <field>`: Uses a named field as the client message (optional)
 /// - `error = <field>`: Single error field to include (optional, named fields only)
 /// - `errors = <field>`: Multiple errors field to include (optional, named fields only)
 ///
@@ -238,19 +240,22 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - `transparent`: Delegate to inner type's `From<T> for Json` (for wrapping other `HttpError` types)
 ///
 /// **Tracing:**
-/// - `#[tracing(level)]`: Adds structured logging when the error occurs (optional)
+/// - `tracing = <level>` inside `#[http_error(...)]` or `#[http(...)]`
+/// - `#[tracing(level)]`: Backward-compatible shorthand at variant level
 ///   - `level`: One of `trace`, `debug`, `info`, `warn`, `error`
-///   - Generates `tracing::*!(...)` calls with error details
+///   - Uses the internal `thiserror::Error` display for the `error` log field
+///   - Logs variant fields as structured tracing fields when available
 ///   - Compatible with `RUST_LOG` for filtering
 ///   - Not allowed with `transparent` variants
 ///
 /// ### Tracing Output
 /// The generated logs include:
+/// - `error`: The internal `thiserror` display string
 /// - `error_type`: The variant name as string
 /// - `status_code`: The HTTP status code
-/// - For unnamed variants (single field): `error = ?field` (debug format)
 /// - For named variants: Each field as `field_name = ?field_value`
-/// - Unit variants: Only `error_type` and `status_code`
+/// - For unnamed variants (single field): `inner = ?field`
+/// - Unit variants: `error`, `error_type`, and `status_code`
 ///
 /// # Example
 ///
@@ -259,20 +264,22 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// use thiserror::Error;
 ///
 /// #[derive(Debug, Error, HttpError)]
+/// #[http_error(code = 500, tracing = error, message = "Internal server error")]
 /// pub enum ApiError {
 ///     #[error("Not found")]
-///     #[http(code = 404)]
-///     #[tracing(info)]  // Log: error_type="NotFound", status_code=404
+///     #[http(code = 404, message = "Not found", tracing = info)]
 ///     NotFound,
 ///
-///     #[error("Forbidden: requires {role}")]
-///     #[http(code = 403, error = role)]
-///     #[tracing(warn)]  // Log: error_type="Forbidden", status_code=403, role=?role
-///     Forbidden { role: String },
+///     #[error("Conflict on field {field}: {value}")]
+///     #[http(code = 409, message = client_message, error = detail)]
+///     Conflict {
+///         client_message: String,
+///         field: String,
+///         value: String,
+///         detail: serde_json::Value,
+///     },
 ///
 ///     #[error("IO Error: {0}")]
-///     #[http(code = 500)]
-///     #[tracing(error)]  // Log: error_type="Io", status_code=500, error=?_inner
 ///     Io(#[from] std::io::Error),
 ///
 ///     #[error("Auth Error: {0}")]
@@ -280,7 +287,7 @@ pub fn injectable(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     Auth(#[from] AuthError),
 /// }
 /// ```
-#[proc_macro_derive(HttpError, attributes(http, tracing))]
+#[proc_macro_derive(HttpError, attributes(http, http_error, tracing))]
 #[cfg(feature = "web-controllers")]
 pub fn derive_http_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -296,12 +303,16 @@ pub fn derive_http_error(input: TokenStream) -> TokenStream {
 /// Generates:
 /// - `From<Self> for tonic::Status`
 ///
-/// Supported attributes per variant:
-/// - `#[grpc(code = "invalid_argument")]`
-/// - `#[grpc(message = "custom text")]`
-/// - `#[grpc(message = field_name)]`
-/// - `#[grpc(transparent)]`
-/// - `#[tracing(level)]`
+/// Enum-level defaults can be declared with `#[grpc_error(...)]` and overridden per
+/// variant with `#[grpc(...)]`.
+///
+/// Supported attributes:
+/// - `code = "invalid_argument"`
+/// - `message = "custom text"`
+/// - `message = field_name`
+/// - `transparent` (variant-only)
+/// - `tracing = <level>` inside `#[grpc_error(...)]` or `#[grpc(...)]`
+/// - `#[tracing(level)]`: backward-compatible shorthand at variant level
 ///
 /// gRPC code values accepted by `#[grpc(code = "...")]`:
 ///
@@ -330,21 +341,25 @@ pub fn derive_http_error(input: TokenStream) -> TokenStream {
 /// use thiserror::Error;
 ///
 /// #[derive(Debug, Error, GrpcError)]
+/// #[grpc_error(code = "internal", tracing = error)]
 /// enum UserError {
-///     #[grpc(code = "not_found")]
+///     #[grpc(code = "not_found", tracing = info)]
 ///     #[error("User not found: {id}")]
 ///     NotFound { id: String },
 ///
-///     #[grpc(code = "invalid_argument", message = "Invalid input")]
-///     #[error("Validation error: {0}")]
-///     Validation(String),
+///     #[grpc(code = "invalid_argument", message = client_message)]
+///     #[error("Validation error: {internal}")]
+///     Validation {
+///         client_message: String,
+///         internal: String,
+///     },
 ///
 ///     #[grpc(transparent)]
 ///     #[error("Database error: {0}")]
 ///     Database(#[from] anyhow::Error),
 /// }
 /// ```
-#[proc_macro_derive(GrpcError, attributes(grpc, tracing))]
+#[proc_macro_derive(GrpcError, attributes(grpc, grpc_error, tracing))]
 pub fn derive_grpc_error(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
