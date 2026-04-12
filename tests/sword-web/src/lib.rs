@@ -20,6 +20,9 @@ mod request {
 mod errors;
 
 #[cfg(test)]
+mod http_methods;
+
+#[cfg(test)]
 mod interceptors {
     mod built_in;
     mod controller_level;

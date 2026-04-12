@@ -9,11 +9,14 @@ use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 use sword_core::{Config, State, sword_error};
 use sword_core::{Controller, ControllerIds, ControllerRegistry};
+use sword_layers::DisplayConfig;
 use sword_web::router::WebRouterExtension;
 
 fn socketio_setup(state: &State, config: &SocketIoServerConfig) -> SocketIoLayer {
-    let (layer, io) = SocketIoServerLayer::new(&config);
+    let (layer, io) = SocketIoServerLayer::new(config);
+
     state.insert(io);
+    config.display();
 
     layer
 }

@@ -44,9 +44,33 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
     controllers::web::attributes::attribute("PATCH", attr, item)
 }
 
+#[cfg(feature = "web-controllers")]
+#[proc_macro_attribute]
+pub fn head(attr: TokenStream, item: TokenStream) -> TokenStream {
+    controllers::web::attributes::attribute("HEAD", attr, item)
+}
+
+#[cfg(feature = "web-controllers")]
+#[proc_macro_attribute]
+pub fn options(attr: TokenStream, item: TokenStream) -> TokenStream {
+    controllers::web::attributes::attribute("OPTIONS", attr, item)
+}
+
+#[cfg(feature = "web-controllers")]
+#[proc_macro_attribute]
+pub fn trace(attr: TokenStream, item: TokenStream) -> TokenStream {
+    controllers::web::attributes::attribute("TRACE", attr, item)
+}
+
+#[cfg(feature = "web-controllers")]
+#[proc_macro_attribute]
+pub fn connect(attr: TokenStream, item: TokenStream) -> TokenStream {
+    controllers::web::attributes::attribute("CONNECT", attr, item)
+}
+
 /// Defines a Sword controller.
 /// Route handlers are declared directly inside the `impl` block using method attributes
-/// such as `#[get]`, `#[post]`, `#[put]`, `#[patch]`, and `#[delete]`.
+/// such as `#[get]`, `#[post]`, `#[put]`, `#[patch]`, `#[delete]`, `#[head]`, `#[options]`, `#[trace]`, and `#[connect]`.
 ///
 /// ### Parameters
 /// - `kind`: Controller kind. Use `Controller::Web` or `Controller::SocketIo`.
