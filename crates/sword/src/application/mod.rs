@@ -18,6 +18,7 @@ pub struct Application {
 }
 
 impl Application {
+    #[cfg(any(feature = "web", feature = "socketio", feature = "grpc"))]
     pub(crate) fn new(engine: ApplicationEngine, config: Config) -> Self {
         Self { engine, config }
     }

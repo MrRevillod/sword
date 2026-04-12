@@ -1,6 +1,7 @@
 #![allow(irrefutable_let_patterns)]
 
 mod controllers;
+
 mod core;
 mod errors;
 mod interceptor_derive;

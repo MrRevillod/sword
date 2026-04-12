@@ -23,7 +23,7 @@ axum = { workspace = true }
 
 sword-core = { workspace = true }
 sword-layers = { workspace = true, features = ["tracing"] }
-sword-macros = { workspace = true }
+sword-macros = { workspace = true, features = ["web-controllers", "socketio-controllers", "grpc-controllers"] }
 sword-web = { workspace = true, optional = true }
 sword-grpc = { workspace = true, optional = true }
 sword-socketio = { workspace = true, optional = true }

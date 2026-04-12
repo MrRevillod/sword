@@ -1,4 +1,6 @@
-use crate::application::{Application, ApplicationConfig, ApplicationEngine};
+use crate::application::Application;
+#[cfg(any(feature = "web", feature = "socketio", feature = "grpc"))]
+use crate::application::{ApplicationConfig, ApplicationEngine};
 use crate::module::Module;
 
 #[cfg(feature = "grpc")]

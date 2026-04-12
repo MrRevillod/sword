@@ -159,10 +159,10 @@ impl TryFrom<ControllerArgs> for ParsedControllerKind {
 
                 #[cfg(not(feature = "web-controllers"))]
                 {
-                    return Err(Error::new(
+                    Err(Error::new(
                         Span::call_site(),
                         "Web controllers require enabling the `web-controllers` feature",
-                    ));
+                    ))
                 }
 
                 #[cfg(feature = "web-controllers")]
